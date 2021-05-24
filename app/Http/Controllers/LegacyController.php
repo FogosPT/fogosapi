@@ -196,7 +196,7 @@ class LegacyController extends Controller
 
         $response = array(
             'success' => true,
-            'data' => $warnings->toArray()
+            'data' => $warnings
         );
 
         return response()->json($response);
