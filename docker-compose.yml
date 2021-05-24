@@ -1,0 +1,52 @@
+version: '3.7'
+
+services:
+  mongo:
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: MongoDB2019!
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data:/data/db
+      - ./assets/timezone:/etc/timezone
+      - ./assets/localtime:/etc/localtime
+
+  fogosapi:
+    build: .
+    container_name: fogosapi
+    hostname: fogosapi
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "9000:9000"
+    depends_on:
+      - mongo
+
+  nginx:
+    image: nginx
+    restart: always
+    volumes:
+      - ./:/var/www/html
+      - ./logs:/var/log/nginx
+      - ./assets/nginx/default:/etc/nginx/conf.d/default.conf
+      - ./assets/nginx/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "8092:80"
+
+  redis:
+    image: redis
+    command: redis-server
+    ports:
+      - "6379:6379"
+
+  chrome:
+    image: 'zenika/alpine-chrome:81'
+    entrypoint: [ "chromium-browser", "--headless", "--no-sandbox", "--remote-debugging-address=0.0.0.0", "--remote-debugging-port=9222" ]
+    ports:
+      - 9222:9222
+
+networks:
+  default:
