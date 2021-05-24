@@ -18,5 +18,6 @@ class HistoryTotal extends Model
         'terrain',
         'location',
         'man',
+        'total'
     ];
 }

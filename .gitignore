@@ -11,3 +11,4 @@ storage/framework
 storage/logs
 /data
 /node_modules
+/logs

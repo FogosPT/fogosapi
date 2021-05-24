@@ -13,6 +13,9 @@ use \App\Http\Controllers\LegacyController;
 |
 */
 
+if(env('APP_ENV') === 'production'){
+    \Illuminate\Support\Facades\URL::forceScheme('https');
+}
 $router->get('/', function () use ($router) {
     return $router->app->version();
 });

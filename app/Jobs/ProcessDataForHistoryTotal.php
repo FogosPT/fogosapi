@@ -46,7 +46,20 @@ class ProcessDataForHistoryTotal extends Job
             'total' => $total,
         );
 
-        $historyTotal = new HistoryTotal($data);
-        $historyTotal->save();
+        $last = HistoryTotal::orderBy('created', 'desc')
+                            ->limit(1)
+                            ->get();
+
+        if(isset($last[0])){
+            $last = $last[0];
+
+            if($data['man'] !== $last->man || $data['aerial'] !== $last->aerial || $data['terrain'] !== $last->terrain || $data['total'] !== $last->total ){
+                $historyTotal = new HistoryTotal($data);
+                $historyTotal->save();
+            }
+        } else {
+            $historyTotal = new HistoryTotal($data);
+            $historyTotal->save();
+        }
     }
 }

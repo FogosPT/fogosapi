@@ -7,7 +7,7 @@ return [
         | Edit to set the api's title
         |--------------------------------------------------------------------------
          */
-        'title' => 'Swagger Lume API',
+        'title' => 'FogosPT API',
     ],
 
     'routes' => [
@@ -199,6 +199,6 @@ return [
     |--------------------------------------------------------------------------
      */
     'constants' => [
-        // 'SWAGGER_LUME_CONST_HOST' => env('SWAGGER_LUME_CONST_HOST', 'http://my-default-host.com'),
+        'SWAGGER_LUME_CONST_HOST' => env('SWAGGER_LUME_CONST_HOST', 'http://my-default-host.com'),
     ],
 ];
