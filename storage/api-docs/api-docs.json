@@ -23,6 +23,35 @@
                 }
             }
         },
+        "/fires/data": {
+            "get": {
+                "tags": [
+                    "legacy"
+                ],
+                "summary": "Fire history means",
+                "description": "",
+                "operationId": "App\\Http\\Controllers\\LegacyController::firesData",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "description": "FireId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "Fire history means"
+                    },
+                    "404": {
+                        "description": "not found"
+                    }
+                }
+            }
+        },
         "/fires": {
             "get": {
                 "tags": [
@@ -63,6 +92,21 @@
                 "responses": {
                     "default": {
                         "description": "Warnings list"
+                    }
+                }
+            }
+        },
+        "/v1/warnings/site": {
+            "get": {
+                "tags": [
+                    "legacy"
+                ],
+                "summary": "Warnings for site",
+                "description": "",
+                "operationId": "App\\Http\\Controllers\\LegacyController::warningsSite",
+                "responses": {
+                    "default": {
+                        "description": "Warnings for site"
                     }
                 }
             }
@@ -228,6 +272,21 @@
                 }
             }
         },
+        "/v1/now/data": {
+            "get": {
+                "tags": [
+                    "legacy"
+                ],
+                "summary": "Last 50 total means history",
+                "description": "",
+                "operationId": "App\\Http\\Controllers\\LegacyController::nowData",
+                "responses": {
+                    "default": {
+                        "description": "Last 50 total means history"
+                    }
+                }
+            }
+        },
         "/v1/stats/8hours": {
             "get": {
                 "tags": [
@@ -359,6 +418,21 @@
                 }
             }
         },
+        "/v1/risk-today": {
+            "get": {
+                "tags": [
+                    "legacy"
+                ],
+                "summary": "RCM for web JS",
+                "description": "",
+                "operationId": "App\\Http\\Controllers\\LegacyController::riskToday",
+                "responses": {
+                    "default": {
+                        "description": "RCM for web JS"
+                    }
+                }
+            }
+        },
         "/v1/list": {
             "get": {
                 "tags": [
@@ -381,6 +455,20 @@
                 "responses": {
                     "default": {
                         "description": "Active fires for concelho"
+                    }
+                }
+            }
+        },
+        "/v2/other/mobile-contributors": {
+            "get": {
+                "tags": [
+                    "v2"
+                ],
+                "description": "Mobile Contributors",
+                "operationId": "App\\Http\\Controllers\\OtherController::getMobileContributors",
+                "responses": {
+                    "default": {
+                        "description": "Mobile Contributors"
                     }
                 }
             }

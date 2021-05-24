@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\HistoryTotal;
 use App\Models\Incident;
+use App\Models\IncidentHistory;
 use App\Models\IncidentStatusHistory;
 use App\Models\RCM;
 use App\Models\RCMForJS;
 use App\Models\Warning;
 use App\Models\WarningMadeira;
+use App\Models\WarningSite;
 use App\Tools\TwitterTool;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -33,6 +35,81 @@ class LegacyController extends Controller
         $response = array(
             'success' => true,
             'data' => $incidents->toArray()
+        );
+
+        return response()->json($response);
+    }
+
+    /**
+     * @OA\Get(path="/fires/data",
+     *   tags={"legacy"},
+     *   summary="Fire history means",
+     *   description="",
+     *   @OA\Parameter(
+     *     name="id",
+     *     required=true,
+     *     in="query",
+     *     description="FireId",
+     *     @OA\Schema(
+     *         type="string"
+     *     )
+     *   ),
+     *   @OA\Response(response="default", description="Fire history means"),
+     *   @OA\Response(response=404, description="not found")
+     * )
+     */
+    public function firesData(Request $request)
+    {
+        $id = $request->get('id');
+
+        $incident = Incident::where('id', $id)->get();
+
+        if(isset($incident[0])){
+            $incident = $incident[0];
+        } else {
+            abort(404);
+        }
+
+        $history = IncidentHistory::where('id', $id)
+                    ->orderBy('creadted', 'desc')
+                    ->limit(50)
+                    ->get();
+
+        $return = array();
+        $first = array(
+            'label' => $incident['hour'],
+            'man' => 0,
+            'terrain' => 0,
+            'aerial' => 0,
+            'created' => $incident['dateTime']->timestamp,
+        );
+
+        foreach ($history as &$r) {
+            $timestamp = $r['created']->timestamp;
+            $label = date('d-m-Y H:i', $r['created']->timestamp);
+            unset($r['updated']);
+            $r['label'] = $label;
+            $r['created'] =$timestamp;
+
+            $_r = array(
+                'created' => $r['created']->timestamp,
+                'label' => $label,
+                'man' => $r['man'],
+                'terrain' => $r['terrain'],
+                'aerial' => $r['aerial'],
+                'location' => $r['location'],
+                'id' => $r['id'],
+                '_id' => $r['_id']
+            );
+
+            $return[] = $_r;
+        }
+
+        $return[] = $first;
+
+        $response = array(
+            'success' => true,
+            'data' => array_reverse($return)
         );
 
         return response()->json($response);
@@ -99,6 +176,27 @@ class LegacyController extends Controller
         $response = array(
             'success' => true,
             'data' => $data
+        );
+
+        return response()->json($response);
+    }
+
+    /**
+     * @OA\Get(path="/v1/warnings/site",
+     *   tags={"legacy"},
+     *   summary="Warnings for site",
+     *   description="",
+     *   @OA\Response(response="default", description="Warnings for site"),
+     * )
+     */
+    public function warningsSite()
+    {
+        $warnings = WarningSite::orderBy('created', 'desc')
+            ->take(50);
+
+        $response = array(
+            'success' => true,
+            'data' => $warnings->toArray()
         );
 
         return response()->json($response);

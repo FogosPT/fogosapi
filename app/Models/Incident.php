@@ -16,7 +16,7 @@ class Incident extends Model
     const CREATED_AT = 'created';
     const UPDATED_AT = 'updated';
 
-    protected $dates = ['dateTime'];
+    protected $dates = ['dateTime', 'created', 'updated'];
 
     protected $fillable = [
         'id',

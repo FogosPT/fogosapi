@@ -22,6 +22,7 @@ $router->get('/', function () use ($router) {
 
 // LEGACY
 $router->get('/new/fires', '\App\Http\Controllers\LegacyController@newFires');
+$router->get('/fires/data', '\App\Http\Controllers\LegacyController@firesData');
 $router->get('/teste', '\App\Http\Controllers\LegacyController@test');
 
 $router->group(['prefix' => 'fires'], function () use ($router) {
@@ -35,10 +36,9 @@ $router->group(['prefix' => 'madeira'], function () use ($router) {
     $router->get('/fires/status', '\App\Http\Controllers\LegacyController@firesStatusMadeira');
 });
 
-
-
 $router->group(['prefix' => 'v1'], function () use ($router) {
     $router->get('warnings', '\App\Http\Controllers\LegacyController@warnings');
+    $router->get('warnings/site', '\App\Http\Controllers\LegacyController@warningsSite');
     $router->get('madeira/warnings', '\App\Http\Controllers\LegacyController@warningsMadeira');
     $router->get('now', '\App\Http\Controllers\LegacyController@now');
     $router->get('now/data', '\App\Http\Controllers\LegacyController@nowData');
@@ -58,7 +58,6 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
 
     });
 });
-
 
 $router->group(['prefix' => 'v2'], function () use ($router) {
     $router->group(['prefix' => 'other'], function () use ($router) {
