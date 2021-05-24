@@ -788,7 +788,8 @@ class LegacyController extends Controller
      */
     public function riskToday()
     {
-        $risk = RCMForJS::orderBy('created', 'desc')
+        $risk = RCMForJS::where('when', 'hoje')
+                        ->orderBy('created', 'desc')
                         ->limit(1)
                         ->get();
 
@@ -804,6 +805,63 @@ class LegacyController extends Controller
 
         return response()->json($response);
     }
+
+    /**
+     * @OA\Get(path="/v1/risk-tomorrow",
+     *   tags={"legacy"},
+     *   summary="RCM for web JS",
+     *   description="",
+     *   @OA\Response(response="default", description="RCM for web JS"),
+     * )
+     */
+    public function riskTomorrow()
+    {
+        $risk = RCMForJS::where('when', 'amanha')
+            ->orderBy('created', 'desc')
+            ->limit(1)
+            ->get();
+
+        $risk = $risk[0]->toArray();
+        unset($risk['created']);
+        unset($risk['updated']);
+        unset($risk['_id']);
+
+        $response = array(
+            'success' => true,
+            'data' => $risk
+        );
+
+        return response()->json($response);
+    }
+
+    /**
+     * @OA\Get(path="/v1/risk-after",
+     *   tags={"legacy"},
+     *   summary="RCM for web JS",
+     *   description="",
+     *   @OA\Response(response="default", description="RCM for web JS"),
+     * )
+     */
+    public function riskAfter()
+    {
+        $risk = RCMForJS::where('when', 'depois')
+            ->orderBy('created', 'desc')
+            ->limit(1)
+            ->get();
+
+        $risk = $risk[0]->toArray();
+        unset($risk['created']);
+        unset($risk['updated']);
+        unset($risk['_id']);
+
+        $response = array(
+            'success' => true,
+            'data' => $risk
+        );
+
+        return response()->json($response);
+    }
+
 
     /**
      * @OA\Get(path="/v1/list",

@@ -48,6 +48,8 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
     $router->get('stats', '\App\Http\Controllers\LegacyController@stats');
     $router->get('risk', '\App\Http\Controllers\LegacyController@risk');
     $router->get('risk-today', '\App\Http\Controllers\LegacyController@riskToday');
+    $router->get('risk-tomorrow', '\App\Http\Controllers\LegacyController@riskTomorrow');
+    $router->get('risk-after', '\App\Http\Controllers\LegacyController@riskAfter');
     $router->get('list', '\App\Http\Controllers\LegacyController@listConcelho');
 
     $router->group(['prefix' => 'stats'], function () use ($router) {
