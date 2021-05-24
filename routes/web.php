@@ -47,6 +47,7 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
     $router->get('aerial', '\App\Http\Controllers\LegacyController@aerial');
     $router->get('stats', '\App\Http\Controllers\LegacyController@stats');
     $router->get('risk', '\App\Http\Controllers\LegacyController@risk');
+    $router->get('risk-today', '\App\Http\Controllers\LegacyController@riskToday');
     $router->get('list', '\App\Http\Controllers\LegacyController@listConcelho');
 
     $router->group(['prefix' => 'stats'], function () use ($router) {
@@ -55,5 +56,12 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         $router->get('last-night', '\App\Http\Controllers\LegacyController@lastNight');
         $router->get('week', '\App\Http\Controllers\LegacyController@statsWeek');
 
+    });
+});
+
+
+$router->group(['prefix' => 'v2'], function () use ($router) {
+    $router->group(['prefix' => 'other'], function () use ($router) {
+        $router->get('mobile-contributors', '\App\Http\Controllers\OtherController@getMobileContributors');
     });
 });

@@ -6,6 +6,7 @@ use App\Models\HistoryTotal;
 use App\Models\Incident;
 use App\Models\IncidentStatusHistory;
 use App\Models\RCM;
+use App\Models\RCMForJS;
 use App\Models\Warning;
 use App\Models\WarningMadeira;
 use App\Tools\TwitterTool;
@@ -674,6 +675,33 @@ class LegacyController extends Controller
         $response = array(
             'success' => true,
             'data' => $status
+        );
+
+        return response()->json($response);
+    }
+
+    /**
+     * @OA\Get(path="/v1/risk-today",
+     *   tags={"legacy"},
+     *   summary="RCM for web JS",
+     *   description="",
+     *   @OA\Response(response="default", description="RCM for web JS"),
+     * )
+     */
+    public function riskToday()
+    {
+        $risk = RCMForJS::orderBy('created', 'desc')
+                        ->limit(1)
+                        ->get();
+
+        $risk = $risk[0]->toArray();
+        unset($risk['created']);
+        unset($risk['updated']);
+        unset($risk['_id']);
+
+        $response = array(
+            'success' => true,
+            'data' => $risk
         );
 
         return response()->json($response);
