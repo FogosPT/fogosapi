@@ -7,7 +7,7 @@
 # Pull base image
 FROM ubuntu:18.04
 
-# Install common tools 
+# Install common tools
 RUN apt-get update
 RUN apt-get install -y wget curl nano htop git unzip bzip2 software-properties-common locales
 
@@ -21,8 +21,8 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # Set working directory
 WORKDIR /var/www/html
 
-# Set up locales 
-# RUN locale-gen 
+# Set up locales
+# RUN locale-gen
 
 #------------- Application Specific Stuff ----------------------------------------------------
 
@@ -42,7 +42,8 @@ RUN apt-get install -y \
     libssl-dev \
     php-xml \
     php-redis \
-    cron
+    cron \
+    poppler-utils
 
 RUN pecl install mongodb
 
@@ -53,7 +54,7 @@ RUN echo "extension=mongodb.so" > /etc/php/8.0/fpm/conf.d/20-mongodb.ini && \
 
 # Install NPM and Node.js
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
-RUN apt-get install -y nodejs 
+RUN apt-get install -y nodejs
 
 #------------- FPM & Nginx configuration ----------------------------------------------------
 

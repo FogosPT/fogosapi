@@ -16,6 +16,8 @@
         "jenssegers/mongodb": "^3.8",
         "laravel/lumen-framework": "^8.0",
         "predis/predis": "^1.1",
+        "smalot/pdfparser": "^1.0",
+        "spatie/pdf-to-text": "^1.4",
         "voku/portable-utf8": "^5.4"
     },
     "require-dev": {

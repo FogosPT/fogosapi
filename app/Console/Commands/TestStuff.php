@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use App\Jobs\HandleNewIncidentSocialMedia;
 use App\Jobs\HourlySummary;
 use App\Jobs\ProcessDataForHistoryTotal;
+use App\Jobs\ProcessICNFPDF;
+use App\Jobs\ProcessICNFPDFData;
 use App\Jobs\ProcessPlanes;
 use App\Jobs\ProcessRCM;
 use App\Models\Incident;
@@ -48,11 +50,15 @@ class TestStuff extends Command
      */
     public function handle()
     {
-        dispatch(new ProcessRCM(true));
+        $incident = Incident::where('id', "2021020011147")->limit(1)->get()[0];
+        $url = env('ICNF_PDF_URL') . 'AT32179';
+
+        //dispatch(new ProcessICNFPDF($incident, $url));
+        dispatch(new ProcessICNFPDFData());
 
 
-         $incident = Incident::where('id', "2021070009869")->limit(1)->get()[0];
-         dispatch(new HandleNewIncidentSocialMedia($incident));
+         //$incident = Incident::where('id', "2021070009869")->limit(1)->get()[0];
+        // dispatch(new HandleNewIncidentSocialMedia($incident));
 
         //$ip = gethostbyname('chrome');
 
