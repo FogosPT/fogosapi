@@ -46,7 +46,7 @@ class CheckImportantFireIncident extends Job implements ShouldQueue, ShouldBeUni
                 $timestampLast =time();
                 $timestampLast = strtotime('-3 hours', $timestampLast);
 
-                if($incident->dateTime->sec < $timestampLast){
+                if($incident->dateTime->timestamp < $timestampLast){
                     $hashTag = HashTagTool::getHashTag($incident->concelho);
 
                     $status = "ℹ🔥 Segundo os critérios da ANEPC o incêndio em {$incident->location} é considerado importante 🔥ℹ";

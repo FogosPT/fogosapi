@@ -48,11 +48,11 @@ class TestStuff extends Command
      */
     public function handle()
     {
-        dispatch(new ProcessDataForHistoryTotal());
+        dispatch(new ProcessRCM(true));
 
 
-        // $incident = Incident::where('id', "2021090016293")->limit(1)->get()[0];
-       // dispatch(new HandleNewIncidentSocialMedia($incident));
+         $incident = Incident::where('id', "2021070009869")->limit(1)->get()[0];
+         dispatch(new HandleNewIncidentSocialMedia($incident));
 
         //$ip = gethostbyname('chrome');
 

@@ -55,7 +55,7 @@ class HourlySummary extends Job
             $statusf = "{$date} - {$total} {$incendio} em curso combatidos por:%0A👩‍ {$man}%0A🚒 {$cars}%0A🚁 {$areal} %0A https://fogos.pt #FogosPT";
         }
 
-        $url = "https://fogos.pt/estatisticas?phantom=1";
+        $url = "estatisticas?phantom=1";
         $name = "stats";
         $path = "/var/www/html/public/screenshots/{$name}.png";
         $urlImage = "https://api.fogos.pt/screenshots/{$name}.png";

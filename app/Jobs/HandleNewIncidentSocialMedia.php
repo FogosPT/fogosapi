@@ -35,7 +35,7 @@ class HandleNewIncidentSocialMedia extends Job
 
         $hashTag = HashTagTool::getHashTag($this->incident->concelho);
 
-        $url = "https://fogos.pt/fogo/{$this->incident->id}";
+        $url = "fogo/{$this->incident->id}/detalhe";
         $name = "screenshot-{$this->incident->id}";
         $path = "/var/www/html/public/screenshots/{$name}.png";
 

@@ -422,9 +422,9 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
 
             foreach ($moderado as $e) {
                 $statusFacebook .= $e . "%0A";
-                $status = $e . "\r\n";
-
+                $status .= $e . "\r\n";
             }
+
             TwitterTool::tweet($status);
             FacebookTool::publish($statusFacebook);
         }
@@ -441,9 +441,9 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
 
             foreach ($elevado as $e) {
                 $statusFacebook .= $e . "%0A";
-                $status = $e . "\r\n";
-
+                $status .= $e . "\r\n";
             }
+
             TwitterTool::tweet($status);
             FacebookTool::publish($statusFacebook);
         }
@@ -461,7 +461,7 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
 
             foreach ($muitoElevado as $e) {
                 $statusFacebook .= $e . "%0A";
-                $status = $e . "\r\n";
+                $status .= $e . "\r\n";
 
             }
             TwitterTool::tweet($status);
@@ -481,15 +481,15 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
 
             foreach ($maximo as $e) {
                 $statusFacebook .= $e . "%0A";
-                $status = $e . "\r\n";
-
+                $status .= $e . "\r\n";
             }
+
             TwitterTool::tweet($status);
             FacebookTool::publish($statusFacebook);
         }
 
         $whenUrl = $this->tomorrow ? '?risk-tomorrow=1' : '?risk=1';
-        $url = "https://fogos.pt/{$whenUrl}";
+        $url = "{$whenUrl}";
         $name = "risk";
         $path = "/var/www/html/public/screenshots/{$name}.png";
         $urlImage = "https://api.fogos.pt/screenshots/{$name}.png";
