@@ -41,7 +41,7 @@ class HandleNewIncidentSocialMedia extends Job
 
         ScreenShotTool::takeScreenShot($url,$name);
         $url = env('SCREENSHOT_DOMAIN');
-        $status = "⚠🔥 Novo incêndio em {$this->incident->location} - {$this->incident->natureza} https://{{$url}}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥⚠";
+        $status = "⚠🔥 Novo incêndio em {$this->incident->location} - {$this->incident->natureza} https://{$url}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥⚠";
 
         $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 

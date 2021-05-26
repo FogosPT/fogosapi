@@ -65,36 +65,34 @@ class ProcessICNFPDFData extends Job implements ShouldQueue, ShouldBeUnique
             $this->incident = Incident::where('id', $id)
                 ->get();
 
-            if(!isset($this->incident[0])){
-                return;
-            }
-            
-            $res = null;
+            if(isset($this->incident[0])){
+                $res = null;
 
-            if($rr[17] !== "''"){
-                preg_match('/href=\"([^"]+)\"/', $rr[17], $match);
-                if(isset($match[1])){
-                    preg_match('/\>([^<]+)\</', $rr[1], $match2);
-                    $fileId = $match2[1];
-                    $fileName = $fileId . '.kml';
+                if($rr[17] !== "''"){
+                    preg_match('/href=\"([^"]+)\"/', $rr[17], $match);
+                    if(isset($match[1])){
+                        preg_match('/\>([^<]+)\</', $rr[1], $match2);
+                        $fileId = $match2[1];
+                        $fileName = $fileId . '.kml';
 
-                    try {
-                        $client = new Client(['base_uri' => 'http://fogos.icnf.pt/sgif2010/ficheiroskml/']);
-                        $res = $client->request('GET', $fileName, ['allow_redirects' => true]);
-                        $res = $res->getBody()->getContents();
+                        try {
+                            $client = new Client(['base_uri' => 'http://fogos.icnf.pt/sgif2010/ficheiroskml/']);
+                            $res = $client->request('GET', $fileName, ['allow_redirects' => true]);
+                            $res = $res->getBody()->getContents();
 
-                        $this->getKml($res);
-                    } catch (ClientException $e) {
-                        var_dump('error', $e->getCode());
+                            $this->getKml($res);
+                        } catch (ClientException $e) {
+                            var_dump('error', $e->getCode());
+                        }
                     }
                 }
+
+                preg_match('/\>([^<]+)\</', $rr[1], $match);
+                $fileId = $match[1];
+                $url = env('ICNF_PDF_URL') . $fileId;
+
+                dispatch(new ProcessICNFPDF($this->incident[0], $url));
             }
-
-            preg_match('/\>([^<]+)\</', $rr[1], $match);
-            $fileId = $match[1];
-            $url = env('ICNF_PDF_URL') . $fileId;
-
-            dispatch(new ProcessICNFPDF($this->incident[0], $url));
         }
     }
 
