@@ -58,8 +58,11 @@ class TestStuff extends Command
         //dispatch(new ProcessICNFPDF($incident, $url));
         //dispatch(new ProcessICNFPDFData());
 
+        \Queue::push(new App\Jobs\ProcessICNFPDFData());
 
-         //$incident = Incident::where('id', "2021070009869")->limit(1)->get()[0];
+
+
+        //$incident = Incident::where('id', "2021070009869")->limit(1)->get()[0];
         // dispatch(new HandleNewIncidentSocialMedia($incident));
 
         //$ip = gethostbyname('chrome');

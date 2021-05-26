@@ -65,6 +65,10 @@ class ProcessICNFPDFData extends Job implements ShouldQueue, ShouldBeUnique
             $this->incident = Incident::where('id', $id)
                 ->get();
 
+            if(!isset($this->incident[0])){
+                return;
+            }
+            
             $res = null;
 
             if($rr[17] !== "''"){
