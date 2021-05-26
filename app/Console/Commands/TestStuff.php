@@ -50,11 +50,13 @@ class TestStuff extends Command
      */
     public function handle()
     {
-        $incident = Incident::where('id', "2021020011147")->limit(1)->get()[0];
-        $url = env('ICNF_PDF_URL') . 'AT32179';
+        $incident = Incident::where('id', "2021020011392")->limit(1)->get()[0];
+        $url = env('ICNF_PDF_URL') . 'AT32185';
+
+        dispatch(new ProcessICNFPDF($incident, $url));
 
         //dispatch(new ProcessICNFPDF($incident, $url));
-        dispatch(new ProcessICNFPDFData());
+        //dispatch(new ProcessICNFPDFData());
 
 
          //$incident = Incident::where('id', "2021070009869")->limit(1)->get()[0];

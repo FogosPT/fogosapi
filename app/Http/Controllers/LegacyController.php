@@ -105,6 +105,8 @@ class LegacyController extends Controller
             $return[] = $_r;
         }
 
+        $return = array_reverse($return);
+
         $return[] = $first;
 
         $response = array(
@@ -462,6 +464,7 @@ class LegacyController extends Controller
             'data' => $data
         );
 
+        return response()->json($response);
     }
 
     /**

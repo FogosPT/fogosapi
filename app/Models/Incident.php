@@ -55,7 +55,9 @@ class Incident extends Model
         'lastTweetId',
         'notifyBig',
         'coordinates',
-        'kml'
+        'kml',
+        'alertFrom',
+        'cbv'
     ];
 
     const NATUREZA_CODE_FIRE = array(

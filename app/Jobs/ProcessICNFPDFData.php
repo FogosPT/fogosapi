@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\Incident;
+use App\Tools\HashTagTool;
+use App\Tools\TwitterTool;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -11,6 +13,7 @@ use Mockery\Exception;
 
 class ProcessICNFPDFData extends Job implements ShouldQueue, ShouldBeUnique
 {
+    public $incident;
     /**
      * Create a new job instance.
      *
@@ -59,6 +62,9 @@ class ProcessICNFPDFData extends Job implements ShouldQueue, ShouldBeUnique
 
             $id = str_replace("'", '', $rr[0]);
 
+            $this->incident = Incident::where('id', $id)
+                ->get();
+
             $res = null;
 
             if($rr[17] !== "''"){
@@ -66,45 +72,48 @@ class ProcessICNFPDFData extends Job implements ShouldQueue, ShouldBeUnique
                 if(isset($match[1])){
                     preg_match('/\>([^<]+)\</', $rr[1], $match2);
                     $fileId = $match2[1];
-
-                    $fileName = substr($fileId, 0, 2) . '%' . substr($fileId, 2) . '.kml';
                     $fileName = $fileId . '.kml';
-                    var_dump($fileName);
 
                     try {
                         $client = new Client(['base_uri' => 'http://fogos.icnf.pt/sgif2010/ficheiroskml/']);
                         $res = $client->request('GET', $fileName, ['allow_redirects' => true]);
                         $res = $res->getBody()->getContents();
-                        var_dump($id);
-                        var_dump($res);
+
+                        $this->getKml($res);
                     } catch (ClientException $e) {
                         var_dump('error', $e->getCode());
                     }
-
                 }
-
             }
 
-            $this->dispatchPDFDownload($id, $rr[1], $res);
-
-            //$this->handleICNFFire($rr);
-        }
-    }
-
-    public function dispatchPDFDownload($id, $line, $kml)
-    {
-        $incident = Incident::where('id', $id)
-                    ->get();
-
-        if(isset($incident[0])){
-
-            $incident[0]->kml = $kml;
-            $incident[0]->save();
-            preg_match('/\>([^<]+)\</', $line, $match);
+            preg_match('/\>([^<]+)\</', $rr[1], $match);
             $fileId = $match[1];
             $url = env('ICNF_PDF_URL') . $fileId;
 
-            //dispatch(new ProcessICNFPDF($incident[0], $url));
+            dispatch(new ProcessICNFPDF($this->incident[0], $url));
+        }
+    }
+
+    private function getKml($kml)
+    {
+        if(isset($this->incident[0])){
+
+            $kmlExists = false;
+            if(isset($this->incident[0]->kml) && $this->incident[0]->kml){
+                $kmlExists = true;
+            }
+
+            $this->incident[0]->kml = $kml;
+            $this->incident[0]->save();
+
+            if(!$kmlExists){
+                $hashtag = HashTagTool::getHashTag($this->incident[0]->concelho);
+                $url = env('SCREENSHOT_DOMAIN');
+                $status = "ℹ Área queimada disponível https://{$url}/fogo/{$this->incident[0]->id}/detalhe {$hashtag} ℹ";
+                $lastTweetId = TwitterTool::tweet($status, $this->incident[0]->lastTweetId);
+                $this->incident[0]->lastTweetId = $lastTweetId;
+                $this->incident[0]->save();
+            }
         }
     }
 }
