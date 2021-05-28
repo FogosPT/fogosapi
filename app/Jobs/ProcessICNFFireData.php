@@ -50,80 +50,82 @@ class ProcessICNFFireData extends Job
 
         $icnfData = array();
 
-        if(isset($data->AREATOTAL) && $data->AREATOTAL !== 0){
+        if(isset($data->AREATOTAL) && (int)$data->AREATOTAL !== 0){
             $icnfData['burnArea'] = array(
-                'povoamento' => $data->AREAPOV[0],
-                'agricola' => $data->AREAAGRIC[0],
-                'mato' => $data->AREAMATO[0],
-                'total' => $data->AREATOTAL[0],
+                'povoamento' => (int)$data->AREAPOV,
+                'agricola' => (int)$data->AREAAGRIC,
+                'mato' => (int)$data->AREAMATO,
+                'total' => (int)$data->AREATOTAL,
             );
         }
 
-        if(isset($data->ALTITUDEMEDIA[0]) && $data->ALTITUDEMEDIA[0] !== 0){
-            $icnfData['altitude'] = $data->ALTITUDEMEDIA[0];
+        var_dump((string)$data->ALTITUDEMEDIA[0]);
+
+        if(isset($data->ALTITUDEMEDIA) && (float)$data->ALTITUDEMEDIA !== 0){
+            $icnfData['altitude'] = (float)$data->ALTITUDEMEDIA;
         }
 
-        if(isset($data->REACENDIMENTOS[0]) && $data->REACENDIMENTOS[0] !== 0){
-            $icnfData['reacendimentos'] = $data->REACENDIMENTOS[0];
+        if(isset($data->REACENDIMENTOS) && (bool)$data->REACENDIMENTOS){
+            $icnfData['reacendimentos'] = (bool)$data->REACENDIMENTOS;
         }
 
-        if(isset($data->QUEIMADA[0]) && $data->QUEIMADA[0] !== 0){
-            $icnfData['queimada'] = $data->QUEIMADA[0];
+        if(isset($data->QUEIMADA) && (bool)$data->QUEIMADA){
+            $icnfData['queimada'] = (bool)$data->QUEIMADA;
         }
 
-        if(isset($data->FALSOALARME[0]) && $data->FALSOALARME[0] !== 0){
-            $icnfData['falsoalarme'] = $data->FALSOALARME[0];
+        if(isset($data->FALSOALARME) && (bool)$data->FALSOALARME){
+            $icnfData['falsoalarme'] = (bool)$data->FALSOALARME;
         }
 
-        if(isset($data->FOGACHO[0]) && $data->FOGACHO[0] !== 0){
-            $icnfData['fogacho'] = $data->FOGACHO[0];
+        if(isset($data->FOGACHO) && (bool)$data->FOGACHO){
+            $icnfData['fogacho'] = (bool)$data->FOGACHO;
         }
 
-        if(isset($data->INCENDIO[0]) && $data->INCENDIO[0] !== 0){
-            $icnfData['incendio'] = $data->INCENDIO[0];
+        if(isset($data->INCENDIO) && (bool)$data->INCENDIO){
+            $icnfData['incendio'] = (bool)$data->INCENDIO;
         }
 
-        if(isset($data->AGRICOLA[0]) && $data->AGRICOLA[0] !== 0){
-            $icnfData['agricola'] = $data->AGRICOLA[0];
+        if(isset($data->AGRICOLA) && (bool)$data->AGRICOLA){
+            $icnfData['agricola'] = (bool)$data->AGRICOLA;
         }
 
-        if(isset($data->QUEIMA[0]) && $data->QUEIMA[0] !== 0){
-            $icnfData['queima'] = $data->QUEIMA[0];
+        if(isset($data->QUEIMA) && (bool)$data->QUEIMA){
+            $icnfData['queima'] = (bool)$data->QUEIMA;
         }
 
         $notifyFonte = false;
-        if(isset($data->FONTEALERTA[0]) && !empty($data->FONTEALERTA[0])){
-            $icnfData['fontealerta'] = $data->FONTEALERTA[0];
+        if(isset($data->FONTEALERTA) && !empty((string)$data->FONTEALERTA)){
+            $icnfData['fontealerta'] = (string)$data->FONTEALERTA;
 
-            if(!isset($this->incident->icnf['fontealerta']) || (isset($this->incident->icnf['fontealerta']) &&  $this->incident->icnf['fontealerta'] !== $data->FONTEALERTA[0])){
+            if(!isset($this->incident->icnf['fontealerta']) || (isset($this->incident->icnf['fontealerta']) &&  $this->incident->icnf['fontealerta'] !== (string) $data->FONTEALERTA)){
                 $notifyFonte = true;
             }
         }
 
         $notifyCausa = false;
-        if(isset($data->CAUSA[0]) && !empty($data->CAUSA[0])){
-            $icnfData['causa'] = $data->CAUSA[0];
+        if(isset($data->CAUSA) && !empty((string)$data->CAUSA)){
+            $icnfData['causa'] = (string)$data->CAUSA;
 
-            if(isset($this->incident->icnf->causa) || (isset($this->incident->icnf->causa) &&  $this->incident->icnf->causa !== $data->CAUSA)){
+            if(isset($this->incident->icnf->causa) || (isset($this->incident->icnf->causa) &&  $this->incident->icnf->causa !== (string)$data->CAUSA)){
                 $notifyCausa = true;
             }
         }
 
-        if(isset($data->TIPOCAUSA[0]) && !empty($data->TIPOCAUSA[0])){
-            $icnfData['tipocausa'] = $data->TIPOCAUSA[0];
+        if(isset($data->TIPOCAUSA) && !empty((string)$data->TIPOCAUSA)){
+            $icnfData['tipocausa'] = (string)$data->TIPOCAUSA;
         }
 
-        if(isset($data->CAUSAFAMILIA[0]) && !empty($data->CAUSAFAMILIA[0])){
-            $icnfData['causafamilia'] = $data->CAUSAFAMILIA[0];
+        if(isset($data->CAUSAFAMILIA) && !empty((string)$data->CAUSAFAMILIA)){
+            $icnfData['causafamilia'] = (string)$data->CAUSAFAMILIA;
         }
 
         $kml = false;
-        if(isset($data->AREASFICHEIROS_GNR[0]) && !empty($data->AREASFICHEIROS_GNR[0])){
-            $kml = $data->AREASFICHEIROS_GNR[0];
+        if(isset($data->AREASFICHEIROS_GNR) && !empty((string)$data->AREASFICHEIROS_GNR)){
+            $kml = (string)$data->AREASFICHEIROS_GNR;
         }
 
-        if(isset($data->AREASFICHEIROS_GTF[0]) && !empty($data->AREASFICHEIROS_GTF[0])){
-            $kml = $data->AREASFICHEIROS_GTF[0];
+        if(isset($data->AREASFICHEIROS_GTF) && !empty((string)$data->AREASFICHEIROS_GTF)){
+            $kml = (string)$data->AREASFICHEIROS_GTF;
         }
 
         $notifyKML = false;
@@ -135,7 +137,7 @@ class ProcessICNFFireData extends Job
             }
         }
 
-        $this->incident->detailLocation = $data->LOCAL;
+        $this->incident->detailLocation = (string)$data->LOCAL;
 
         $this->incident->icnf = $icnfData;
         $this->incident->save();

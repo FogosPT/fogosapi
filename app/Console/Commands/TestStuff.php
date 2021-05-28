@@ -52,13 +52,13 @@ class TestStuff extends Command
      */
     public function handle()
     {
-        dispatch(new UpdateICNFData(0));
+        //dispatch(new UpdateICNFData(0));
 
-       // $incident = Incident::where('id', "2021130076096")->limit(1)->get()[0];
+        $incident = Incident::where('id', "2021010039521")->limit(1)->get()[0];
 
         //$incident = Incident::where('id', "2021020011392")->limit(1)->get()[0];
 
-        //dispatch(new ProcessICNFFireData($incident));
+        dispatch(new ProcessICNFFireData($incident));
         //$url = env('ICNF_PDF_URL') . 'AT32185';
 
         //dispatch(new ProcessICNFPDF($incident, $url));
