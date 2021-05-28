@@ -56,8 +56,7 @@ class Incident extends Model
         'notifyBig',
         'coordinates',
         'kml',
-        'alertFrom',
-        'cbv'
+        'icnf'
     ];
 
     const NATUREZA_CODE_FIRE = array(

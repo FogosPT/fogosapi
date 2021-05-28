@@ -5,10 +5,12 @@ namespace App\Console\Commands;
 use App\Jobs\HandleNewIncidentSocialMedia;
 use App\Jobs\HourlySummary;
 use App\Jobs\ProcessDataForHistoryTotal;
+use App\Jobs\ProcessICNFFireData;
 use App\Jobs\ProcessICNFPDF;
 use App\Jobs\ProcessICNFPDFData;
 use App\Jobs\ProcessPlanes;
 use App\Jobs\ProcessRCM;
+use App\Jobs\UpdateICNFData;
 use App\Models\Incident;
 use Illuminate\Console\Command;
 use Spatie\Browsershot\Browsershot;
@@ -50,13 +52,19 @@ class TestStuff extends Command
      */
     public function handle()
     {
+        dispatch(new UpdateICNFData(0));
+
+       // $incident = Incident::where('id', "2021130076096")->limit(1)->get()[0];
+
         //$incident = Incident::where('id', "2021020011392")->limit(1)->get()[0];
+
+        //dispatch(new ProcessICNFFireData($incident));
         //$url = env('ICNF_PDF_URL') . 'AT32185';
 
         //dispatch(new ProcessICNFPDF($incident, $url));
 
         //dispatch(new ProcessICNFPDF($incident, $url));
-        dispatch(new ProcessICNFPDFData());
+        //dispatch(new ProcessICNFPDFData());
 
         //\Queue::push(new App\Jobs\ProcessICNFPDFData());
 

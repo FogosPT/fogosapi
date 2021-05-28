@@ -9,6 +9,7 @@ use App\Jobs\ProcessICNFPDFData;
 use App\Jobs\ProcessMadeiraWarnings;
 use App\Jobs\ProcessPlanes;
 use App\Jobs\ProcessRCM;
+use App\Jobs\UpdateICNFData;
 use Illuminate\Console\Scheduling\Schedule;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
 
@@ -37,10 +38,19 @@ class Kernel extends ConsoleKernel
             $schedule->job(new ProcessDataForHistoryTotal())->everyTwoMinutes();
             $schedule->job(new ProcessMadeiraWarnings())->everyTenMinutes();
             $schedule->job(new ProcessPlanes())->everyTenMinutes();
-            $schedule->job(new ProcessICNFPDFData())->hourly();
             $schedule->job(new ProcessRCM(true))->daily()->at('09:00');
             $schedule->job(new ProcessRCM(false))->hourly(); // update RCM
             $schedule->job(new ProcessRCM(true,true))->daily()->at('18:00');
+
+            $schedule->job(new UpdateICNFData(0))->everyTwoHours();
+            $schedule->job(new UpdateICNFData(1))->everySixHours();
+            $schedule->job(new UpdateICNFData(2))->daily();
+            $schedule->job(new UpdateICNFData(3))->cron('0 2 */2 * *'); // every 2 days
+            $schedule->job(new UpdateICNFData(4))->cron('0 3 * * 1,5'); // twice a week, monday and thursday
+            $schedule->job(new UpdateICNFData(5))->cron('0 3 * * 1,5'); // twice a week, monday and thursday
+            $schedule->job(new UpdateICNFData(6))->cron('0 3 * * 3'); // once a week, wednesday
+            $schedule->job(new UpdateICNFData(7))->monthly();
+            $schedule->job(new UpdateICNFData(8))->cron('0 0 1 */2 *'); // every two months
         }
     }
 }

@@ -48,7 +48,7 @@ class HandleNewIncidentSocialMedia extends Job
         $this->incident->lastTweetId = $lastTweetId;
         $this->incident->save();
 
-        //ScreenShotTool::removeScreenShotFile($name);
+        ScreenShotTool::removeScreenShotFile($name);
 
         FacebookTool::publish($status);
         TelegramTool::publish($status);
