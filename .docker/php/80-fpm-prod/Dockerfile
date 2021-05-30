@@ -7,12 +7,15 @@ RUN apt-get update
 RUN apt-get install -y --no-install-recommends locales
 RUN cp /usr/share/i18n/SUPPORTED /etc/locale.gen && locale-gen
 
+RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
+
 RUN apt-get install -y --no-install-recommends \
     git \
     libmcrypt-dev \
     libzip-dev \
     libssl-dev \
     libpq-dev \
+    nodejs \
     openssh-client \
     unzip
 
@@ -37,3 +40,5 @@ RUN docker-php-ext-enable \
     timezonedb
 
 COPY zz-docker.conf /usr/local/etc/php-fpm.d/zz-docker.conf
+
+RUN npm install --global chrome-remote-interface minimist
