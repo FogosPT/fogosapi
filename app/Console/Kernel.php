@@ -11,6 +11,7 @@ use App\Jobs\ProcessPlanes;
 use App\Jobs\ProcessRCM;
 use App\Jobs\UpdateICNFData;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Log;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel

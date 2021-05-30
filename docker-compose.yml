@@ -61,6 +61,20 @@ services:
     networks:
       - fogos
 
+  fogos.scheduler:
+    image: docker.pkg.github.com/fogospt/fogosapi/scheduler
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/html
+      - ./.docker/scheduler/cron.d:/etc/cron.d
+    expose:
+      - 9000
+    depends_on:
+      - fogos.api
+    networks:
+      - fogos
+    entrypoint: ./.docker/scheduler/entrypoint.sh
+
 volumes:
   mongodb_data:
 
