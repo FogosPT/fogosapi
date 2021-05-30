@@ -45,6 +45,7 @@
 
 ## Run
 ```
+$ cp docker-compose.override-example.yaml docker-compose.override.yaml
 $ docker-compose up
 ```
 
