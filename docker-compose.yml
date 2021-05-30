@@ -75,6 +75,19 @@ services:
       - fogos
     entrypoint: ./.docker/scheduler/entrypoint.sh
 
+  fogos.worker:
+    image: docker.pkg.github.com/fogospt/fogosapi/php:8.0-fpm-prod
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/html
+    expose:
+      - 9000
+    depends_on:
+      - fogos.mongodb
+    networks:
+      - fogos
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+
 volumes:
   mongodb_data:
 
