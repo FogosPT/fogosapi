@@ -48,6 +48,10 @@ class ProcessICNFFireData extends Job
 
         $data = $xml->CODIGO;
 
+        if(!$data){
+            return;
+        }
+
         $icnfData = array();
 
         if(isset($data->AREATOTAL) && (int)$data->AREATOTAL !== 0){
@@ -58,8 +62,6 @@ class ProcessICNFFireData extends Job
                 'total' => (int)$data->AREATOTAL,
             );
         }
-
-        var_dump((string)$data->ALTITUDEMEDIA[0]);
 
         if(isset($data->ALTITUDEMEDIA) && (float)$data->ALTITUDEMEDIA !== 0){
             $icnfData['altitude'] = (float)$data->ALTITUDEMEDIA;
@@ -106,7 +108,7 @@ class ProcessICNFFireData extends Job
         if(isset($data->CAUSA) && !empty((string)$data->CAUSA)){
             $icnfData['causa'] = (string)$data->CAUSA;
 
-            if(isset($this->incident->icnf->causa) || (isset($this->incident->icnf->causa) &&  $this->incident->icnf->causa !== (string)$data->CAUSA)){
+            if(isset($this->incident->icnf['causa']) || (isset($this->incident->icnf['causa']) &&  $this->incident->icnf['causa'] !== (string)$data->CAUSA)){
                 $notifyCausa = true;
             }
         }
@@ -162,6 +164,7 @@ class ProcessICNFFireData extends Job
         }
 
         if($status){
+            $this->updateIncident();
             NotificationTool::send($notification, $this->incident->location,$this->incident->id);
 
             $url = "fogo/{$this->incident->id}/detalhe";
@@ -181,6 +184,7 @@ class ProcessICNFFireData extends Job
         }
 
         if($notifyKML){
+            $this->updateIncident();
             $status = "ℹ🔥 Area ardida disponível https://{$url}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
 
             $url = "fogo/{$this->incident->id}/detalhe";
@@ -188,7 +192,6 @@ class ProcessICNFFireData extends Job
             $path = "/var/www/html/public/screenshots/{$name}.png";
 
             ScreenShotTool::takeScreenShot($url,$name);
-            $url = env('SCREENSHOT_DOMAIN');
 
             $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
@@ -201,4 +204,8 @@ class ProcessICNFFireData extends Job
         }
     }
 
+    private function updateIncident()
+    {
+        $this->incident = Incident::where('id', $this->incident->id)->get()[0];
+    }
 }
