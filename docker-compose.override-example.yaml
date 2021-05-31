@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  fogos.server:
+    ports:
+      - 8080:80
+    networks:
+      fogos:
+        aliases:
+          - api.fogos.test
+
+  fogos.api:
+    image: docker.pkg.github.com/fogospt/fogosapi/php:8.0-fpm-dev
+    user: "1000:1000"
+
+  fogos.mongodb:
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - 27017:27017
+
+  fogos.redis:
+    ports:
+      - 6379:6379
+
+  fogos.chrome:
+    ports:
+      - 9222:9222
