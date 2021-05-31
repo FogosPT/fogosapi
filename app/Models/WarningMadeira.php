@@ -10,8 +10,8 @@ class WarningMadeira extends Model
     protected $collection = 'warningMadeira';
     protected $primaryKey = '_id';
 
-    const CREATED_AT = 'created';
-    const UPDATED_AT = 'updated';
+    public const CREATED_AT = 'created';
+    public const UPDATED_AT = 'updated';
 
     protected $fillable = [
         'title',
@@ -20,6 +20,6 @@ class WarningMadeira extends Model
         'menu',
         'dia_hora',
         'id',
-        'label'
+        'label',
     ];
 }

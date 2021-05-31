@@ -1,7 +1,6 @@
 <?php
 
 /** @var \Laravel\Lumen\Routing\Router $router */
-use \App\Http\Controllers\LegacyController;
 /*
 |--------------------------------------------------------------------------
 | Application Routes
@@ -13,7 +12,7 @@ use \App\Http\Controllers\LegacyController;
 |
 */
 
-if(env('APP_ENV') === 'production'){
+if (env('APP_ENV') === 'production') {
     \Illuminate\Support\Facades\URL::forceScheme('https');
 }
 $router->get('/', function () use ($router) {
@@ -57,7 +56,6 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         $router->get('8hours/yesterday', '\App\Http\Controllers\LegacyController@stats8hoursYesterday');
         $router->get('last-night', '\App\Http\Controllers\LegacyController@lastNight');
         $router->get('week', '\App\Http\Controllers\LegacyController@statsWeek');
-
     });
 });
 

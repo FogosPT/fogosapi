@@ -3,21 +3,15 @@
 namespace App\Console\Commands;
 
 use App\Jobs\HandleNewIncidentSocialMedia;
-use App\Jobs\HourlySummary;
-use App\Jobs\ProcessDataForHistoryTotal;
 use App\Jobs\ProcessICNFFireData;
 use App\Jobs\ProcessICNFPDF;
 use App\Jobs\ProcessICNFPDFData;
-use App\Jobs\ProcessPlanes;
-use App\Jobs\ProcessRCM;
 use App\Jobs\UpdateICNFData;
 use App\Models\Incident;
 use Illuminate\Console\Command;
 use Spatie\Browsershot\Browsershot;
-use HeadlessChromium\BrowserFactory;
 use HeadlessChromium\Communication\Connection;
 use HeadlessChromium\Browser;
-
 
 class TestStuff extends Command
 {
@@ -37,8 +31,6 @@ class TestStuff extends Command
 
     /**
      * Create a new command instance.
-     *
-     * @return void
      */
     public function __construct()
     {
@@ -54,7 +46,7 @@ class TestStuff extends Command
     {
         //dispatch(new UpdateICNFData(0));
 
-        $incident = Incident::where('id', "2021010039521")->limit(1)->get()[0];
+        $incident = Incident::where('id', '2021010039521')->limit(1)->get()[0];
 
         //$incident = Incident::where('id', "2021020011392")->limit(1)->get()[0];
 
@@ -68,15 +60,12 @@ class TestStuff extends Command
 
         //\Queue::push(new App\Jobs\ProcessICNFPDFData());
 
-
-
         //$incident = Incident::where('id', "2021070009869")->limit(1)->get()[0];
         // dispatch(new HandleNewIncidentSocialMedia($incident));
 
         //$ip = gethostbyname('chrome');
 
         //exec('node /var/www/html/screenshot-script.js --url https://fogos.pt/ --width 1000 --height 1300 --name screenshot-twitter ');
-
 
 //        Browsershot::url('https://fogos.pt')
 //            ->useCookies(['CookieConsent' => "{stamp:'m+a2sHQeOOuoPJRBktiiVf5mOGWDtiqvOKiLgCLNxxLwBBxXgfbaWQ=='%2Cnecessary:true%2Cpreferences:true%2Cstatistics:true%2Cmarketing:true%2Cver:1}"])

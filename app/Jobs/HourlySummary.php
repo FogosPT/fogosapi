@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Models\Incident;
 use App\Tools\FacebookTool;
-use App\Tools\HashTagTool;
 use App\Tools\ScreenShotTool;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
@@ -13,18 +12,13 @@ class HourlySummary extends Job
 {
     /**
      * Create a new job instance.
-     *
-     * @return void
      */
     public function __construct()
     {
-        //
     }
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -33,9 +27,9 @@ class HourlySummary extends Job
             ->whereIn('statusCode', Incident::ACTIVE_STATUS_CODES)
             ->get();
 
-        $date = date("H:i");
+        $date = date('H:i');
 
-        if($incidents->count() === 0){
+        if ($incidents->count() === 0) {
             $status = "{$date} - Sem registo de incêndios ativos. https://fogos.pt #FogosPT #Status";
             $statusf = $status;
         } else {
@@ -43,7 +37,7 @@ class HourlySummary extends Job
             $man = 0;
             $areal = 0;
             $cars = 0;
-            foreach($incidents as $f){
+            foreach ($incidents as $f) {
                 $man += $f['man'];
                 $areal += $f['aerial'];
                 $cars += $f['terrain'];
@@ -55,12 +49,12 @@ class HourlySummary extends Job
             $statusf = "{$date} - {$total} {$incendio} em curso combatidos por:%0A👩‍ {$man}%0A🚒 {$cars}%0A🚁 {$areal} %0A https://fogos.pt #FogosPT";
         }
 
-        $url = "estatisticas?phantom=1";
-        $name = "stats";
+        $url = 'estatisticas?phantom=1';
+        $name = 'stats';
         $path = "/var/www/html/public/screenshots/{$name}.png";
         $urlImage = "https://api.fogos.pt/screenshots/{$name}.png";
 
-        ScreenShotTool::takeScreenShot($url,$name, 1200, 450);
+        ScreenShotTool::takeScreenShot($url, $name, 1200, 450);
 
         TwitterTool::tweet($status, false, $path);
         FacebookTool::publishWithImage($statusf, $urlImage);

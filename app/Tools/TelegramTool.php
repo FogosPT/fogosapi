@@ -1,14 +1,12 @@
 <?php
 
-
 namespace App\Tools;
-
 
 class TelegramTool
 {
     public static function publish($status)
     {
-        if(!env('TELEGRAM_ENABLE')){
+        if (!env('TELEGRAM_ENABLE')) {
             return;
         }
 
@@ -16,15 +14,15 @@ class TelegramTool
 
         $data = [
             'chat_id' => '@fogospt',
-            'text' => $status
+            'text' => $status,
         ];
 
-        file_get_contents("https://api.telegram.org/bot{$apiToken}/sendMessage?" . http_build_query($data));
+        file_get_contents("https://api.telegram.org/bot{$apiToken}/sendMessage?".http_build_query($data));
     }
 
     public static function publishImage($status, $imagePath)
     {
-        if(!env('TELEGRAM_ENABLE')){
+        if (!env('TELEGRAM_ENABLE')) {
             return;
         }
 

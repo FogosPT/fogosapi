@@ -10,14 +10,14 @@ class HistoryTotal extends Model
     protected $collection = 'historyTotal';
     protected $primaryKey = '_id';
 
-    const CREATED_AT = 'created';
-    const UPDATED_AT = 'updated';
+    public const CREATED_AT = 'created';
+    public const UPDATED_AT = 'updated';
 
     protected $fillable = [
         'aerial',
         'terrain',
         'location',
         'man',
-        'total'
+        'total',
     ];
 }

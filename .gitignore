@@ -1,5 +1,6 @@
 .env
 .env.production
+.php-cs-fixer.cache
 .phpunit.result.cache
 /.idea
 /data
