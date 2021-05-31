@@ -44,11 +44,23 @@
 ```
 
 ## Run
-```
+
+```shell
 $ cp docker-compose.override-example.yaml docker-compose.override.yaml
 $ docker-compose up
 ```
 
+### Running the Php-Cs-Fixer
+
+On the entire project:
+```shell
+$ docker-compose exec fogos.api php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist
+```
+
+On a specific file:
+```shell
+$ docker-compose exec fogos.api php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist {file-path}
+```
 
 ### TODO
 
@@ -57,14 +69,12 @@ $ docker-compose up
 - [ ] Novas funcionalidades via ICNF
 - [ ] Tweets de perigo de incendio com bug (talvez bug nas threads)
 
-
 ## Slack
 
 https://communityinviter.com/apps/fogospt/fogos-pt
 
+# License
 
-License
-----
 Copyright 2021
 
 Licensed under the Apache License, Version 2.0 (the "License");
