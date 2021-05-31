@@ -10,8 +10,8 @@ class RCM extends Model
     protected $collection = 'rcm';
     protected $primaryKey = '_id';
 
-    const CREATED_AT = 'created';
-    const UPDATED_AT = 'updated';
+    public const CREATED_AT = 'created';
+    public const UPDATED_AT = 'updated';
 
     protected $fillable = [
         'concelho',
@@ -21,14 +21,14 @@ class RCM extends Model
         'depois',
         'depois2',
         'depois3',
-        'dico'
+        'dico',
     ];
 
-    const RCM_TO_HUMAN =  array(
+    public const RCM_TO_HUMAN = [
         1 => 'Reduzido',
         2 => 'Moderado',
         3 => 'Elevado',
         4 => 'Muito Elevado',
         5 => 'Maximo',
-    );
+    ];
 }

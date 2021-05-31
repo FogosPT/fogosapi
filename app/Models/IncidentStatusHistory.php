@@ -10,8 +10,8 @@ class IncidentStatusHistory extends Model
     protected $collection = 'statusHistory';
     protected $primaryKey = '_id';
 
-    const CREATED_AT = 'created';
-    const UPDATED_AT = 'updated';
+    public const CREATED_AT = 'created';
+    public const UPDATED_AT = 'updated';
 
     protected $dateFormat = 'd-m-Y H:i';
 

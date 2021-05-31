@@ -1,25 +1,20 @@
 <?php
 
-
 namespace App\Tools;
-
-
-use Illuminate\Support\Facades\Log;
 
 class TwitterTool
 {
     private static $client = false;
 
-    static public function getClient()
+    public static function getClient()
     {
         if (!self::$client) {
-
-            $settings = array(
+            $settings = [
                 'oauth_access_token' => env('TWITTER_OAUTH_ACCESS_TOKEN'),
                 'oauth_access_token_secret' => env('TWITTER_OAUTH_ACCESS_TOKEN_SECRET'),
                 'consumer_key' => env('TWITTER_CONSUMER_KEY'),
                 'consumer_secret' => env('TWITTER_CONSUMER_SECRET'),
-            );
+            ];
 
             self::$client = new \TwitterAPIExchange($settings);
         }
@@ -27,7 +22,7 @@ class TwitterTool
         return self::$client;
     }
 
-    static private function splitTweets($long_string, $max_length = 280, $max_sentences = 10, $encoding = 'UTF-8')
+    private static function splitTweets($long_string, $max_length = 280, $max_sentences = 10, $encoding = 'UTF-8')
     {
         $string_length = mb_strlen($long_string, $encoding);
         if ($string_length <= $max_length) {
@@ -47,16 +42,16 @@ class TwitterTool
         $sentences_array = [];
         $ended_word = 0;
 
-        for ($sentence = 0; $sentence < $max_sentences; $sentence++) {
+        for ($sentence = 0; $sentence < $max_sentences; ++$sentence) {
             $short_string = '';
 
             foreach ($words_array as $word_number => $current_word) {
-                $expected_length = mb_strlen($short_string . ' ' . $current_word, $encoding);
+                $expected_length = mb_strlen($short_string.' '.$current_word, $encoding);
                 if ($expected_length > $max_length) {
                     break;
                 }
 
-                $short_string .= $current_word . ' ';
+                $short_string .= $current_word.' ';
                 $ended_word = $word_number + 1;
             }
 
@@ -71,37 +66,36 @@ class TwitterTool
         return $sentences_array;
     }
 
-    static public function tweet($text, $lastId = false, $imagePath = false)
+    public static function tweet($text, $lastId = false, $imagePath = false)
     {
-        if(!env('TWITTER_ENABLE')){
+        if (!env('TWITTER_ENABLE')) {
             return false;
         }
 
         $client = self::getClient();
-        $fields = array();
+        $fields = [];
 
-        if($imagePath){
+        if ($imagePath) {
             $file = file_get_contents($imagePath);
             $data = base64_encode($file);
 
-            $url = "https://upload.twitter.com/1.1/media/upload.json";
-            $method = "POST";
-            $params = array(
-                "media_data" => $data,
-            );
+            $url = 'https://upload.twitter.com/1.1/media/upload.json';
+            $method = 'POST';
+            $params = [
+                'media_data' => $data,
+            ];
 
             $imageResponse = $client
                 ->setPostfields($params)
                 ->buildOauth($url, $method)
                 ->performRequest();
 
-
             $imageResponse = json_decode($imageResponse);
 
             // Extract media id
             $id = $imageResponse->media_id_string;
 
-            $fields['media_ids']=$id;
+            $fields['media_ids'] = $id;
         }
 
         $url = 'https://api.twitter.com/1.1/statuses/update.json';

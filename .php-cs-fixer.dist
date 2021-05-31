@@ -1,0 +1,38 @@
+<?php
+
+return (new PhpCsFixer\Config())
+    ->setRules([
+        '@PhpCsFixer' => true,
+        '@PSR12' => true,
+        'multiline_whitespace_before_semicolons' => [
+            'strategy' => 'no_multi_line',
+        ],
+        'php_unit_internal_class' => false,
+        'php_unit_test_class_requires_covers' => false,
+        'yoda_style' => false,
+        'php_unit_method_casing' => [
+            'case' => 'snake_case'
+        ],
+        'single_line_comment_style' => [
+             'comment_types' => ['hash']
+         ]
+    ])
+    ->setFinder(
+        PhpCsFixer\Finder::create()
+            ->in(__DIR__)
+            ->exclude([
+                '.ci',
+                '.phan',
+                '.vscode',
+                'vendor',
+                'storage',
+                'node_modules',
+            ])
+            ->notName('*.dist')
+            ->notName('*.md')
+            ->notName('*.xml')
+            ->notName('*.yml')
+            ->notName('_ide_helper.php')
+            ->notName('*.json')
+            ->notName('*.lock')
+    );

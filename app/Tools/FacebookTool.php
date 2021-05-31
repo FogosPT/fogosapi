@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Tools;
 
 class FacebookTool
@@ -28,7 +27,7 @@ class FacebookTool
 
     public static function publish($status)
     {
-        if(!env('FACEBOOK_ENABLE')){
+        if (!env('FACEBOOK_ENABLE')) {
             return;
         }
 
@@ -38,7 +37,7 @@ class FacebookTool
 
     public static function publishWithImage($status, $imageUrl)
     {
-        if(!env('FACEBOOK_ENABLE')){
+        if (!env('FACEBOOK_ENABLE')) {
             return;
         }
 

@@ -20,7 +20,8 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
     /**
      * Create a new job instance.
      *
-     * @return void
+     * @param mixed $publishSocial
+     * @param mixed $tomorrow
      */
     public function __construct($publishSocial = false, $tomorrow = false)
     {
@@ -30,12 +31,10 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
-        $url = "https://www.ipma.pt/pt/riscoincendio/rcm.pt/index.jsp";
+        $url = 'https://www.ipma.pt/pt/riscoincendio/rcm.pt/index.jsp';
 
         $client = new \GuzzleHttp\Client();
         $res = $client->request('GET', $url);
@@ -44,7 +43,7 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
 
         $data = str_replace(PHP_EOL, '', $data);
 
-       $cities = json_decode('{"type":"FeatureCollection","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}},"features":[
+        $cities = json_decode('{"type":"FeatureCollection","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}},"features":[
 {"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-8.29435,40.65269],[-8.29551,40.63784],[-8.28389,40.63038],[-8.27428,40.63074],[-8.24919,40.61849],[-8.24741,40.61432],[-8.27478,40.60493],[-8.28317,40.60626],[-8.30328,40.60162],[-8.30842,40.59641],[-8.29955,40.57782],[-8.28919,40.56879],[-8.28528,40.53965],[-8.27313,40.53699],[-8.26069,40.52239],[-8.25066,40.51489],[-8.26587,40.50343],[-8.28285,40.50917],[-8.30002,40.49899],[-8.31149,40.49591],[-8.33221,40.51058],[-8.34005,40.51253],[-8.36723,40.50943],[-8.37834,40.50318],[-8.39282,40.49985],[-8.4357,40.50761],[-8.44077,40.50239],[-8.46236,40.50518],[-8.46237,40.51889],[-8.47208,40.52772],[-8.48615,40.5307],[-8.50158,40.54357],[-8.49546,40.55383],[-8.51013,40.55884],[-8.52522,40.55014],[-8.5463,40.55625],[-8.55815,40.56256],[-8.5414,40.57058],[-8.53772,40.57752],[-8.52096,40.58368],[-8.52534,40.59165],[-8.52343,40.60936],[-8.49795,40.6125],[-8.48521,40.62023],[-8.48263,40.64231],[-8.47661,40.6486],[-8.4804,40.65772],[-8.47113,40.6794],[-8.44954,40.67894],[-8.42441,40.68988],[-8.41645,40.69129],[-8.40896,40.68701],[-8.38384,40.69259],[-8.37564,40.69199],[-8.37448,40.66811],[-8.364,40.65939],[-8.35997,40.6505],[-8.32817,40.63699],[-8.32151,40.64511],[-8.31114,40.64347],[-8.29435,40.65269]]]},"properties":{"DICO":"0101","Concelho":"ÁGUEDA","Distrito":"AVEIRO"}},
 {"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-8.41594,40.76808],[-8.409,40.76618],[-8.40829,40.75106],[-8.41501,40.7184],[-8.41645,40.69129],[-8.42441,40.68988],[-8.44954,40.67894],[-8.47113,40.6794],[-8.4804,40.65772],[-8.47661,40.6486],[-8.48263,40.64231],[-8.48521,40.62023],[-8.49795,40.6125],[-8.52343,40.60936],[-8.53125,40.61059],[-8.54621,40.62985],[-8.5551,40.63476],[-8.56365,40.65514],[-8.57251,40.65801],[-8.58383,40.68915],[-8.59748,40.69313],[-8.60892,40.70582],[-8.63025,40.71447],[-8.63243,40.72353],[-8.62446,40.72698],[-8.60385,40.72301],[-8.60958,40.71376],[-8.58411,40.70944],[-8.57179,40.70355],[-8.56502,40.69036],[-8.5372,40.68989],[-8.52308,40.70748],[-8.51148,40.714],[-8.51769,40.72974],[-8.5242,40.73097],[-8.53165,40.75993],[-8.52638,40.76531],[-8.50866,40.75888],[-8.49966,40.76066],[-8.49601,40.76995],[-8.47877,40.77245],[-8.45497,40.78009],[-8.43331,40.77507],[-8.41594,40.76808]]]},"properties":{"DICO":"0102","Concelho":"ALBERGARIA-A-VELHA","Distrito":"AVEIRO"}},
 {"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-8.31149,40.49591],[-8.33027,40.49299],[-8.33579,40.48095],[-8.33427,40.47455],[-8.31813,40.45427],[-8.31758,40.4412],[-8.3264,40.44005],[-8.34447,40.42486],[-8.33805,40.41881],[-8.34586,40.4105],[-8.35464,40.40889],[-8.35415,40.39561],[-8.36317,40.40224],[-8.37611,40.39712],[-8.40004,40.39933],[-8.43421,40.39554],[-8.44466,40.40098],[-8.45187,40.39764],[-8.46242,40.40583],[-8.47807,40.4121],[-8.5053,40.41614],[-8.51768,40.42049],[-8.54182,40.4065],[-8.57244,40.40029],[-8.57937,40.41238],[-8.57821,40.44277],[-8.57107,40.45059],[-8.57594,40.4655],[-8.56489,40.46715],[-8.55378,40.47356],[-8.53156,40.49438],[-8.52292,40.48923],[-8.50513,40.49176],[-8.49983,40.49613],[-8.47341,40.50704],[-8.46236,40.50518],[-8.44077,40.50239],[-8.4357,40.50761],[-8.39282,40.49985],[-8.37834,40.50318],[-8.36723,40.50943],[-8.34005,40.51253],[-8.33221,40.51058],[-8.31149,40.49591]]]},"properties":{"DICO":"0103","Concelho":"ANADIA","Distrito":"AVEIRO"}},
@@ -325,23 +324,23 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
 {"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-8.03088,40.74443],[-8.01609,40.74661],[-8.00725,40.72929],[-8.01429,40.71856],[-8.02195,40.69823],[-8.01872,40.69328],[-8.03238,40.68568],[-8.03924,40.66941],[-8.07197,40.65279],[-8.09159,40.63486],[-8.10485,40.63937],[-8.13393,40.64046],[-8.13959,40.63768],[-8.14732,40.62328],[-8.14523,40.61589],[-8.16099,40.60126],[-8.17607,40.60066],[-8.19792,40.60569],[-8.21767,40.61637],[-8.21599,40.62457],[-8.24007,40.62877],[-8.24919,40.61849],[-8.27428,40.63074],[-8.26603,40.63606],[-8.26339,40.64448],[-8.27198,40.65302],[-8.26063,40.66004],[-8.26047,40.67766],[-8.24171,40.68839],[-8.24048,40.69849],[-8.22776,40.69929],[-8.2136,40.69458],[-8.17847,40.70138],[-8.15637,40.69661],[-8.14972,40.7038],[-8.14392,40.72054],[-8.13253,40.72482],[-8.12955,40.73517],[-8.11656,40.73529],[-8.10891,40.72925],[-8.09213,40.7341],[-8.06334,40.73604],[-8.04701,40.74986],[-8.04082,40.73988],[-8.03088,40.74443]]]},"properties":{"DICO":"1824","Concelho":"VOUZELA","Distrito":"VISEU"}}
 ]}', true);
 
-        preg_match("#rcmF\[0]\s*=\s*(.*?);#", $data, $riscoHoje);
+        preg_match('#rcmF\\[0]\\s*=\\s*(.*?);#', $data, $riscoHoje);
         $riscoHoje = json_decode($riscoHoje[1], true);
         $riscoHoje['when'] = 'hoje';
 
-        preg_match("#rcmF\[1]\s*=\s*(.*?);#", $data, $riscoAmanha);
+        preg_match('#rcmF\\[1]\\s*=\\s*(.*?);#', $data, $riscoAmanha);
         $riscoAmanha = json_decode($riscoAmanha[1], true);
         $riscoAmanha['when'] = 'amanha';
 
-        preg_match("#rcmF\[2]\s*=\s*(.*?);#", $data, $riscoDepois);
+        preg_match('#rcmF\\[2]\\s*=\\s*(.*?);#', $data, $riscoDepois);
         $riscoDepois = json_decode($riscoDepois[1], true);
         $riscoDepois['when'] = 'depois';
 
-        preg_match("#rcmF\[3]\s*=\s*(.*?);#", $data, $riscoDepois2);
+        preg_match('#rcmF\\[3]\\s*=\\s*(.*?);#', $data, $riscoDepois2);
         $riscoDepois2 = json_decode($riscoDepois2[1], true);
         $riscoDepois2['when'] = 'depois2';
 
-        preg_match("#rcmF\[4]\s*=\s*(.*?);#", $data, $riscoDepois3);
+        preg_match('#rcmF\\[4]\\s*=\\s*(.*?);#', $data, $riscoDepois3);
         $riscoDepois3 = json_decode($riscoDepois3[1], true);
         $riscoDepois3['when'] = 'depois3';
 
@@ -361,20 +360,20 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
         $rcmJsDepois3->save();
 
         $i = 0;
-        $all = array();
+        $all = [];
 
         foreach ($cities['features'] as $c) {
-            $i++;
-            $data = array(
-                'concelho' => UTF8::ucwords(mb_strtolower($c['properties']['Concelho'], "UTF-8")),
+            ++$i;
+            $data = [
+                'concelho' => UTF8::ucwords(mb_strtolower($c['properties']['Concelho'], 'UTF-8')),
                 'date' => $riscoHoje['dataPrev'],
                 'hoje' => RCM::RCM_TO_HUMAN[$riscoHoje['local'][$c['properties']['DICO']]['data']['rcm']],
                 'amanha' => RCM::RCM_TO_HUMAN[$riscoAmanha['local'][$c['properties']['DICO']]['data']['rcm']],
                 'depois' => RCM::RCM_TO_HUMAN[$riscoDepois['local'][$c['properties']['DICO']]['data']['rcm']],
                 'depois2' => RCM::RCM_TO_HUMAN[$riscoDepois2['local'][$c['properties']['DICO']]['data']['rcm']],
                 'depois3' => RCM::RCM_TO_HUMAN[$riscoDepois3['local'][$c['properties']['DICO']]['data']['rcm']],
-                'dico' => $c['properties']['DICO']
-            );
+                'dico' => $c['properties']['DICO'],
+            ];
 
             $rcm = new RCM($data);
             $rcm->save();
@@ -382,17 +381,17 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
             $all[] = $data;
         }
 
-        if($this->publishSocial){
+        if ($this->publishSocial) {
             $this->publishSocial($all);
         }
     }
 
     private function publishSocial($all)
     {
-        $moderado = array();
-        $elevado = array();
-        $muitoElevado = array();
-        $maximo = array();
+        $moderado = [];
+        $elevado = [];
+        $muitoElevado = [];
+        $maximo = [];
 
         $index = $this->tomorrow ? 'amanha' : 'hoje';
         $when = $this->tomorrow ? 'AMANHÃ' : 'hoje';
@@ -411,18 +410,18 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
         }
 
         if (!count($moderado)) {
-            $status = date('d-m-Y') . " - Sem registo de concelhos com risco de incêndio Moderado {$when2}";
+            $status = date('d-m-Y')." - Sem registo de concelhos com risco de incêndio Moderado {$when2}";
             TwitterTool::tweet($status);
             FacebookTool::publish($status);
         } else {
             $concelhos = (count($moderado) === 1) ? 'Concelho' : 'Concelhos';
 
-            $statusFacebook = date('d-m-Y') . " {$concelhos} com risco Moderado de incêndio para {$when}: %0A";
-            $status = date('d-m-Y') . " {$concelhos} com risco Moderado de incêndio para {$when}: \r\n";
+            $statusFacebook = date('d-m-Y')." {$concelhos} com risco Moderado de incêndio para {$when}: %0A";
+            $status = date('d-m-Y')." {$concelhos} com risco Moderado de incêndio para {$when}: \r\n";
 
             foreach ($moderado as $e) {
-                $statusFacebook .= $e . "%0A";
-                $status .= $e . "\r\n";
+                $statusFacebook .= $e.'%0A';
+                $status .= $e."\r\n";
             }
 
             TwitterTool::tweet($status);
@@ -430,58 +429,55 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
         }
 
         if (!count($elevado)) {
-            $status = date('d-m-Y') . " - Sem registo de concelhos com risco de incêndio Elevado {$when2}";
+            $status = date('d-m-Y')." - Sem registo de concelhos com risco de incêndio Elevado {$when2}";
             TwitterTool::tweet($status);
             FacebookTool::publish($status);
         } else {
             $concelhos = (count($elevado) === 1) ? 'Concelho' : 'Concelhos';
 
-            $statusFacebook = date('d-m-Y') . " {$concelhos} com risco Elevado de incêndio para {$when}: %0A";
-            $status = date('d-m-Y') . " {$concelhos} com risco Elevado de incêndio para {$when}: \r\n";
+            $statusFacebook = date('d-m-Y')." {$concelhos} com risco Elevado de incêndio para {$when}: %0A";
+            $status = date('d-m-Y')." {$concelhos} com risco Elevado de incêndio para {$when}: \r\n";
 
             foreach ($elevado as $e) {
-                $statusFacebook .= $e . "%0A";
-                $status .= $e . "\r\n";
+                $statusFacebook .= $e.'%0A';
+                $status .= $e."\r\n";
             }
 
             TwitterTool::tweet($status);
             FacebookTool::publish($statusFacebook);
         }
 
-
         if (!count($muitoElevado)) {
-            $status = date('d-m-Y') . " - Sem registo de concelhos com risco de incêndio Muito Elevado {$when2}";
+            $status = date('d-m-Y')." - Sem registo de concelhos com risco de incêndio Muito Elevado {$when2}";
             TwitterTool::tweet($status);
             FacebookTool::publish($status);
         } else {
             $concelhos = (count($muitoElevado) === 1) ? 'Concelho' : 'Concelhos';
 
-            $statusFacebook = date('d-m-Y') . " {$concelhos} com risco Muito Elevado de incêndio para {$when}: %0A";
-            $status = date('d-m-Y') . " {$concelhos} com risco Muito Elevado de incêndio para {$when}: \r\n";
+            $statusFacebook = date('d-m-Y')." {$concelhos} com risco Muito Elevado de incêndio para {$when}: %0A";
+            $status = date('d-m-Y')." {$concelhos} com risco Muito Elevado de incêndio para {$when}: \r\n";
 
             foreach ($muitoElevado as $e) {
-                $statusFacebook .= $e . "%0A";
-                $status .= $e . "\r\n";
-
+                $statusFacebook .= $e.'%0A';
+                $status .= $e."\r\n";
             }
             TwitterTool::tweet($status);
             FacebookTool::publish($statusFacebook);
         }
 
-
         if (!count($maximo)) {
-            $status = date('d-m-Y') . " - Sem registo de concelhos com risco de incêndio Máximo {$when2}";
+            $status = date('d-m-Y')." - Sem registo de concelhos com risco de incêndio Máximo {$when2}";
             TwitterTool::tweet($status);
             FacebookTool::publish($status);
         } else {
             $concelhos = (count($maximo) === 1) ? 'Concelho' : 'Concelhos';
 
-            $statusFacebook = date('d-m-Y') . " {$concelhos} com risco Máximo de incêndio para {$when}: %0A";
-            $status = date('d-m-Y') . " {$concelhos} com risco Máximo de incêndio para {$when}: \r\n";
+            $statusFacebook = date('d-m-Y')." {$concelhos} com risco Máximo de incêndio para {$when}: %0A";
+            $status = date('d-m-Y')." {$concelhos} com risco Máximo de incêndio para {$when}: \r\n";
 
             foreach ($maximo as $e) {
-                $statusFacebook .= $e . "%0A";
-                $status .= $e . "\r\n";
+                $statusFacebook .= $e.'%0A';
+                $status .= $e."\r\n";
             }
 
             TwitterTool::tweet($status);
@@ -490,11 +486,11 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
 
         $whenUrl = $this->tomorrow ? '?risk-tomorrow=1' : '?risk=1';
         $url = "{$whenUrl}";
-        $name = "risk";
+        $name = 'risk';
         $path = "/var/www/html/public/screenshots/{$name}.png";
         $urlImage = "https://api.fogos.pt/screenshots/{$name}.png";
 
-        $status = date('d-m-Y') . " Risco de incêndio para {$when} #FogosPT";
+        $status = date('d-m-Y')." Risco de incêndio para {$when} #FogosPT";
 
         ScreenShotTool::takeScreenShot($url, $name);
 

@@ -11,8 +11,6 @@ class ProcessICNFData extends Job implements ShouldQueue, ShouldBeUnique
 {
     /**
      * Create a new job instance.
-     *
-     * @return void
      */
     public function __construct()
     {
@@ -20,21 +18,19 @@ class ProcessICNFData extends Job implements ShouldQueue, ShouldBeUnique
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
         // TODO: apanhar nao só os em curso mas os estados anteriores.
-        $url = "https://fogos.icnf.pt/localizador/faztable.asp?estado=em%20curso";
+        $url = 'https://fogos.icnf.pt/localizador/faztable.asp?estado=em%20curso';
 
-        $options = array(
-            'headers' => array(
+        $options = [
+            'headers' => [
                 'User-Agent' => 'Fogos.pt/3.0',
-            //    'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
-            ),
-            'verify' => false
-        );
+                //    'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
+            ],
+            'verify' => false,
+        ];
 
         $client = new \GuzzleHttp\Client();
         $res = $client->request('GET', $url, $options);
@@ -42,15 +38,16 @@ class ProcessICNFData extends Job implements ShouldQueue, ShouldBeUnique
         $data = $res->getBody()->getContents();
         $data = str_replace(PHP_EOL, '', $data);
 
-        preg_match_all('/\[(.*?)\]/', $data,$result);
+        preg_match_all('/\[(.*?)\]/', $data, $result);
 
         $i = 0;
-        foreach($result[1] as $r){
-            if($i===0 || $i===1){
-                $i++;
+        foreach ($result[1] as $r) {
+            if ($i === 0 || $i === 1) {
+                ++$i;
+
                 continue;
             }
-            $i++;
+            ++$i;
 
             $rr = explode("',", $r);
 
@@ -60,16 +57,16 @@ class ProcessICNFData extends Job implements ShouldQueue, ShouldBeUnique
 
     public function handleICNFFire($fire)
     {
-        if($fire[0] == "'Sem registos !... '"){
+        if ($fire[0] == "'Sem registos !... '") {
             return;
         }
 
         $id = str_replace("'", '', $fire[0]);
-        $localidade = str_replace('@',' ',UTF8::ucwords(mb_strtolower(str_replace("'", '', $fire[7]), "UTF-8")));
+        $localidade = str_replace('@', ' ', UTF8::ucwords(mb_strtolower(str_replace("'", '', $fire[7]), 'UTF-8')));
 
         $incident = Incident::where('id', $id)->get();
 
-        if(isset($incident[0])){
+        if (isset($incident[0])) {
             $incident = $incident[0];
             $incident->detailLocation = $localidade;
             $incident->save();

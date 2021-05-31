@@ -1,6 +1,6 @@
 <?php
-use Illuminate\Support\Str;
 
+use Illuminate\Support\Str;
 
 return [
     'default' => 'mongodb',
@@ -13,14 +13,13 @@ return [
             'username' => env('DB_USERNAME'),
             'password' => env('DB_PASSWORD'),
             'options' => [
-                'database' => 'admin' // sets the authentication database required by mongo 3
-            ]
+                'database' => 'admin', // sets the authentication database required by mongo 3
+            ],
         ],
     ],
     'migrations' => 'migrations',
 
     'redis' => [
-
         'client' => env('REDIS_CLIENT', 'phpredis'),
 
         'options' => [
@@ -43,6 +42,5 @@ return [
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_CACHE_DB', '1'),
         ],
-
     ],
 ];
