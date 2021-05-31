@@ -14,13 +14,13 @@ class CheckIsActive extends Job
     /**
      * Create a new job instance.
      *
-     * @return void
+     * @param mixed $data
      */
     public function __construct($data)
     {
         $this->data = $data;
-        $activeIds = array();
-        foreach($this->data as $d){
+        $activeIds = [];
+        foreach ($this->data as $d) {
             $activeIds[] = $d['Numero'];
         }
 
@@ -29,14 +29,12 @@ class CheckIsActive extends Job
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
         $incidents = Incident::where('active', true)->whereNotIn('id', $this->activeIds)->get();
 
-        foreach($incidents as $incident){
+        foreach ($incidents as $incident) {
             $incident->active = false;
             $incident->save();
         }

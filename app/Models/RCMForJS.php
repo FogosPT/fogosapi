@@ -10,8 +10,8 @@ class RCMForJS extends Model
     protected $collection = 'rcmJS';
     protected $primaryKey = '_id';
 
-    const CREATED_AT = 'created';
-    const UPDATED_AT = 'updated';
+    public const CREATED_AT = 'created';
+    public const UPDATED_AT = 'updated';
 
     protected $fillable = [
         'dataPrev',

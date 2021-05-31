@@ -1,15 +1,12 @@
 <?php
 
-
 namespace App\Tools;
-
 
 class DiscordTool
 {
-
     public static function post($message)
     {
-        if(!env('DISCORD_ENABLE')){
+        if (!env('DISCORD_ENABLE')) {
             return;
         }
 
@@ -17,14 +14,17 @@ class DiscordTool
         $webhookToken = env('DISCORD_WEBHOOK_TOKEN');
 
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL,"https://discordapp.com/api/webhooks/{$webhookId}/{$webhookToken}");
+        curl_setopt($ch, CURLOPT_URL, "https://discordapp.com/api/webhooks/{$webhookId}/{$webhookToken}");
         curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS,
-            "content={$message}");
+        curl_setopt(
+            $ch,
+            CURLOPT_POSTFIELDS,
+            "content={$message}"
+        );
 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
         curl_exec($ch);
-        curl_close ($ch);
+        curl_close($ch);
     }
 }

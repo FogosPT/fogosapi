@@ -6,7 +6,7 @@ use Laravel\Lumen\Routing\Controller as BaseController;
 
 class Controller extends BaseController
 {
-    /**
+    /*
      * @OA\Info(
      *   title="Fogos.pt",
      *   version="1.0",
