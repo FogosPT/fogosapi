@@ -31,7 +31,6 @@ $app->register(Illuminate\Redis\RedisServiceProvider::class);
 
 $app->withEloquent();
 
-
 $app->configure('app');
 
 /*

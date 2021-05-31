@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Jobs;
+
 use App\Models\Incident;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -11,8 +12,6 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
 {
     /**
      * Create a new job instance.
-     *
-     * @return void
      */
     public function __construct()
     {
@@ -20,14 +19,12 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
-        $url = "http://www.prociv.pt/_vti_bin/ARM.ANPC.UI/ANPC_SituacaoOperacional.svc/GetHistoryOccurrencesByLocation";
+        $url = 'http://www.prociv.pt/_vti_bin/ARM.ANPC.UI/ANPC_SituacaoOperacional.svc/GetHistoryOccurrencesByLocation';
 
-        $data = array(
+        $data = [
             'allData' => true,
             'concelhoID' => null,
             'distritoID' => null,
@@ -35,15 +32,15 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
             'freguesiaID' => null,
             'natureza' => '0',
             'pageIndex' => 0,
-            'pageSize' => 0
-        );
+            'pageSize' => 0,
+        ];
 
-        $options = array(
+        $options = [
             'json' => $data,
-            'headers' => array(
+            'headers' => [
                 'User-Agent' => 'Fogos.pt/3.0',
-            )
-        );
+            ],
+        ];
 
         $client = new \GuzzleHttp\Client();
         $res = $client->request('POST', $url, $options);
@@ -60,10 +57,10 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
 
     private function handleIncidents($data)
     {
-        foreach($data as $i){
+        foreach ($data as $i) {
             $exists = Incident::where('id', $i['Numero'])->get();
 
-            if(isset($exists[0])){
+            if (isset($exists[0])) {
                 $this->updateIncident($exists[0], $i);
             } else {
                 $this->createIncident($i);
@@ -90,26 +87,26 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
         $ticks = explode('+', explode('(', $data['DataOcorrencia'])[1])[0];
         $ticks = substr($ticks, 0, -3);
 
-        $distrito = UTF8::ucwords(mb_strtolower($data['Distrito']['Name'], "UTF-8"));
-        $concelho = UTF8::ucwords(mb_strtolower($data['Concelho']['Name'], "UTF-8"));
-        $freguesia = UTF8::ucwords(mb_strtolower($data['Freguesia']['Name'], "UTF-8"));
-        $localidade = UTF8::ucwords(mb_strtolower($data['Localidade'], "UTF-8"));
+        $distrito = UTF8::ucwords(mb_strtolower($data['Distrito']['Name'], 'UTF-8'));
+        $concelho = UTF8::ucwords(mb_strtolower($data['Concelho']['Name'], 'UTF-8'));
+        $freguesia = UTF8::ucwords(mb_strtolower($data['Freguesia']['Name'], 'UTF-8'));
+        $localidade = UTF8::ucwords(mb_strtolower($data['Localidade'], 'UTF-8'));
 
-        $man = (int)$data['NumeroOperacionaisTerrestresEnvolvidos'] + (int)$data['NumeroOperacionaisAereosEnvolvidos'];
+        $man = (int) $data['NumeroOperacionaisTerrestresEnvolvidos'] + (int) $data['NumeroOperacionaisAereosEnvolvidos'];
 
-        $isFire = in_array($data['Natureza']['Codigo'],Incident::NATUREZA_CODE_FIRE);
-        $isTransportFire = in_array($data['Natureza']['Codigo'],Incident::NATUREZA_CODE_TRANSPORT_FIRE) ;
-        $isUrbanFire = in_array($data['Natureza']['Codigo'],Incident::NATUREZA_CODE_URBAN_FIRE);
-        $isOtherFire = in_array($data['Natureza']['Codigo'],Incident::NATUREZA_CODE_OTHER_FIRE);
+        $isFire = in_array($data['Natureza']['Codigo'], Incident::NATUREZA_CODE_FIRE);
+        $isTransportFire = in_array($data['Natureza']['Codigo'], Incident::NATUREZA_CODE_TRANSPORT_FIRE);
+        $isUrbanFire = in_array($data['Natureza']['Codigo'], Incident::NATUREZA_CODE_URBAN_FIRE);
+        $isOtherFire = in_array($data['Natureza']['Codigo'], Incident::NATUREZA_CODE_OTHER_FIRE);
         $isOtherIncident = !$isFire && !$isTransportFire && !$isUrbanFire && !$isOtherFire;
 
-        $point = array(
+        $point = [
             'id' => $data['Numero'],
             'coords' => true,
             'dateTime' => Carbon::createFromTimestamp($ticks, 'Europe/Lisbon'),
             'date' => date('d-m-Y', $ticks),
             'hour' => date('H:i', $ticks),
-            'location' => $distrito . ', ' . $concelho . ', ' . $freguesia,
+            'location' => $distrito.', '.$concelho.', '.$freguesia,
             'aerial' => $data['NumeroMeiosAereosEnvolvidos'],
             'terrain' => $data['NumeroMeiosTerrestresEnvolvidos'],
             'man' => $man,
@@ -136,8 +133,8 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
             'isUrbanFire' => $isUrbanFire,
             'isTransporteFire' => $isTransportFire,
             'isOtherFire' => $isOtherFire,
-            'isOtherIncident' => $isOtherIncident
-        );
+            'isOtherIncident' => $isOtherIncident,
+        ];
 
         if ($data['EstadoOcorrencia']['ID'] == 11) {
             $point['extra'] = 'Falso Alarme';

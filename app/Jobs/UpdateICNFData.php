@@ -11,7 +11,6 @@ class UpdateICNFData extends Job
 
     /**
      * UpdateICNFData constructor.
-     * @param int $interval
      */
     public function __construct(int $interval = 0)
     {
@@ -20,52 +19,49 @@ class UpdateICNFData extends Job
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
-        $intervals = array(
-            array(
+        $intervals = [
+            [
                 'before' => Carbon::now(),
                 'after' => Carbon::now()->subDay(),
-            ),
-            array(
+            ],
+            [
                 'before' => Carbon::now()->subDay(),
                 'after' => Carbon::now()->subDays(2),
-            ),
-            array(
+            ],
+            [
                 'before' => Carbon::now()->subDays(2),
                 'after' => Carbon::now()->subDays(7),
-            ),
-            array(
+            ],
+            [
                 'before' => Carbon::now()->subDays(7),
                 'after' => Carbon::now()->subDays(14),
-            ),
-            array(
+            ],
+            [
                 'before' => Carbon::now()->subDays(14),
                 'after' => Carbon::now()->subDays(28),
-            ),
-            array(
+            ],
+            [
                 'before' => Carbon::now()->subDays(28),
                 'after' => Carbon::now()->subDays(60),
-            ),
-            array(
+            ],
+            [
                 'before' => Carbon::now()->subDays(60),
                 'after' => Carbon::now()->subDays(90),
-            ),
-            array(
+            ],
+            [
                 'before' => Carbon::now()->subDays(90),
                 'after' => Carbon::now()->subDays(180),
-            ),
-        );
-
+            ],
+        ];
 
         $incidents = Incident::where('created', '>=', $intervals[$this->interval]['after'])
-                            ->where('created', '<=',  $intervals[$this->interval]['before'])
-                            ->get();
+            ->where('created', '<=', $intervals[$this->interval]['before'])
+            ->get();
 
-        foreach($incidents as $incident){
+        foreach ($incidents as $incident) {
             dispatch(new ProcessICNFFireData($incident));
         }
     }

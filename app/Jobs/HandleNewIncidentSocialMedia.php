@@ -16,8 +16,6 @@ class HandleNewIncidentSocialMedia extends Job
 
     /**
      * Create a new job instance.
-     *
-     * @return void
      */
     public function __construct(Incident $incident)
     {
@@ -26,8 +24,6 @@ class HandleNewIncidentSocialMedia extends Job
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -39,7 +35,7 @@ class HandleNewIncidentSocialMedia extends Job
         $name = "screenshot-{$this->incident->id}";
         $path = "/var/www/html/public/screenshots/{$name}.png";
 
-        ScreenShotTool::takeScreenShot($url,$name);
+        ScreenShotTool::takeScreenShot($url, $name);
         $url = env('SCREENSHOT_DOMAIN');
         $status = "⚠🔥 Novo incêndio em {$this->incident->location} - {$this->incident->natureza} https://{$url}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥⚠";
 

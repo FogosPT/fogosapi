@@ -5,7 +5,6 @@ namespace App\Console;
 use App\Jobs\HourlySummary;
 use App\Jobs\ProcessANPCAllData;
 use App\Jobs\ProcessDataForHistoryTotal;
-use App\Jobs\ProcessICNFPDFData;
 use App\Jobs\ProcessMadeiraWarnings;
 use App\Jobs\ProcessPlanes;
 use App\Jobs\ProcessRCM;
@@ -21,18 +20,15 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        \App\Console\Commands\TestStuff::class
+        \App\Console\Commands\TestStuff::class,
     ];
 
     /**
      * Define the application's command schedule.
-     *
-     * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
-     * @return void
      */
     protected function schedule(Schedule $schedule)
     {
-        if(env('SCHEDULER_ENABLE')){
+        if (env('SCHEDULER_ENABLE')) {
             $schedule->job(new HourlySummary())->hourlyAt(0);
             $schedule->job(new ProcessANPCAllData())->everyTwoMinutes();
             $schedule->job(new ProcessDataForHistoryTotal())->everyTwoMinutes();
@@ -40,7 +36,7 @@ class Kernel extends ConsoleKernel
             $schedule->job(new ProcessPlanes())->everyTenMinutes();
             $schedule->job(new ProcessRCM(true))->daily()->at('09:00');
             $schedule->job(new ProcessRCM(false))->hourly(); // update RCM
-            $schedule->job(new ProcessRCM(true,true))->daily()->at('18:00');
+            $schedule->job(new ProcessRCM(true, true))->daily()->at('18:00');
 
             $schedule->job(new UpdateICNFData(0))->everyTwoHours();
             $schedule->job(new UpdateICNFData(1))->everySixHours();

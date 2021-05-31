@@ -9,18 +9,13 @@ class ProcessDataForHistoryTotal extends Job
 {
     /**
      * Create a new job instance.
-     *
-     * @return void
      */
     public function __construct()
     {
-        //
     }
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -33,27 +28,27 @@ class ProcessDataForHistoryTotal extends Job
         $man = 0;
         $aerial = 0;
         $cars = 0;
-        foreach($active as $f){
+        foreach ($active as $f) {
             $man += $f['man'];
             $aerial += $f['aerial'];
             $cars += $f['terrain'];
         }
 
-        $data = array(
+        $data = [
             'man' => $man,
             'aerial' => $aerial,
             'terrain' => $cars,
             'total' => $total,
-        );
+        ];
 
         $last = HistoryTotal::orderBy('created', 'desc')
-                            ->limit(1)
-                            ->get();
+            ->limit(1)
+            ->get();
 
-        if(isset($last[0])){
+        if (isset($last[0])) {
             $last = $last[0];
 
-            if($data['man'] !== $last->man || $data['aerial'] !== $last->aerial || $data['terrain'] !== $last->terrain || $data['total'] !== $last->total ){
+            if ($data['man'] !== $last->man || $data['aerial'] !== $last->aerial || $data['terrain'] !== $last->terrain || $data['total'] !== $last->total) {
                 $historyTotal = new HistoryTotal($data);
                 $historyTotal->save();
             }

@@ -14,28 +14,23 @@ class ProcessMadeiraWarnings extends Job implements ShouldQueue, ShouldBeUnique
 {
     /**
      * Create a new job instance.
-     *
-     * @return void
      */
     public function __construct()
     {
-        //
     }
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
-        $url = "https://www.procivmadeira.pt/app/api/dobswarecommunication/Select_Notifications/";
+        $url = 'https://www.procivmadeira.pt/app/api/dobswarecommunication/Select_Notifications/';
 
-        $options = array(
-            'headers' => array(
+        $options = [
+            'headers' => [
                 'User-Agent' => 'Fogos.pt/3.0',
-            )
-        );
+            ],
+        ];
 
         $client = new \GuzzleHttp\Client();
         $res = $client->request('GET', $url, $options);
@@ -43,7 +38,7 @@ class ProcessMadeiraWarnings extends Job implements ShouldQueue, ShouldBeUnique
         $data = json_decode($res->getBody(), true);
 
         foreach ($data['result'] as $d) {
-            $id = md5($d['menu'] . $d['dia_hora']);
+            $id = md5($d['menu'].$d['dia_hora']);
 
             $exists = WarningMadeira::where('id', $id)->get();
 
@@ -65,10 +60,8 @@ class ProcessMadeiraWarnings extends Job implements ShouldQueue, ShouldBeUnique
                     $twitterTitleId = TwitterTool::tweet($d['title']);
 
                     TwitterTool::tweet($d['description'], $twitterTitleId);
-
                 }
             }
-
         }
     }
 }
