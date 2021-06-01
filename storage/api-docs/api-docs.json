@@ -9,51 +9,6 @@
         "version": "1.0"
     },
     "paths": {
-        "/v1/warnings": {
-            "get": {
-                "tags": [
-                    "legacy"
-                ],
-                "summary": "Warnings list",
-                "description": "",
-                "operationId": "App\\Http\\Controllers\\LegacyController::warnings",
-                "responses": {
-                    "default": {
-                        "description": "Warnings list"
-                    }
-                }
-            }
-        },
-        "/v1/warnings/site": {
-            "get": {
-                "tags": [
-                    "legacy"
-                ],
-                "summary": "Warnings for site",
-                "description": "",
-                "operationId": "App\\Http\\Controllers\\LegacyController::warningsSite",
-                "responses": {
-                    "default": {
-                        "description": "Warnings for site"
-                    }
-                }
-            }
-        },
-        "/v1/madeira/warnings": {
-            "get": {
-                "tags": [
-                    "legacy"
-                ],
-                "summary": "Madeira Warnings list",
-                "description": "",
-                "operationId": "App\\Http\\Controllers\\LegacyController::warningsMadeira",
-                "responses": {
-                    "default": {
-                        "description": "Madeira Warnings list"
-                    }
-                }
-            }
-        },
         "/v1/stats/week": {
             "get": {
                 "tags": [
