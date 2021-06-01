@@ -32,6 +32,10 @@ paths:
     $ref: './fires/paths/legacy-fires-status.yaml'
   /new/fires:
     $ref: './fires/paths/legacy-new-fires.yaml'
+  /v1/list:
+    $ref: './fires/paths/legacy-v1-list.yaml'
+  /v1/now:
+    $ref: './fires/paths/legacy-v1-now.yaml'
 
   /v1/madeira/warnings:
     $ref: './warnings/paths/legacy-v1-madeira-warnings.yaml'
