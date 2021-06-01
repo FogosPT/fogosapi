@@ -1,0 +1,8 @@
+description: OK
+content:
+  application/json:
+    type: object
+    properties:
+      data:
+        $ref: '../models/Fire.yaml'
+

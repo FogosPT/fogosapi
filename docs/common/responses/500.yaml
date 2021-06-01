@@ -1,0 +1,6 @@
+description: "Internal Server Error. Please, report to us and try to provide as much information as possible, such as the endpoint, HTTP request headers and request body if applicable."
+content:
+  application/json:
+    schema:
+      title: 500 Internal Server Error
+      type: object

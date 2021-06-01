@@ -1,0 +1,6 @@
+description: "Resource Not Found. Requests to resources that don't exist or are malformed."
+content:
+  application/json:
+    schema:
+      title: 404 Not Found
+      type: object
