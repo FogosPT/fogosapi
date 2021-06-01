@@ -1,0 +1,6 @@
+name: id
+in: query
+description: The fire ID
+required: true
+schema:
+  type: string

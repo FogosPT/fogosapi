@@ -1,0 +1,12 @@
+description: OK
+content:
+  application/json:
+    schema:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '../models/FireHistory.yaml'

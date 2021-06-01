@@ -1,0 +1,35 @@
+openapi: 3.0.3
+
+info:
+  title: Fogos.pt
+  description: Fogos.pt Official API Documentation
+  version: 1.0.0
+  contact:
+    name: Tomahock
+    email: mail@fogos.pt
+
+servers:
+  - url: 'http://api.fogos.test'
+    description: Development Server
+  - url: 'https://api.fogos.pt'
+    description: Production Server
+
+tags:
+  - name: Assets
+  - name: Fires
+  - name: Misc
+  - name: Stats
+  - name: Warnings
+
+paths:
+  /fires:
+    $ref: './fires/paths/legacy-fires.yaml'
+  /fires/danger:
+    $ref: './fires/paths/legacy-fires-danger.yaml'
+  /fires/data:
+    $ref: './fires/paths/legacy-fires-data.yaml'
+  /fires/status:
+    $ref: './fires/paths/legacy-fires-status.yaml'
+  /new/fires:
+    $ref: './fires/paths/legacy-new-fires.yaml'
+

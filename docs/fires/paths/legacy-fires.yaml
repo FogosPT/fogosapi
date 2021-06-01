@@ -1,0 +1,14 @@
+get:
+  operationId: getFires,
+  summary: List fires details
+  tags:
+    - Fires
+  parameters:
+    - $ref: '../parameters/query/id.yaml'
+  responses:
+    200:
+      $ref: '../responses/legacy-fires-get.yaml'
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'
