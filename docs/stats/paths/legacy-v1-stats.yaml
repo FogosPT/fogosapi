@@ -1,0 +1,10 @@
+get:
+  operationId: getStats,
+  summary: Stats district today text
+  tags:
+    - Stats
+  responses:
+    200:
+      $ref: '../responses/legacy-stats-text.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

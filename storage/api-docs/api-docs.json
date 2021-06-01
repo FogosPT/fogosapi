@@ -9,21 +9,6 @@
         "version": "1.0"
     },
     "paths": {
-        "/v1/stats/week": {
-            "get": {
-                "tags": [
-                    "legacy"
-                ],
-                "summary": "Last 7 days total fires",
-                "description": "",
-                "operationId": "App\\Http\\Controllers\\LegacyController::statsWeek",
-                "responses": {
-                    "default": {
-                        "description": "Last 7 days total fires"
-                    }
-                }
-            }
-        },
         "/v1/now/data": {
             "get": {
                 "tags": [
@@ -35,51 +20,6 @@
                 "responses": {
                     "default": {
                         "description": "Last 50 total means history"
-                    }
-                }
-            }
-        },
-        "/v1/stats/8hours": {
-            "get": {
-                "tags": [
-                    "legacy"
-                ],
-                "summary": "Today district stats for 00H to 08H and 08H to 16H",
-                "description": "",
-                "operationId": "App\\Http\\Controllers\\LegacyController::stats8hours",
-                "responses": {
-                    "default": {
-                        "description": "Today district stats for 00H to 08H and 08H to 16H"
-                    }
-                }
-            }
-        },
-        "/v1/stats/8hours/yesterday": {
-            "get": {
-                "tags": [
-                    "legacy"
-                ],
-                "summary": "Yesterday district stats for 00H to 08H, 08H to 16H and 16H to 24H",
-                "description": "",
-                "operationId": "App\\Http\\Controllers\\LegacyController::stats8hoursYesterday",
-                "responses": {
-                    "default": {
-                        "description": "Yesterday district stats for 00H to 08H, 08H to 16H and 16H to 24H"
-                    }
-                }
-            }
-        },
-        "/v1/stats/last-night": {
-            "get": {
-                "tags": [
-                    "legacy"
-                ],
-                "summary": "Last night fires (21H to 09H today)",
-                "description": "",
-                "operationId": "App\\Http\\Controllers\\LegacyController::lastNight",
-                "responses": {
-                    "default": {
-                        "description": "Last night fires (21H to 09H today)"
                     }
                 }
             }
@@ -125,21 +65,6 @@
                 "responses": {
                     "default": {
                         "description": "Meios aereos activos em texto"
-                    }
-                }
-            }
-        },
-        "/v1/stats": {
-            "get": {
-                "tags": [
-                    "legacy"
-                ],
-                "summary": "Stats district today text",
-                "description": "",
-                "operationId": "App\\Http\\Controllers\\LegacyController::stats",
-                "responses": {
-                    "default": {
-                        "description": "Stats district today text"
                     }
                 }
             }

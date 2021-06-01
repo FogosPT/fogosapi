@@ -44,3 +44,14 @@ paths:
   /v1/warnings/site:
     $ref: './warnings/paths/legacy-v1-warnings-site.yaml'
 
+  /v1/stats:
+    $ref: './stats/paths/legacy-v1-stats.yaml'
+  /v1/stats/8hours:
+    $ref: './stats/paths/legacy-v1-stats-8hours.yaml'
+  /v1/stats/8hours/yesterday:
+    $ref: './stats/paths/legacy-v1-stats-8hours-yesterday.yaml'
+  /v1/stats/last-night:
+    $ref: './stats/paths/legacy-v1-stats-last-night.yaml'
+  /v1/stats/week:
+    $ref: './stats/paths/legacy-v1-stats-week.yaml'
+
