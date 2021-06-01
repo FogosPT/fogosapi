@@ -1,0 +1,12 @@
+get:
+  operationId: getWarningsMadeira,
+  summary: List warnings for Madeira
+  tags:
+    - Warnings
+  responses:
+    200:
+      $ref: '../responses/legacy-warnings-list.yaml'
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

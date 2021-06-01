@@ -33,3 +33,10 @@ paths:
   /new/fires:
     $ref: './fires/paths/legacy-new-fires.yaml'
 
+  /v1/madeira/warnings:
+    $ref: './warnings/paths/legacy-v1-madeira-warnings.yaml'
+  /v1/warnings:
+    $ref: './warnings/paths/legacy-v1-warnings.yaml'
+  /v1/warnings/site:
+    $ref: './warnings/paths/legacy-v1-warnings-site.yaml'
+
