@@ -1,10 +1,10 @@
 get:
-  operationId: getFiresData,
-  summary: List fires history means
+  operationId: getFiresListForMunicipality,
+  summary: List fires for a given municipality
   tags:
     - Fires
   parameters:
-    - $ref: '../parameters/query/id.yaml'
+    - $ref: '../parameters/query/concelho.yaml'
   responses:
     200:
       $ref: '../responses/legacy-fires-list.yaml'

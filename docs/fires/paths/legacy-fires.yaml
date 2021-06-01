@@ -7,7 +7,7 @@ get:
     - $ref: '../parameters/query/id.yaml'
   responses:
     200:
-      $ref: '../responses/legacy-fires-get.yaml'
+      $ref: '../responses/legacy-fires-show.yaml'
     404:
       $ref: '../../common/responses/404.yaml'
     500:

@@ -24,21 +24,6 @@
                 }
             }
         },
-        "/v1/now": {
-            "get": {
-                "tags": [
-                    "legacy"
-                ],
-                "summary": "Active fires status now",
-                "description": "",
-                "operationId": "App\\Http\\Controllers\\LegacyController::now",
-                "responses": {
-                    "default": {
-                        "description": "Active fires status now"
-                    }
-                }
-            }
-        },
         "/v1/now/data": {
             "get": {
                 "tags": [
@@ -196,32 +181,6 @@
                 "responses": {
                     "default": {
                         "description": "RCM for web JS"
-                    }
-                }
-            }
-        },
-        "/v1/list": {
-            "get": {
-                "tags": [
-                    "legacy"
-                ],
-                "summary": "Active fires for concelho",
-                "description": "",
-                "operationId": "App\\Http\\Controllers\\LegacyController::listConcelho",
-                "parameters": [
-                    {
-                        "name": "concelho",
-                        "in": "query",
-                        "description": "Concelho",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "default": {
-                        "description": "Active fires for concelho"
                     }
                 }
             }
