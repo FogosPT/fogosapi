@@ -9,51 +9,6 @@
         "version": "1.0"
     },
     "paths": {
-        "/v1/now/data": {
-            "get": {
-                "tags": [
-                    "legacy"
-                ],
-                "summary": "Last 50 total means history",
-                "description": "",
-                "operationId": "App\\Http\\Controllers\\LegacyController::nowData",
-                "responses": {
-                    "default": {
-                        "description": "Last 50 total means history"
-                    }
-                }
-            }
-        },
-        "/v1/status": {
-            "get": {
-                "tags": [
-                    "legacy"
-                ],
-                "summary": "Current status in text",
-                "description": "",
-                "operationId": "App\\Http\\Controllers\\LegacyController::status",
-                "responses": {
-                    "default": {
-                        "description": "Current status in text"
-                    }
-                }
-            }
-        },
-        "/v1/aerial": {
-            "get": {
-                "tags": [
-                    "legacy"
-                ],
-                "summary": "Meios aereos activos em texto",
-                "description": "",
-                "operationId": "App\\Http\\Controllers\\LegacyController::aerial",
-                "responses": {
-                    "default": {
-                        "description": "Meios aereos activos em texto"
-                    }
-                }
-            }
-        },
         "/v1/risk": {
             "get": {
                 "tags": [

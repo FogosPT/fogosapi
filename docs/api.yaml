@@ -22,6 +22,11 @@ tags:
   - name: Warnings
 
 paths:
+  /v1/aerial:
+    $ref: './assets/paths/legacy-v1-aerial.yaml'
+  /v1/now/data:
+    $ref: './assets/paths/legacy-v1-now-data.yaml'
+
   /fires:
     $ref: './fires/paths/legacy-fires.yaml'
   /fires/danger:
@@ -38,6 +43,9 @@ paths:
     $ref: './fires/paths/legacy-v1-list.yaml'
   /v1/now:
     $ref: './fires/paths/legacy-v1-now.yaml'
+
+  /v1/status:
+    $ref: './misc/paths/legacy-v1-status.yaml'
 
   /v1/madeira/warnings:
     $ref: './warnings/paths/legacy-v1-madeira-warnings.yaml'
