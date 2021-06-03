@@ -11,21 +11,13 @@ use App\Models\RCMForJS;
 use App\Models\Warning;
 use App\Models\WarningMadeira;
 use App\Models\WarningSite;
-use App\Tools\TwitterTool;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Laravel\Lumen\Routing\Controller;
 use voku\helper\UTF8;
 
 class LegacyController extends Controller
 {
-    /**
-     * @OA\Get(
-     *     tags={"legacy"},
-     *     path="/new/fires",
-     *     description="Active Fires",
-     *     @OA\Response(response="default", description="Active Fires")
-     * )
-     */
     public function newFires()
     {
         $incidents = Incident::where('active', true)
@@ -40,24 +32,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/fires/data",
-     *   tags={"legacy"},
-     *   summary="Fire history means",
-     *   description="",
-     *   @OA\Parameter(
-     *     name="id",
-     *     required=true,
-     *     in="query",
-     *     description="FireId",
-     *     @OA\Schema(
-     *         type="string"
-     *     )
-     *   ),
-     *   @OA\Response(response="default", description="Fire history means"),
-     *   @OA\Response(response=404, description="not found")
-     * )
-     */
     public function firesData(Request $request)
     {
         $id = $request->get('id');
@@ -117,24 +91,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/fires",
-     *   tags={"legacy"},
-     *   summary="Fire detail",
-     *   description="",
-     *   @OA\Parameter(
-     *     name="id",
-     *     required=true,
-     *     in="query",
-     *     description="FireId",
-     *     @OA\Schema(
-     *         type="string"
-     *     )
-     *   ),
-     *   @OA\Response(response="default", description="fire id"),
-     *   @OA\Response(response=404, description="not found")
-     * )
-     */
     public function fires(Request $request)
     {
         $id = $request->get('id');
@@ -152,14 +108,6 @@ class LegacyController extends Controller
         abort(404);
     }
 
-    /**
-     * @OA\Get(path="/v1/warnings",
-     *   tags={"legacy"},
-     *   summary="Warnings list",
-     *   description="",
-     *   @OA\Response(response="default", description="Warnings list"),
-     * )
-     */
     public function warnings()
     {
         $warnings = Warning::orderBy('created', 'desc')
@@ -182,14 +130,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/v1/warnings/site",
-     *   tags={"legacy"},
-     *   summary="Warnings for site",
-     *   description="",
-     *   @OA\Response(response="default", description="Warnings for site"),
-     * )
-     */
     public function warningsSite()
     {
         $warnings = WarningSite::orderBy('created', 'desc')
@@ -203,14 +143,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/v1/madeira/warnings",
-     *   tags={"legacy"},
-     *   summary="Madeira Warnings list",
-     *   description="",
-     *   @OA\Response(response="default", description="Madeira Warnings list"),
-     * )
-     */
     public function warningsMadeira()
     {
         $warnings = WarningMadeira::orderBy('created', 'desc')
@@ -233,14 +165,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/v1/stats/week",
-     *   tags={"legacy"},
-     *   summary="Last 7 days total fires",
-     *   description="",
-     *   @OA\Response(response="default", description="Last 7 days total fires"),
-     * )
-     */
     public function statsWeek()
     {
         $timestampLast = strtotime(date('Y-m-d 00:00'));
@@ -270,24 +194,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/fires/danger",
-     *   tags={"legacy"},
-     *   summary="Fire RCM",
-     *   description="",
-     *   @OA\Parameter(
-     *     name="id",
-     *     required=true,
-     *     in="query",
-     *     description="FireId",
-     *     @OA\Schema(
-     *         type="string"
-     *     )
-     *   ),
-     *   @OA\Response(response="default", description="Fire RCM"),
-     *   @OA\Response(response=404, description="not found")
-     * )
-     */
     public function firesDanger(Request $request)
     {
         $id = $request->get('id');
@@ -314,24 +220,6 @@ class LegacyController extends Controller
         }
     }
 
-    /**
-     * @OA\Get(path="/fires/status",
-     *   tags={"legacy"},
-     *   summary="Fire Status History",
-     *   description="",
-     *   @OA\Parameter(
-     *     name="id",
-     *     required=true,
-     *     in="query",
-     *     description="FireId",
-     *     @OA\Schema(
-     *         type="string"
-     *     )
-     *   ),
-     *   @OA\Response(response="default", description="Fire Status History"),
-     *   @OA\Response(response=404, description="not found")
-     * )
-     */
     public function firesStatus(Request $request)
     {
         $id = $request->get('id');
@@ -373,60 +261,16 @@ class LegacyController extends Controller
         abort(404);
     }
 
-    /**
-     * @OA\Get(path="/madeira/fires",
-     *   tags={"legacy"},
-     *   summary="NOT WORKING",
-     *   description="",
-     *   @OA\Parameter(
-     *     name="id",
-     *     required=true,
-     *     in="query",
-     *     description="FireId",
-     *     @OA\Schema(
-     *         type="string"
-     *     )
-     *   ),
-     *   @OA\Response(response="default", description="NOT WORKING"),
-     *   @OA\Response(response=404, description="not found")
-     * )
-     */
     public function firesMadeira(Request $request)
     {
         return response()->json();
     }
 
-    /**
-     * @OA\Get(path="/madeira/fires/status",
-     *   tags={"legacy"},
-     *   summary="NOT WORKING",
-     *   description="",
-     *   @OA\Parameter(
-     *     name="id",
-     *     required=true,
-     *     in="query",
-     *     description="FireId",
-     *     @OA\Schema(
-     *         type="string"
-     *     )
-     *   ),
-     *   @OA\Response(response="default", description="NOT WORKING"),
-     *   @OA\Response(response=404, description="not found")
-     * )
-     */
     public function firesStatusMadeira(Request $request)
     {
         return response()->json();
     }
 
-    /**
-     * @OA\Get(path="/v1/now",
-     *   tags={"legacy"},
-     *   summary="Active fires status now",
-     *   description="",
-     *   @OA\Response(response="default", description="Active fires status now"),
-     * )
-     */
     public function now()
     {
         $incidents = Incident::where('active', true)
@@ -461,14 +305,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/v1/now/data",
-     *   tags={"legacy"},
-     *   summary="Last 50 total means history",
-     *   description="",
-     *   @OA\Response(response="default", description="Last 50 total means history"),
-     * )
-     */
     public function nowData()
     {
         $data = HistoryTotal::orderBy('created', 'desc')->limit(50)->get();
@@ -504,14 +340,6 @@ class LegacyController extends Controller
         ];
     }
 
-    /**
-     * @OA\Get(path="/v1/stats/8hours",
-     *   tags={"legacy"},
-     *   summary="Today district stats for 00H to 08H and 08H to 16H",
-     *   description="",
-     *   @OA\Response(response="default", description="Today district stats for 00H to 08H and 08H to 16H"),
-     * )
-     */
     public function stats8hours()
     {
         $data = [];
@@ -538,14 +366,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/v1/stats/8hours/yesterday",
-     *   tags={"legacy"},
-     *   summary="Yesterday district stats for 00H to 08H, 08H to 16H and 16H to 24H",
-     *   description="",
-     *   @OA\Response(response="default", description="Yesterday district stats for 00H to 08H, 08H to 16H and 16H to 24H"),
-     * )
-     */
     public function stats8hoursYesterday()
     {
         $data = [];
@@ -570,14 +390,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/v1/stats/last-night",
-     *   tags={"legacy"},
-     *   summary="Last night fires (21H to 09H today)",
-     *   description="",
-     *   @OA\Response(response="default", description="Last night fires (21H to 09H today)"),
-     * )
-     */
     public function lastNight()
     {
         $timestampLast = Carbon::yesterday()->addHours(21);
@@ -591,14 +403,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/v1/status",
-     *   tags={"legacy"},
-     *   summary="Current status in text",
-     *   description="",
-     *   @OA\Response(response="default", description="Current status in text"),
-     * )
-     */
     public function status()
     {
         $active = $incidents = Incident::where('active', true)
@@ -631,14 +435,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/v1/active",
-     *   tags={"legacy"},
-     *   summary="Active fire list",
-     *   description="",
-     *   @OA\Response(response="default", description="Active fire list"),
-     * )
-     */
     public function active()
     {
         $active = Incident::where('active', true)
@@ -654,14 +450,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/v1/aerial",
-     *   tags={"legacy"},
-     *   summary="Meios aereos activos em texto",
-     *   description="",
-     *   @OA\Response(response="default", description="Meios aereos activos em texto"),
-     * )
-     */
     public function aerial()
     {
         $active = $incidents = Incident::where('active', true)
@@ -699,14 +487,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/v1/stats",
-     *   tags={"legacy"},
-     *   summary="Stats district today text",
-     *   description="",
-     *   @OA\Response(response="default", description="Stats district today text"),
-     * )
-     */
     public function stats()
     {
         $timestampLast = Carbon::today();
@@ -730,23 +510,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/v1/risk",
-     *   tags={"legacy"},
-     *   summary="RCM for concelho",
-     *   description="",
-     *   @OA\Parameter(
-     *     name="concelho",
-     *     required=true,
-     *     in="query",
-     *     description="Concelho",
-     *     @OA\Schema(
-     *         type="string"
-     *     )
-     *   ),
-     *   @OA\Response(response="default", description="RCM for concelho"),
-     * )
-     */
     public function risk(Request $request)
     {
         $concelho = $request->get('concelho');
@@ -770,14 +533,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/v1/risk-today",
-     *   tags={"legacy"},
-     *   summary="RCM for web JS",
-     *   description="",
-     *   @OA\Response(response="default", description="RCM for web JS"),
-     * )
-     */
     public function riskToday()
     {
         $risk = RCMForJS::where('when', 'hoje')
@@ -796,14 +551,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/v1/risk-tomorrow",
-     *   tags={"legacy"},
-     *   summary="RCM for web JS",
-     *   description="",
-     *   @OA\Response(response="default", description="RCM for web JS"),
-     * )
-     */
     public function riskTomorrow()
     {
         $risk = RCMForJS::where('when', 'amanha')
@@ -822,14 +569,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/v1/risk-after",
-     *   tags={"legacy"},
-     *   summary="RCM for web JS",
-     *   description="",
-     *   @OA\Response(response="default", description="RCM for web JS"),
-     * )
-     */
     public function riskAfter()
     {
         $risk = RCMForJS::where('when', 'depois')
@@ -848,23 +587,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-    /**
-     * @OA\Get(path="/v1/list",
-     *   tags={"legacy"},
-     *   summary="Active fires for concelho",
-     *   description="",
-     *   @OA\Parameter(
-     *     name="concelho",
-     *     required=true,
-     *     in="query",
-     *     description="Concelho",
-     *     @OA\Schema(
-     *         type="string"
-     *     )
-     *   ),
-     *   @OA\Response(response="default", description="Active fires for concelho"),
-     * )
-     */
     public function listConcelho(Request $request)
     {
         $concelho = $request->get('concelho');
@@ -892,53 +614,5 @@ class LegacyController extends Controller
         ];
 
         return response()->json($response);
-    }
-
-    public function test()
-    {
-        echo '<pre>';
-        $client = TwitterTool::getClient();
-
-        $url = 'https://fogos.pt/estatisticas?phantom=1';
-        $name = 'stats';
-        $path = "/var/www/html/public/screenshots/{$name}.png";
-        $urlImage = "https://api.fogos.pt/screenshots/{$name}.png";
-
-        $file = file_get_contents($path);
-        $data = base64_encode($file);
-
-        $url = 'https://upload.twitter.com/1.1/media/upload.json';
-        $method = 'POST';
-        $params = [
-            'media_data' => $data,
-        ];
-
-        $imageResponse = $client
-            ->setPostfields($params)
-            ->buildOauth($url, $method)
-            ->performRequest();
-
-        var_dump($imageResponse);
-        $imageResponse = json_decode($imageResponse);
-
-        print_r($imageResponse);
-
-        // Extract media id
-        $id = $imageResponse->media_id_string;
-
-        $fields['media_ids'] = $id;
-
-        $url = 'https://api.twitter.com/1.1/statuses/update.json';
-
-        $fields['status'] = 'blabla';
-
-        $response = $client
-            ->buildOauth($url, 'POST')
-            ->setPostfields($fields)
-            ->performRequest();
-
-        $r = json_decode($response);
-
-        $lastId = $r->i;
     }
 }

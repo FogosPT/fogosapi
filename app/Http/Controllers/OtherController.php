@@ -5,17 +5,10 @@ namespace App\Http\Controllers;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Redis;
+use Laravel\Lumen\Routing\Controller;
 
 class OtherController extends Controller
 {
-    /**
-     * @OA\Get(
-     *     tags={"v2"},
-     *     path="/v2/other/mobile-contributors",
-     *     description="Mobile Contributors",
-     *     @OA\Response(response="default", description="Mobile Contributors")
-     * )
-     */
     public function getMobileContributors()
     {
         $exists = Redis::get('mobile:contributors');
