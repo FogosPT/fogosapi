@@ -1,0 +1,6 @@
+name: concelho
+in: query
+description: The municipality name
+required: true
+schema:
+  type: string

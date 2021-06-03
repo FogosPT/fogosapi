@@ -44,8 +44,14 @@ paths:
   /v1/now:
     $ref: './fires/paths/legacy-v1-now.yaml'
 
+  /v1/risk-today:
+    $ref: './misc/paths/legacy-v1-risk-today.yaml'
+  /v1/risk:
+    $ref: './misc/paths/legacy-v1-risk.yaml'
   /v1/status:
     $ref: './misc/paths/legacy-v1-status.yaml'
+  /v2/other/mobile-contributors:
+    $ref: './misc/paths/v2-mobile-contributors.yaml'
 
   /v1/madeira/warnings:
     $ref: './warnings/paths/legacy-v1-madeira-warnings.yaml'

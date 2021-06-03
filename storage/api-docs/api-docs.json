@@ -9,47 +9,6 @@
         "version": "1.0"
     },
     "paths": {
-        "/v1/risk": {
-            "get": {
-                "tags": [
-                    "legacy"
-                ],
-                "summary": "RCM for concelho",
-                "description": "",
-                "operationId": "App\\Http\\Controllers\\LegacyController::risk",
-                "parameters": [
-                    {
-                        "name": "concelho",
-                        "in": "query",
-                        "description": "Concelho",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "default": {
-                        "description": "RCM for concelho"
-                    }
-                }
-            }
-        },
-        "/v1/risk-today": {
-            "get": {
-                "tags": [
-                    "legacy"
-                ],
-                "summary": "RCM for web JS",
-                "description": "",
-                "operationId": "App\\Http\\Controllers\\LegacyController::riskToday",
-                "responses": {
-                    "default": {
-                        "description": "RCM for web JS"
-                    }
-                }
-            }
-        },
         "/v2/other/mobile-contributors": {
             "get": {
                 "tags": [
