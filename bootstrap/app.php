@@ -64,7 +64,6 @@ $app->singleton(
 | the default version. You may register other files below as needed.
 |
 */
-$app->configure('swagger-lume');
 
 /*
 |--------------------------------------------------------------------------
@@ -95,8 +94,6 @@ $app->configure('swagger-lume');
 | totally optional, so you are not required to uncomment this line.
 |
 */
-
-$app->register(\SwaggerLume\ServiceProvider::class);
 
 // $app->register(App\Providers\AppServiceProvider::class);
 // $app->register(App\Providers\AuthServiceProvider::class);
