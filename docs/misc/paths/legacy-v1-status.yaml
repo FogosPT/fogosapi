@@ -1,0 +1,10 @@
+get:
+  operationId: getMiscStatus,
+  summary: Current status, in text
+  tags:
+    - Misc
+  responses:
+    200:
+      $ref: '../responses/legacy-status-text.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'
