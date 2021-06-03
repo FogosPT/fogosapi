@@ -8,7 +8,6 @@
         "php": "^8.0",
         "ext-curl": "*",
         "ext-json": "*",
-        "darkaonline/swagger-lume": "8.*",
         "flipbox/lumen-generator": "^8.2",
         "guzzlehttp/guzzle": "^7.0",
         "illuminate/redis": "^8.40",
