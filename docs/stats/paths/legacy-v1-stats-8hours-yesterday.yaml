@@ -1,0 +1,10 @@
+get:
+  operationId: getStats8HoursYesterday,
+  summary: Yesterday district stats for 00H to 08H, 08H to 16H and 16H to 24H
+  tags:
+    - Stats
+  responses:
+    200:
+      $ref: '../responses/legacy-stats-list.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'
