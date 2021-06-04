@@ -1,0 +1,198 @@
+# This is a basic workflow to help you get started with Actions
+
+name: build docker images
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - .docker
+  pull_request:
+    branches: [ master ]
+    paths:
+      - .docker
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build-fpm-prod:
+    runs-on: ubuntu-latest
+    env:
+      SERVICE: 8.0-fpm-prod
+    steps:
+      - uses: actions/checkout@v2
+      - name: Prepare tags
+        id: prep
+        run: |
+          DOCKER_IMAGE=ghcr.io/fogospt/fogosapi-php
+          VERSION=-edge
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=-${GITHUB_REF#refs/tags/}
+          elif [[ $GITHUB_REF == refs/heads/* ]]; then
+            VERSION=-$(echo ${GITHUB_REF#refs/heads/} | sed -r 's#/+#-#g')
+          elif [[ $GITHUB_REF == refs/pull/* ]]; then
+            VERSION=-pr-${{ github.event.number }}
+          fi
+          if [[ $VERSION == "-master" ]]; then
+            VERSION=""
+          fi
+          TAGS="${DOCKER_IMAGE}:${SERVICE}${VERSION}"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAGS="$TAGS,${DOCKER_IMAGE}:${SERVICE}-sha-${GITHUB_SHA::8}"
+          fi
+          echo ::set-output name=version::${SERVICE}${VERSION}
+          echo ::set-output name=tags::${TAGS}
+          echo ::set-output name=created::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@master
+    
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: .docker/php/80-fpm-prod
+          builder: ${{ steps.buildx.outputs.name }}
+          push: true
+          tags:  ${{ steps.prep.outputs.tags }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }} 
+
+  build-fpm-dev:
+    env:
+      SERVICE: 8.0-fpm-dev
+    needs: build-fpm-prod
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Prepare tags
+        id: prep
+        run: |
+          DOCKER_IMAGE=ghcr.io/fogospt/fogosapi-php
+          VERSION=-edge
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=-${GITHUB_REF#refs/tags/}
+          elif [[ $GITHUB_REF == refs/heads/* ]]; then
+            VERSION=-$(echo ${GITHUB_REF#refs/heads/} | sed -r 's#/+#-#g')
+          elif [[ $GITHUB_REF == refs/pull/* ]]; then
+            VERSION=-pr-${{ github.event.number }}
+          fi
+          if [[ $VERSION == "-master" ]]; then
+            VERSION=""
+          fi
+          TAGS="${DOCKER_IMAGE}:${SERVICE}${VERSION}"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAGS="$TAGS,${DOCKER_IMAGE}:${SERVICE}-sha-${GITHUB_SHA::8}"
+          fi
+          echo ::set-output name=version::${SERVICE}${VERSION}
+          echo ::set-output name=tags::${TAGS}
+          echo ::set-output name=created::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@master
+    
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: .docker/php/80-fpm-dev
+          builder: ${{ steps.buildx.outputs.name }}
+          push: true
+          tags:  ${{ steps.prep.outputs.tags }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }} 
+  build-scheduler:
+    needs: build-fpm-prod
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Prepare tags
+        id: prep
+        run: |
+          DOCKER_IMAGE=ghcr.io/fogospt/fogosapi-scheduler
+          VERSION=edge
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          elif [[ $GITHUB_REF == refs/heads/* ]]; then
+            VERSION=$(echo ${GITHUB_REF#refs/heads/} | sed -r 's#/+#-#g')
+          elif [[ $GITHUB_REF == refs/pull/* ]]; then
+            VERSION=pr-${{ github.event.number }}
+          fi
+          if [[ $VERSION == "master" ]]; then
+            VERSION=latest
+          fi
+          TAGS="${DOCKER_IMAGE}:${VERSION}"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAGS="$TAGS,${DOCKER_IMAGE}:sha-${GITHUB_SHA::8}"
+          fi
+          echo ::set-output name=version::${VERSION}
+          echo ::set-output name=tags::${TAGS}
+          echo ::set-output name=created::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@master
+    
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: .docker/scheduler
+          builder: ${{ steps.buildx.outputs.name }}
+          push: true
+          tags:  ${{ steps.prep.outputs.tags }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }} 
