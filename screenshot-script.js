@@ -9,7 +9,7 @@ const fullPage = argv.fullPage || false;
 const ip = argv.ip;
 
 var opt = {
-    host: 'chrome'
+    host: 'fogos.chrome'
 }
 
 CDP(opt, async function(client){
