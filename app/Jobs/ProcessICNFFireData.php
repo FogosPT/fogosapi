@@ -51,12 +51,12 @@ class ProcessICNFFireData extends Job
 
         $icnfData = [];
 
-        if (isset($data->AREATOTAL) && (int) $data->AREATOTAL !== 0) {
+        if (isset($data->AREATOTAL) && (float) $data->AREATOTAL !== 0) {
             $icnfData['burnArea'] = [
-                'povoamento' => (int) $data->AREAPOV,
-                'agricola' => (int) $data->AREAAGRIC,
-                'mato' => (int) $data->AREAMATO,
-                'total' => (int) $data->AREATOTAL,
+                'povoamento' => (float) $data->AREAPOV,
+                'agricola' => (float) $data->AREAAGRIC,
+                'mato' => (float) $data->AREAMATO,
+                'total' => (float) $data->AREATOTAL,
             ];
         }
 
@@ -68,28 +68,28 @@ class ProcessICNFFireData extends Job
             $icnfData['reacendimentos'] = (bool) $data->REACENDIMENTOS;
         }
 
-        if (isset($data->QUEIMADA) && (bool) $data->QUEIMADA) {
-            $icnfData['queimada'] = (bool) $data->QUEIMADA;
+        if (isset($data->QUEIMADA) && boolval((int)$data->QUEIMADA)) {
+            $icnfData['queimada'] = boolval((int)$data->QUEIMADA);
         }
 
-        if (isset($data->FALSOALARME) && (bool) $data->FALSOALARME) {
-            $icnfData['falsoalarme'] = (bool) $data->FALSOALARME;
+        if (isset($data->FALSOALARME) && boolval((int)$data->FALSOALARME)) {
+            $icnfData['falsoalarme'] = boolval((int)$data->FALSOALARME);
         }
 
-        if (isset($data->FOGACHO) && (bool) $data->FOGACHO) {
-            $icnfData['fogacho'] = (bool) $data->FOGACHO;
+        if (isset($data->FOGACHO) && boolval((int)$data->FOGACHO)) {
+            $icnfData['fogacho'] = boolval((int)$data->FOGACHO);
         }
 
-        if (isset($data->INCENDIO) && (bool) $data->INCENDIO) {
-            $icnfData['incendio'] = (bool) $data->INCENDIO;
+        if (isset($data->INCENDIO) && boolval((int)$data->INCENDIO)) {
+            $icnfData['incendio'] = boolval((int)$data->INCENDIO);
         }
 
-        if (isset($data->AGRICOLA) && (bool) $data->AGRICOLA) {
-            $icnfData['agricola'] = (bool) $data->AGRICOLA;
+        if (isset($data->AGRICOLA) && boolval((int)$data->AGRICOLA)) {
+            $icnfData['agricola'] = boolval((int)$data->AGRICOLA);
         }
 
-        if (isset($data->QUEIMA) && (bool) $data->QUEIMA) {
-            $icnfData['queima'] = (bool) $data->QUEIMA;
+        if (isset($data->QUEIMA) && boolval((int)$data->QUEIMA)) {
+            $icnfData['queima'] = boolval((int)$data->QUEIMA);
         }
 
         $notifyFonte = false;
