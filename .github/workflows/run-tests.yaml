@@ -48,4 +48,3 @@ jobs:
           DB_HOST: localhost
           DB_USERNAME: ''
           DB_PASSWORD: ''
-          DB_AUTHENTICATION_DATABASE: ''
