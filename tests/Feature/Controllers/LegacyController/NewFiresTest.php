@@ -54,4 +54,19 @@ class NewFiresTest extends TestCase
             ->response
             ->assertJsonCount(1, 'data');
     }
+
+    /** @test */
+    public function it_doesnt_lists_inactive_fire_incidents(): void
+    {
+        $this->withoutJobs();
+
+        $inactiveFireIncident = IncidentFactory::new()->fire()->create();
+
+        $this->json('GET', 'new/fires')
+            ->dontSeeJson([
+                'id' => $inactiveFireIncident->id,
+            ])
+            ->response
+            ->assertJsonCount(0, 'data');
+    }
 }
