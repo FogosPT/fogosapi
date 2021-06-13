@@ -32,6 +32,9 @@ jobs:
         uses: supercharge/mongodb-github-action@1.6.0
         with:
           mongodb-version: '4.4.6'
+        env:
+          MONGO_INITDB_ROOT_USERNAME: root
+          MONGO_INITDB_ROOT_PASSWORD: root
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -45,4 +48,6 @@ jobs:
       - name: Execute tests
         run: vendor/bin/phpunit --testdox --coverage-clover build/logs/clover.xml
         env:
-          DB_HOST: mongodb
+          DB_HOST: localhost
+          DB_USERNAME: root
+          DB_PASSWORD: root
