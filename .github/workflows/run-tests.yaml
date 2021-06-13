@@ -48,4 +48,8 @@ jobs:
       - name: Execute tests
         run: vendor/bin/phpunit --testdox --coverage-clover build/logs/clover.xml
         env:
+          APP_TIMEZONE: Europe/Lisbon
           DB_HOST: localhost
+          DB_USERNAME: 'root'
+          DB_PASSWORD: 'root'
+          DB_AUTHENTICATION_DATABASE: 'admin'
