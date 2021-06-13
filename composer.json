@@ -1,7 +1,10 @@
 {
     "name": "fogospt/api",
     "description": "FogosPT API.",
-    "keywords": ["fogospt", "api"],
+    "keywords": [
+        "fogospt",
+        "api"
+    ],
     "license": "Apache-2.0",
     "type": "project",
     "require": {
@@ -17,7 +20,8 @@
         "predis/predis": "^1.1",
         "smalot/pdfparser": "^1.0",
         "spatie/pdf-to-text": "^1.4",
-        "voku/portable-utf8": "^5.4"
+        "voku/portable-utf8": "^5.4",
+        "ext-mongodb": "*"
     },
     "require-dev": {
         "roave/security-advisories": "dev-latest",

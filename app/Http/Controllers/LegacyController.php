@@ -11,25 +11,24 @@ use App\Models\RCMForJS;
 use App\Models\Warning;
 use App\Models\WarningMadeira;
 use App\Models\WarningSite;
+use App\Resources\IncidentResource;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Laravel\Lumen\Routing\Controller;
 use voku\helper\UTF8;
 
+/** @deprecated */
 class LegacyController extends Controller
 {
-    public function newFires()
+    public function newFires(): JsonResponse
     {
-        $incidents = Incident::where('active', true)
-            ->where('isFire', true)
-            ->get();
+        $incidents = Incident::isActive()->isFire()->get();
 
-        $response = [
+        return new JsonResponse([
             'success' => true,
-            'data' => $incidents->toArray(),
-        ];
-
-        return response()->json($response);
+            'data' => IncidentResource::collection($incidents),
+        ]);
     }
 
     public function firesData(Request $request)
