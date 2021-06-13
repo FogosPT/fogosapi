@@ -37,7 +37,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          coverage: xdebug
+          coverage: pcov
 
       - name: Install dependencies
         run: composer install --no-interaction --no-suggest
@@ -48,3 +48,4 @@ jobs:
           DB_HOST: localhost
           DB_USERNAME: ''
           DB_PASSWORD: ''
+          DB_AUTHENTICATION_DATABASE: ''
