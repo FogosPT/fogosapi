@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Observers\IncidentObserver;
+use Jenssegers\Mongodb\Eloquent\Builder;
 use Jenssegers\Mongodb\Eloquent\Model;
 
 class Incident extends Model
@@ -17,6 +18,29 @@ class Incident extends Model
     public const UPDATED_AT = 'updated';
 
     protected $dates = ['dateTime', 'created', 'updated'];
+
+    protected $casts = [
+        'active' => 'boolean',
+        'aerial' => 'integer',
+        'coords' => 'boolean',
+        'dico' => 'string',
+        'disappear' => 'boolean',
+        'id' => 'string',
+        'important' => 'boolean',
+        'isFire' => 'boolean',
+        'isOtherFire' => 'boolean',
+        'isOtherIncident' => 'boolean',
+        'isTransporteFire' => 'boolean',
+        'isUrbanFire' => 'boolean',
+        'lat' => 'float',
+        'lng' => 'float',
+        'man' => 'integer',
+        'naturezaCode' => 'string',
+        'sadoId' => 'string',
+        'sharepointId' => 'integer',
+        'statusCode' => 'integer',
+        'terrain' => 'integer',
+    ];
 
     protected $fillable = [
         'id',
@@ -105,17 +129,48 @@ class Incident extends Model
     ];
 
     public const STATUS_COLORS = [
-        4 => 'FF6E02',
+        '  DESPACHO DE 1º ALERTA' => 'FF6E02', // sometimes we get this value...
+        ' Encerrada' => '6ABF59', // sometimes we get this value...
         3 => 'CE773C',
+        4 => 'FF6E02',
         5 => 'B81E1F',
         6 => 'B81E1F',
         7 => '65C4ED',
         8 => '8e7e7d',
-        ' Encerrada' => '6ABF59', // por vezes vem este valor..
-        '  DESPACHO DE 1º ALERTA' => 'FF6E02', // por vezes vem este valor..
         9 => '65C4ED',
         10 => '6ABF59',
         11 => 'BDBDBD',
         12 => 'BDBDBD',
     ];
+
+    public function scopeIsActive(Builder $query): Builder
+    {
+        return $query->where('active', true);
+    }
+
+    public function scopeIsFire(Builder $query): Builder
+    {
+        return $query->where('isFire', true);
+    }
+
+    public function getDateTimeObjectAttribute(): array
+    {
+        return [
+            'sec' => $this->dateTime->getTimestamp(),
+        ];
+    }
+
+    public function getCreatedObjectAttribute(): array
+    {
+        return [
+            'sec' => $this->created->getTimestamp(),
+        ];
+    }
+
+    public function getUpdatedObjectAttribute(): array
+    {
+        return [
+            'sec' => $this->updated->getTimestamp(),
+        ];
+    }
 }
