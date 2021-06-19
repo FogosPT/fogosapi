@@ -42,14 +42,13 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: pcov
 
+      - name: Duplicate example env file
+        run: cp .env.example .env
+
       - name: Install dependencies
         run: composer install --no-interaction --no-suggest
 
       - name: Execute tests
         run: vendor/bin/phpunit --testdox --coverage-clover build/logs/clover.xml
         env:
-          APP_TIMEZONE: Europe/Lisbon
           DB_HOST: localhost
-          DB_USERNAME: 'root'
-          DB_PASSWORD: 'root'
-          DB_AUTHENTICATION_DATABASE: 'admin'
