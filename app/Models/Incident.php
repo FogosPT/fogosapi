@@ -40,6 +40,8 @@ class Incident extends Model
         'sharepointId' => 'integer',
         'statusCode' => 'integer',
         'terrain' => 'integer',
+        'detailLocation' => 'string',
+        'kml' => 'string'
     ];
 
     protected $fillable = [

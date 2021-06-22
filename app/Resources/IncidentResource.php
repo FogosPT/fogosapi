@@ -34,6 +34,9 @@ class IncidentResource extends JsonResource
             'sharepointId' => $this->sharepointId,
             'extra' => $this->extra,
             'disappear' => $this->disappear,
+            'icnf' => $this->icnf,
+            'detailLocation' => $this->detailLocation,
+            'kml' => $this->kml,
             'created' => $this->createdObject,
             'updated' => $this->updatedObject,
         ];
