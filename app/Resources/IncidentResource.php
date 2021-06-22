@@ -16,6 +16,7 @@ class IncidentResource extends JsonResource
             'hour' => $this->hour,
             'location' => $this->location,
             'aerial' => $this->aerial,
+            'man' => $this->man,
             'terrain' => $this->terrain,
             'district' => $this->district,
             'concelho' => $this->concelho,
