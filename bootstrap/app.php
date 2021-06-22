@@ -30,6 +30,7 @@ $app->withFacades();
 $app->register(Jenssegers\Mongodb\MongodbServiceProvider::class);
 $app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
 $app->register(Illuminate\Redis\RedisServiceProvider::class);
+$app->register(Sentry\Laravel\ServiceProvider::class);
 
 $app->withEloquent();
 
