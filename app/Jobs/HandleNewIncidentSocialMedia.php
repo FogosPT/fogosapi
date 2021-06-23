@@ -36,17 +36,22 @@ class HandleNewIncidentSocialMedia extends Job
         $path = "/var/www/html/public/screenshots/{$name}.png";
 
         ScreenShotTool::takeScreenShot($url, $name);
-        $url = env('SCREENSHOT_DOMAIN');
-        $status = "⚠🔥 Novo incêndio em {$this->incident->location} - {$this->incident->natureza} https://{$url}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥⚠";
+
+        $domain = env('SOCIAL_LINK_DOMAIN');
+
+        $status = "⚠🔥 Novo incêndio em {$this->incident->location} - {$this->incident->natureza} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥⚠";
 
         $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
         $this->incident->lastTweetId = $lastTweetId;
         $this->incident->save();
 
+        $urlImage = "https://api-dev.fogos.pt/screenshots/{$name}.png";
+
+        FacebookTool::publishWithImage($status,$urlImage);
+        TelegramTool::publishImage($status, $path);
+
         ScreenShotTool::removeScreenShotFile($name);
 
-        FacebookTool::publish($status);
-        TelegramTool::publish($status);
     }
 }
