@@ -46,9 +46,12 @@ class HandleNewIncidentSocialMedia extends Job
         $this->incident->lastTweetId = $lastTweetId;
         $this->incident->save();
 
+        $urlImage = "https://api-dev.fogos.pt/screenshots/{$name}.png";
+
+        FacebookTool::publishWithImage($status,$urlImage);
+        TelegramTool::publishImage($status, $path);
+
         ScreenShotTool::removeScreenShotFile($name);
 
-        FacebookTool::publish($status);
-        TelegramTool::publish($status);
     }
 }
