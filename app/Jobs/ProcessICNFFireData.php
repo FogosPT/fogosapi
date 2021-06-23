@@ -143,19 +143,21 @@ class ProcessICNFFireData extends Job
 
         $status = false;
         $hashTag = HashTagTool::getHashTag($this->incident->concelho);
-        $url = env('SCREENSHOT_DOMAIN');
+
+        $domain = env('SOCIAL_LINK_DOMAIN');
+
 
         if ($notifyFonte && $notifyCausa) {
-            $status = "ℹ🔥 Fonte de Alerta:  {$this->incident->icnf['fontealerta']} - Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa}, {$this->incident->icnf->causa} https://{$url}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
+            $status = "ℹ🔥 Fonte de Alerta:  {$this->incident->icnf['fontealerta']} - Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa}, {$this->incident->icnf->causa} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥ℹ";
             $notification = "Fonte de Alerta:  {$this->incident->icnf['fontealerta']} - Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa}, {$this->incident->icnf->causa}";
         } else {
             if ($notifyCausa) {
-                $status = "ℹ🔥 Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa} https://{$url}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
+                $status = "ℹ🔥 Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥ℹ";
                 $notification = "Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa}";
             }
 
             if ($notifyFonte) {
-                $status = "ℹ🔥 Fonte de Alerta:  {$this->incident->icnf['fontealerta']} https://{$url}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
+                $status = "ℹ🔥 Fonte de Alerta:  {$this->incident->icnf['fontealerta']} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥ℹ";
                 $notification = "Fonte de Alerta:  {$this->incident->icnf['fontealerta']}";
             }
         }
@@ -182,7 +184,7 @@ class ProcessICNFFireData extends Job
 
         if ($notifyKML) {
             $this->updateIncident();
-            $status = "ℹ🔥 Area ardida disponível https://{$url}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
+            $status = "ℹ🔥 Area ardida disponível https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
 
             $url = "fogo/{$this->incident->id}/detalhe";
             $name = "screenshot-{$this->incident->id}";
