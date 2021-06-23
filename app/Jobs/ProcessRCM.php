@@ -488,7 +488,7 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
         $url = "{$whenUrl}";
         $name = 'risk';
         $path = "/var/www/html/public/screenshots/{$name}.png";
-        $urlImage = "https://api.fogos.pt/screenshots/{$name}.png";
+        $urlImage = "https://api-dev.fogos.pt/screenshots/{$name}.png";
 
         $status = date('d-m-Y')." Risco de incêndio para {$when} #FogosPT";
 

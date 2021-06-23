@@ -105,8 +105,10 @@ class ProcessICNFPDFData extends Job implements ShouldQueue, ShouldBeUnique
 
             if (!$kmlExists) {
                 $hashtag = HashTagTool::getHashTag($this->incident[0]->concelho);
-                $url = env('SCREENSHOT_DOMAIN');
-                $status = "ℹ Área queimada disponível https://{$url}/fogo/{$this->incident[0]->id}/detalhe {$hashtag} ℹ";
+
+                $domain = env('SOCIAL_LINK_DOMAIN');
+
+                $status = "ℹ Área queimada disponível https://{$domain}/fogo/{$this->incident[0]->id}/detalhe {$hashtag} ℹ";
                 $lastTweetId = TwitterTool::tweet($status, $this->incident[0]->lastTweetId);
                 $this->incident[0]->lastTweetId = $lastTweetId;
                 $this->incident[0]->save();
