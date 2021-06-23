@@ -55,7 +55,7 @@ class TestStuff extends Command
 
         //dispatch(new ProcessICNFPDF($incident, $url));
 
-        dispatch(new UpdateICNFData(7));
+        dispatch(new UpdateICNFData(4));
 
         //dispatch(new ProcessICNFPDF($incident, $url));
         //dispatch(new ProcessICNFPDFData());
