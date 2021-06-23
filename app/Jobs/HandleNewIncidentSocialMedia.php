@@ -49,7 +49,7 @@ class HandleNewIncidentSocialMedia extends Job
         $urlImage = "https://api-dev.fogos.pt/screenshots/{$name}.png";
 
         FacebookTool::publishWithImage($status,$urlImage);
-        TelegramTool::publishImage($status, $path);
+        TelegramTool::publish($status);
 
         ScreenShotTool::removeScreenShotFile($name);
 
