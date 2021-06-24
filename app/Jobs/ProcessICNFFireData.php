@@ -156,8 +156,8 @@ class ProcessICNFFireData extends Job
             }
 
             if ($notifyFonte) {
-                $status = "ℹ🔥 Fonte de Alerta:  {$this->incident->icnf['fontealerta']} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥ℹ";
-                $notification = "Fonte de Alerta:  {$this->incident->icnf['fontealerta']}";
+                $status = "ℹ🔥 Alerta via:  {$this->incident->icnf['fontealerta']} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥ℹ";
+                $notification = "Alerta via:  {$this->incident->icnf['fontealerta']}";
             }
         }
 
