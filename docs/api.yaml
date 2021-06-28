@@ -71,3 +71,8 @@ paths:
   /v1/stats/week:
     $ref: './stats/paths/legacy-v1-stats-week.yaml'
 
+  /v2/incidents/active:
+    $ref: './fires/paths/v2-active.yaml'
+  /v2/incidents/search:
+    $ref: './fires/paths/v2-search.yaml'
+

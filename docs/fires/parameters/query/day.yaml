@@ -1,0 +1,6 @@
+name: day
+in: query
+description: Day of search
+required: true
+schema:
+  type: date
