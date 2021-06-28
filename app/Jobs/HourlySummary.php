@@ -52,7 +52,7 @@ class HourlySummary extends Job
         $url = 'estatisticas?phantom=1';
         $name = 'stats';
         $path = "/var/www/html/public/screenshots/{$name}.png";
-        $urlImage = "https://api.fogos.pt/screenshots/{$name}.png";
+        $urlImage = "https://api-dev.fogos.pt/screenshots/{$name}.png";
 
         ScreenShotTool::takeScreenShot($url, $name, 1200, 450);
 

@@ -53,7 +53,8 @@ class FixKMLData extends Command
                 $res = $client->request('GET', $incident->kml, $options);
                 $kml = $res->getBody()->getContents();
 
-                $incident->kml = $kml;
+                var_dump($kml);
+                $incident->kml = utf8_encode($kml);
                 $incident->save();
             }
         }
