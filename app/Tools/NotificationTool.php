@@ -77,7 +77,7 @@ class NotificationTool
         return $topic;
     }
 
-    private static function buildLegacyImportantTopic($id)
+    private static function buildLegacyImportantTopic()
     {
         if (env('APP_ENV') === 'production') {
             $topic = "'web-important' in topics || 'mobile-android-important' in topics || 'mobile-ios-important' in topics";
@@ -119,6 +119,35 @@ class NotificationTool
             $topic = self::buildLegacyTopic($id);
             self::sendRequest($topic, $status, $location, $id);
         }
+    }
+
+    public static function sendImportant($status)
+    {
+        $topic = self::buildLegacyImportantTopic();
+
+        $title = 'Ocorrência Importante';
+
+        $headers = [
+            'allow_redirects' => true,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'key='.env('FIREBASE_KEY'),
+            ],
+            'json' => [
+                'condition' => $topic,
+                'notification' => [
+                    'title' => "Fogos.pt - {$title}",
+                    'body' => $status,
+                    'sound' => 'default',
+                    'click_action' => 'https://fogos.pt/fogo/{$id}',
+                    'icon' => 'https://fogos.pt/img/logo.svg',
+                ],
+            ],
+        ];
+
+        $client = new \GuzzleHttp\Client();
+        $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
     }
 
     public static function sendNewCosNotification(Incident $incident)

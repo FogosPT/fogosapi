@@ -60,6 +60,10 @@ class CheckImportantFireIncident extends Job implements ShouldQueue, ShouldBeUni
                     $incident->lastTweetId = $lastTweetId;
                     $incident->sentCheckImportant = true;
                     $incident->save();
+
+                    $notification = "ℹ🔥 Segundo os critérios da @ProteccaoCivil o incêndio em {$incident->location} é considerado importante 🔥ℹ";
+
+                    NotificationTool::sendImportant($notification);
                 }
             }
         }
