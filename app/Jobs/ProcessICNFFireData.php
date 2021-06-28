@@ -9,6 +9,7 @@ use App\Tools\NotificationTool;
 use App\Tools\ScreenShotTool;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
+use GuzzleHttp\Client;
 
 class ProcessICNFFireData extends Job
 {
@@ -51,6 +52,7 @@ class ProcessICNFFireData extends Job
 
         $icnfData = [];
 
+        $totalBurned = false;
         if (isset($data->AREATOTAL) && (float) $data->AREATOTAL !== 0) {
             $icnfData['burnArea'] = [
                 'povoamento' => (float) $data->AREAPOV,
@@ -58,6 +60,8 @@ class ProcessICNFFireData extends Job
                 'mato' => (float) $data->AREAMATO,
                 'total' => (float) $data->AREATOTAL,
             ];
+
+            $totalBurned = (float) $data->AREATOTAL;
         }
 
         if (isset($data->ALTITUDEMEDIA) && (float) $data->ALTITUDEMEDIA !== 0) {
@@ -118,17 +122,21 @@ class ProcessICNFFireData extends Job
             $icnfData['causafamilia'] = (string) $data->CAUSAFAMILIA;
         }
 
-        $kml = false;
+        $kmlUrl = false;
         if (isset($data->AREASFICHEIROS_GNR) && !empty((string) $data->AREASFICHEIROS_GNR)) {
-            $kml = (string) $data->AREASFICHEIROS_GNR;
+            $kmlUrl = (string) $data->AREASFICHEIROS_GNR;
         }
 
         if (isset($data->AREASFICHEIROS_GTF) && !empty((string) $data->AREASFICHEIROS_GTF)) {
-            $kml = (string) $data->AREASFICHEIROS_GTF;
+            $kmlUrl = (string) $data->AREASFICHEIROS_GTF;
         }
 
         $notifyKML = false;
-        if ($kml) {
+        if ($kmlUrl) {
+            $client = new \GuzzleHttp\Client();
+            $res = $client->request('GET', $kmlUrl, $options);
+            $kml = $res->getBody()->getContents();
+
             $this->incident->kml = $kml;
 
             if (isset($this->incident->kml) && $this->incident->kml !== $kml) {
@@ -169,12 +177,12 @@ class ProcessICNFFireData extends Job
             $name = "screenshot-{$this->incident->id}";
             $path = "/var/www/html/public/screenshots/{$name}.png";
 
-            ScreenShotTool::takeScreenShot($url, $name);
+            //ScreenShotTool::takeScreenShot($url, $name);
 
-            $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
+            //$lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
-            $this->incident->lastTweetId = $lastTweetId;
-            $this->incident->save();
+            //$this->incident->lastTweetId = $lastTweetId;
+            //$this->incident->save();
 
             //FacebookTool::publish($status);
             //TelegramTool::publish($status);
@@ -199,6 +207,26 @@ class ProcessICNFFireData extends Job
             FacebookTool::publish($status);
             TelegramTool::publishImage($status, $path);
             ScreenShotTool::removeScreenShotFile($name);
+        }
+
+        if($totalBurned){
+            $this->updateIncident();
+            $status = "ℹ🔥 Total de área ardida: {$totalBurned} ha https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
+
+            $url = "fogo/{$this->incident->id}/detalhe";
+            $name = "screenshot-{$this->incident->id}";
+            $path = "/var/www/html/public/screenshots/{$name}.png";
+
+//            ScreenShotTool::takeScreenShot($url, $name);
+//
+//            $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
+//
+//            $this->incident->lastTweetId = $lastTweetId;
+//            $this->incident->save();
+//
+//            FacebookTool::publish($status);
+//            TelegramTool::publishImage($status, $path);
+//            ScreenShotTool::removeScreenShotFile($name);
         }
     }
 

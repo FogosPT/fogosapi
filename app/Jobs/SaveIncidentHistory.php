@@ -115,7 +115,7 @@ class SaveIncidentHistory extends Job
                 NotificationTool::send($status, $this->incident->location, $this->incident->id);
             }
 
-            if ($this->incident->man > env('BIG_INCIDENT_MAN') && !$this->incident['notifyBig']) {
+            if ($this->incident->man >= env('BIG_INCIDENT_MAN') && !$this->incident['notifyBig']) {
                 $this->incident->notifyBig = true;
                 $this->incident->save();
 
