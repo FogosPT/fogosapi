@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\IncidentSearchRequest;
 use App\Models\Incident;
 use App\Resources\IncidentResource;
 use Carbon\Carbon;
@@ -15,12 +16,11 @@ class IncidentController extends Controller
     {
         $all = $request->get('all');
 
-        if($all){
-            $incidents = Incident::isActive()->get();
-
-        } else {
-            $incidents = Incident::isActive()->isFire()->get();
-        }
+        $incidents = Incident::isActive()
+                            ->when(!$all, function ($query, $all){
+                                return $query->isFire();
+                            })
+                            ->get();
 
         return new JsonResponse([
             'success' => true,
@@ -28,10 +28,11 @@ class IncidentController extends Controller
         ]);
     }
 
-    public function search(Request $request): JsonResponse
+    public function search(IncidentSearchRequest $request): JsonResponse
     {
         //@todo validate date format
         $day = $request->get('day');
+
         if(!$day){
             abort(422, 'day is required');
         }
@@ -42,21 +43,18 @@ class IncidentController extends Controller
 
         $incidents = Incident::whereBetween(
                 'dateTime',
-                array(
+                [
                     Carbon::parse($date->startOfDay()),
                     Carbon::parse($date->endOfDay())
-                )
-            );
-
-        if($concelho){
-            $incidents = $incidents->where('concelho', $concelho);
-        }
-
-        if(!$all){
-            $incidents = $incidents->isFire();
-        }
-
-        $incidents = $incidents->get();
+                ]
+            )
+            ->when($concelho, function($query, $concelho){
+                return $query->where('concelho', $concelho);
+            })
+            ->when(!$all, function ($query, $all){
+                return $query->isFire();
+            })
+            ->get();
 
         return new JsonResponse([
             'success' => true,
