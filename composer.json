@@ -12,6 +12,7 @@
         "ext-curl": "*",
         "ext-json": "*",
         "ext-mongodb": "*",
+        "anik/form-request": "^4.2",
         "flipbox/lumen-generator": "^8.2",
         "guzzlehttp/guzzle": "^7.0",
         "illuminate/redis": "^8.40",
