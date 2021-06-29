@@ -30,12 +30,7 @@ class IncidentController extends Controller
 
     public function search(IncidentSearchRequest $request): JsonResponse
     {
-        //@todo validate date format
         $day = $request->get('day');
-
-        if(!$day){
-            abort(422, 'day is required');
-        }
 
         $date = new Carbon($day);
         $all = $request->get('all');
