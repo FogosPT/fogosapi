@@ -10,7 +10,9 @@ RUN apt-get update && \
     cp /usr/share/i18n/SUPPORTED /etc/locale.gen && locale-gen && \
     apt-get clean && rm -rf /var/lib/apt/lists/* 
     
-RUN apt-get install -y --no-install-recommends \
+RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
     git \
     libmcrypt-dev \
     libzip-dev \
@@ -20,7 +22,6 @@ RUN apt-get install -y --no-install-recommends \
     openssh-client \
     unzip && \
     apt-get clean && rm -rf /var/lib/apt/lists/* && \
-    curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
     npm install --global chrome-remote-interface@0.30.0 minimist@1.2.5 
 
 RUN docker-php-ext-install \
