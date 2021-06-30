@@ -10,7 +10,7 @@ services:
           - api.fogos.test
 
   fogos.api:
-    image: docker.pkg.github.com/fogospt/fogosapi/php:8.0-fpm-dev
+    image: ghcr.io/fogospt/fogosapi-php:dev
     user: "1000:1000"
 
   fogos.mongodb:
