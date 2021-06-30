@@ -1,0 +1,10 @@
+get:
+  operationId: getAssetsAerial,
+  summary: List aerial assets active, in text
+  tags:
+    - Assets
+  responses:
+    200:
+      $ref: '../responses/legacy-assets-aerial-text.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

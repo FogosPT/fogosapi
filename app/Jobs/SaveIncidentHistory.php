@@ -54,12 +54,14 @@ class SaveIncidentHistory extends Job
         $hashTag = HashTagTool::getHashTag($this->incident->concelho);
         $date = date('H:i');
 
+        $domain = env('SOCIAL_LINK_DOMAIN');
+
         if (isset($last[0])) {
             $last = $last[0];
             if (isset($this->incident->cos, $last['cos']) && $this->incident->cos !== $last['cos']) {
                 NotificationTool::sendNewCosNotification($this->incident);
 
-                $status = "ℹ🔥{$date} - {$this->incident->location} - Novo Comandante de Operações de Socorro: {$this->incident->cos} - https://fogos.pt/fogo/{$this->incident->sadoId} {$hashTag} #FogosPT 🔥ℹ";
+                $status = "ℹ🔥{$date} - {$this->incident->location} - Novo Comandante de Operações de Socorro: {$this->incident->cos} - https://{$domain}/fogo/{$this->incident->sadoId} {$hashTag} #FogosPT 🔥ℹ";
 
                 $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
 
@@ -73,7 +75,7 @@ class SaveIncidentHistory extends Job
             if (isset($this->incident->POSITDescricao, $last['POSITDescricao']) && $this->incident->POSITDescricao !== $last['POSITDescricao']) {
                 NotificationTool::sendNewPOSITNotification($this->incident);
 
-                $status = "ℹ🔥{$date} - {$this->incident->location} - Novo Ponto de situação: {$this->incident->POSITDescricao} - https://fogos.pt/fogo/{$this->incident->sadoId} {$hashTag} #FogosPT 🔥ℹ";
+                $status = "ℹ🔥{$date} - {$this->incident->location} - Novo Ponto de situação: {$this->incident->POSITDescricao} - https://{$domain}/fogo/{$this->incident->sadoId} {$hashTag} #FogosPT 🔥ℹ";
 
                 $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
 
@@ -113,23 +115,27 @@ class SaveIncidentHistory extends Job
                 NotificationTool::send($status, $this->incident->location, $this->incident->id);
             }
 
-            if ($this->incident->man > env('BIG_INCIDENT_MAN') && !$this->incident['notifyBig']) {
+            if ($this->incident->man >= env('BIG_INCIDENT_MAN') && !$this->incident['notifyBig']) {
                 $this->incident->notifyBig = true;
                 $this->incident->save();
 
                 $date = date('H:i');
 
-                $status = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:\r\n 👩‍🚒 {$this->incident->man}\r\n 🚒 {$this->incident->terrain}\r\n 🚁 {$this->incident->aerial}\r\n https://fogos.pt/fogo/{$this->incident->id} {$hashTag} @vostpt #FogosPT 🚨ℹ";
+                $status = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:\r\n 👩‍🚒 {$this->incident->man}\r\n 🚒 {$this->incident->terrain}\r\n 🚁 {$this->incident->aerial}\r\n https://{$domain}/fogo/{$this->incident->id} {$hashTag} @vostpt #FogosPT 🚨ℹ";
 
                 $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
 
                 $this->incident->lastTweetId = $lastTweetId;
                 $this->incident->save();
 
-                $statusf = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:%0A  👩‍🚒 {$this->incident->man}%0A 🚒 {$this->incident->terrain}%0A 🚁 {$this->incident->aerial}%0A https://fogos.pt/fogo/{$this->incident->id} {$hashTag} #FogosPT 🚨ℹ";
+                $statusf = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:%0A  👩‍🚒 {$this->incident->man}%0A 🚒 {$this->incident->terrain}%0A 🚁 {$this->incident->aerial}%0A https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT 🚨ℹ";
                 FacebookTool::publish($statusf);
 
                 TelegramTool::publish($status);
+
+                $notification = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:%0A  👩‍🚒 {$this->incident->man} 🚒 {$this->incident->terrain} 🚁 {$this->incident->aerial} 🚨ℹ";
+
+                NotificationTool::sendImportant($notification);
             }
         } else {
             $this->saveNewIncidentHistory();

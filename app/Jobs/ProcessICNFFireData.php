@@ -9,6 +9,7 @@ use App\Tools\NotificationTool;
 use App\Tools\ScreenShotTool;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
+use GuzzleHttp\Client;
 
 class ProcessICNFFireData extends Job
 {
@@ -51,13 +52,16 @@ class ProcessICNFFireData extends Job
 
         $icnfData = [];
 
-        if (isset($data->AREATOTAL) && (int) $data->AREATOTAL !== 0) {
+        $totalBurned = false;
+        if (isset($data->AREATOTAL) && (float) $data->AREATOTAL !== 0) {
             $icnfData['burnArea'] = [
-                'povoamento' => (int) $data->AREAPOV,
-                'agricola' => (int) $data->AREAAGRIC,
-                'mato' => (int) $data->AREAMATO,
-                'total' => (int) $data->AREATOTAL,
+                'povoamento' => (float) $data->AREAPOV,
+                'agricola' => (float) $data->AREAAGRIC,
+                'mato' => (float) $data->AREAMATO,
+                'total' => (float) $data->AREATOTAL,
             ];
+
+            $totalBurned = (float) $data->AREATOTAL;
         }
 
         if (isset($data->ALTITUDEMEDIA) && (float) $data->ALTITUDEMEDIA !== 0) {
@@ -68,28 +72,28 @@ class ProcessICNFFireData extends Job
             $icnfData['reacendimentos'] = (bool) $data->REACENDIMENTOS;
         }
 
-        if (isset($data->QUEIMADA) && (bool) $data->QUEIMADA) {
-            $icnfData['queimada'] = (bool) $data->QUEIMADA;
+        if (isset($data->QUEIMADA) && boolval((int)$data->QUEIMADA)) {
+            $icnfData['queimada'] = boolval((int)$data->QUEIMADA);
         }
 
-        if (isset($data->FALSOALARME) && (bool) $data->FALSOALARME) {
-            $icnfData['falsoalarme'] = (bool) $data->FALSOALARME;
+        if (isset($data->FALSOALARME) && boolval((int)$data->FALSOALARME)) {
+            $icnfData['falsoalarme'] = boolval((int)$data->FALSOALARME);
         }
 
-        if (isset($data->FOGACHO) && (bool) $data->FOGACHO) {
-            $icnfData['fogacho'] = (bool) $data->FOGACHO;
+        if (isset($data->FOGACHO) && boolval((int)$data->FOGACHO)) {
+            $icnfData['fogacho'] = boolval((int)$data->FOGACHO);
         }
 
-        if (isset($data->INCENDIO) && (bool) $data->INCENDIO) {
-            $icnfData['incendio'] = (bool) $data->INCENDIO;
+        if (isset($data->INCENDIO) && boolval((int)$data->INCENDIO)) {
+            $icnfData['incendio'] = boolval((int)$data->INCENDIO);
         }
 
-        if (isset($data->AGRICOLA) && (bool) $data->AGRICOLA) {
-            $icnfData['agricola'] = (bool) $data->AGRICOLA;
+        if (isset($data->AGRICOLA) && boolval((int)$data->AGRICOLA)) {
+            $icnfData['agricola'] = boolval((int)$data->AGRICOLA);
         }
 
-        if (isset($data->QUEIMA) && (bool) $data->QUEIMA) {
-            $icnfData['queima'] = (bool) $data->QUEIMA;
+        if (isset($data->QUEIMA) && boolval((int)$data->QUEIMA)) {
+            $icnfData['queima'] = boolval((int)$data->QUEIMA);
         }
 
         $notifyFonte = false;
@@ -118,17 +122,21 @@ class ProcessICNFFireData extends Job
             $icnfData['causafamilia'] = (string) $data->CAUSAFAMILIA;
         }
 
-        $kml = false;
+        $kmlUrl = false;
         if (isset($data->AREASFICHEIROS_GNR) && !empty((string) $data->AREASFICHEIROS_GNR)) {
-            $kml = (string) $data->AREASFICHEIROS_GNR;
+            $kmlUrl = (string) $data->AREASFICHEIROS_GNR;
         }
 
         if (isset($data->AREASFICHEIROS_GTF) && !empty((string) $data->AREASFICHEIROS_GTF)) {
-            $kml = (string) $data->AREASFICHEIROS_GTF;
+            $kmlUrl = (string) $data->AREASFICHEIROS_GTF;
         }
 
         $notifyKML = false;
-        if ($kml) {
+        if ($kmlUrl) {
+            $client = new \GuzzleHttp\Client();
+            $res = $client->request('GET', $kmlUrl, $options);
+            $kml = $res->getBody()->getContents();
+
             $this->incident->kml = $kml;
 
             if (isset($this->incident->kml) && $this->incident->kml !== $kml) {
@@ -143,20 +151,21 @@ class ProcessICNFFireData extends Job
 
         $status = false;
         $hashTag = HashTagTool::getHashTag($this->incident->concelho);
-        $url = env('SCREENSHOT_DOMAIN');
+
+        $domain = env('SOCIAL_LINK_DOMAIN');
 
         if ($notifyFonte && $notifyCausa) {
-            $status = "ℹ🔥 Fonte de Alerta:  {$this->incident->icnf['fontealerta']} - Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa}, {$this->incident->icnf->causa} https://{$url}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
-            $notification = "Fonte de Alerta:  {$this->incident->icnf['fontealerta']} - Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa}, {$this->incident->icnf->causa}";
+            $status = "ℹ🔥 Alerta via: {$this->incident->icnf['fontealerta']} - Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa}, {$this->incident->icnf->causa} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥ℹ";
+            $notification = "Alerta via: {$this->incident->icnf['fontealerta']} - Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa}, {$this->incident->icnf->causa}";
         } else {
             if ($notifyCausa) {
-                $status = "ℹ🔥 Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa} https://{$url}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
+                $status = "ℹ🔥 Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥ℹ";
                 $notification = "Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa}";
             }
 
             if ($notifyFonte) {
-                $status = "ℹ🔥 Fonte de Alerta:  {$this->incident->icnf['fontealerta']} https://{$url}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
-                $notification = "Fonte de Alerta:  {$this->incident->icnf['fontealerta']}";
+                $status = "ℹ🔥 Alerta via:  {$this->incident->icnf['fontealerta']} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥ℹ";
+                $notification = "Alerta via:  {$this->incident->icnf['fontealerta']}";
             }
         }
 
@@ -175,14 +184,14 @@ class ProcessICNFFireData extends Job
             $this->incident->lastTweetId = $lastTweetId;
             $this->incident->save();
 
-            FacebookTool::publish($status);
+            //FacebookTool::publish($status);
             TelegramTool::publish($status);
             ScreenShotTool::removeScreenShotFile($name);
         }
 
         if ($notifyKML) {
             $this->updateIncident();
-            $status = "ℹ🔥 Area ardida disponível https://{$url}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
+            $status = "ℹ🔥 Area ardida disponível https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
 
             $url = "fogo/{$this->incident->id}/detalhe";
             $name = "screenshot-{$this->incident->id}";
@@ -195,7 +204,27 @@ class ProcessICNFFireData extends Job
             $this->incident->lastTweetId = $lastTweetId;
             $this->incident->save();
 
-            FacebookTool::publish($status);
+            //FacebookTool::publish($status);
+            TelegramTool::publishImage($status, $path);
+            ScreenShotTool::removeScreenShotFile($name);
+        }
+
+        if($totalBurned){
+            $this->updateIncident();
+            $status = "ℹ🔥 Total de área ardida: {$totalBurned} ha https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
+
+            $url = "fogo/{$this->incident->id}/detalhe";
+            $name = "screenshot-{$this->incident->id}";
+            $path = "/var/www/html/public/screenshots/{$name}.png";
+
+            ScreenShotTool::takeScreenShot($url, $name);
+
+            $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
+
+            $this->incident->lastTweetId = $lastTweetId;
+            $this->incident->save();
+
+            //FacebookTool::publish($status);
             TelegramTool::publishImage($status, $path);
             ScreenShotTool::removeScreenShotFile($name);
         }

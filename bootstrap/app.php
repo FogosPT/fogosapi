@@ -1,5 +1,7 @@
 <?php
 
+use Laravel\Lumen\Routing\Router;
+
 require_once __DIR__.'/../vendor/autoload.php';
 
 (new Laravel\Lumen\Bootstrap\LoadEnvironmentVariables(
@@ -28,6 +30,8 @@ $app->withFacades();
 $app->register(Jenssegers\Mongodb\MongodbServiceProvider::class);
 $app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
 $app->register(Illuminate\Redis\RedisServiceProvider::class);
+$app->register(Sentry\Laravel\ServiceProvider::class);
+$app->register(\Anik\Form\FormRequestServiceProvider::class);
 
 $app->withEloquent();
 
@@ -64,7 +68,6 @@ $app->singleton(
 | the default version. You may register other files below as needed.
 |
 */
-$app->configure('swagger-lume');
 
 /*
 |--------------------------------------------------------------------------
@@ -96,9 +99,7 @@ $app->configure('swagger-lume');
 |
 */
 
-$app->register(\SwaggerLume\ServiceProvider::class);
-
-// $app->register(App\Providers\AppServiceProvider::class);
+$app->register(App\Providers\AppServiceProvider::class);
 // $app->register(App\Providers\AuthServiceProvider::class);
 // $app->register(App\Providers\EventServiceProvider::class);
 
@@ -113,10 +114,6 @@ $app->register(\SwaggerLume\ServiceProvider::class);
 |
 */
 
-$app->router->group([
-    'namespace' => 'App\Http\Controllers',
-], function ($router) {
-    require __DIR__.'/../routes/web.php';
-});
+$app->router->group([], static fn (Router $router) => require __DIR__.'/../routes/web.php');
 
 return $app;

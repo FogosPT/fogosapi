@@ -1,0 +1,10 @@
+get:
+  operationId: getMiscRiskToday,
+  summary: RCM for web JS
+  tags:
+    - Misc
+  responses:
+    200:
+      $ref: '../responses/legacy-risk-list.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

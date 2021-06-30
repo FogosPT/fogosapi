@@ -53,11 +53,12 @@ services:
     entrypoint: [ "chromium-browser", "--headless", "--no-sandbox", "--remote-debugging-address=0.0.0.0", "--remote-debugging-port=9222" ]
     expose:
       - 9222
+    restart: always
     deploy:
       resources:
         limits:
           cpus: 2
-          memory: 2048M
+          memory: 4048M
     networks:
       - fogos
 

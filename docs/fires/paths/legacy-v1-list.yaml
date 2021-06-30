@@ -1,0 +1,14 @@
+get:
+  operationId: getFiresListForMunicipality,
+  summary: List fires for a given municipality
+  tags:
+    - Fires
+  parameters:
+    - $ref: '../parameters/query/concelho.yaml'
+  responses:
+    200:
+      $ref: '../responses/legacy-fires-list.yaml'
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

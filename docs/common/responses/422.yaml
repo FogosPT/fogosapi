@@ -1,0 +1,6 @@
+description: "Unprocessable Entity."
+content:
+  application/json:
+    schema:
+      title: 422 Unprocessable Entity
+      type: object

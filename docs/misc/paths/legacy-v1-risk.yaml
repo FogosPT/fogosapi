@@ -1,0 +1,12 @@
+get:
+  operationId: getMiscRisk,
+  summary: RCM for a municipality
+  tags:
+    - Misc
+  parameters:
+    - $ref: '../parameters/query/concelho.yaml'
+  responses:
+    200:
+      $ref: '../responses/legacy-risk-list.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'
