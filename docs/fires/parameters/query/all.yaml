@@ -1,0 +1,6 @@
+name: all
+in: query
+description: Set true if you want all incidents and not only wildfires
+required: false
+schema:
+  type: bool

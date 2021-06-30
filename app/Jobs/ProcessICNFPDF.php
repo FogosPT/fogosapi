@@ -72,11 +72,11 @@ class ProcessICNFPDF extends Job implements ShouldQueue
             ++$i;
         }
 
-        $url = env('SCREENSHOT_DOMAIN');
+        $domain = env('SOCIAL_LINK_DOMAIN');
 
         if (!$cbvExists) {
             $hashtag = HashTagTool::getHashTag($this->incident->concelho);
-            $status = "ℹ Incêndio na área de actuação própria do {$this->incident->cbv} https://{$url}/fogo/{$this->incident->id}/detalhe {$hashtag} ℹ";
+            $status = "ℹ Incêndio na área de actuação própria do {$this->incident->cbv} https://{$domain}/fogo/{$this->incident->id} {$hashtag} ℹ";
             $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
             $this->incident->lastTweetId = $lastTweetId;
             $this->incident->save();
@@ -84,7 +84,7 @@ class ProcessICNFPDF extends Job implements ShouldQueue
 
         if (!$alertFromExists) {
             $hashtag = HashTagTool::getHashTag($this->incident->concelho);
-            $status = "ℹ Alerta dado por {$this->incident->alertFrom} https://{$url}/fogo/{$this->incident->id}/detalhe {$hashtag} ℹ";
+            $status = "ℹ Alerta dado por {$this->incident->alertFrom} https://{$domain}/fogo/{$this->incident->id} {$hashtag} ℹ";
             $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
             $this->incident->lastTweetId = $lastTweetId;
             $this->incident->save();

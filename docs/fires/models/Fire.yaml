@@ -1,0 +1,88 @@
+title: Fire
+description: Fire model details
+type: object
+properties:
+  id:
+    type: string
+    description: Public identificator
+  coords:
+    type: boolean
+  dateTime:
+    type: object
+    properties:
+      sec:
+        type: integer
+        format: timestamp
+  date:
+    type: string
+    format: date
+  hour:
+    type: string
+    format: hour
+  location:
+    type: string
+  aerial:
+    type: integer
+  terrain:
+    type: integer
+  man:
+    type: integer
+  district:
+    type: string
+  concelho:
+    type: string
+  dico:
+    type: string
+  freguesia:
+    type: string
+  lat:
+    type: number
+  lng:
+    type: number
+  naturezaCode:
+    type: integer
+    enum:
+      - 3101
+      - 3103
+      - 3105
+      - 3107
+  natureza:
+    type: string
+  statusCode:
+    type: integer
+    enum:
+      - 3
+      - 4
+      - 5
+      - 6
+  statusColor:
+    type: string
+    description: Hexadecimal code representing colors, related with `statusCode` value.
+  status:
+    type: string
+  important:
+    type: boolean
+    default: false
+  active:
+    type: boolean
+  sadoId:
+    type: string
+  sharepointId:
+    type: integer
+  extra:
+    type: string
+  disappear:
+    type: boolean
+    default: false
+  created:
+    type: object
+    properties:
+      sec:
+        type: integer
+        format: timestamp
+  updated:
+    type: object
+    properties:
+      sec:
+        type: integer
+        format: timestamp

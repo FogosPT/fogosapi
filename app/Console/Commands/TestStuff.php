@@ -46,14 +46,16 @@ class TestStuff extends Command
     {
         //dispatch(new UpdateICNFData(0));
 
-        $incident = Incident::where('id', '2021010039521')->limit(1)->get()[0];
+        //$incident = Incident::where('id', '2021010039521')->limit(1)->get()[0];
 
-        //$incident = Incident::where('id', "2021020011392")->limit(1)->get()[0];
+        $incident = Incident::where('id', "2021110104306")->limit(1)->get()[0];
 
         dispatch(new ProcessICNFFireData($incident));
         //$url = env('ICNF_PDF_URL') . 'AT32185';
 
         //dispatch(new ProcessICNFPDF($incident, $url));
+
+        dispatch(new UpdateICNFData(11));
 
         //dispatch(new ProcessICNFPDF($incident, $url));
         //dispatch(new ProcessICNFPDFData());

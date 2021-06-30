@@ -1,0 +1,10 @@
+get:
+  operationId: getStatsWeek,
+  summary: List last 7 days total fires
+  tags:
+    - Stats
+  responses:
+    200:
+      $ref: '../responses/legacy-stats-list.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

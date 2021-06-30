@@ -1,0 +1,10 @@
+get:
+  operationId: getAssetsNowData,
+  summary: List last 50 total means history
+  tags:
+    - Assets
+  responses:
+    200:
+      $ref: '../responses/legacy-assets-history-list.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

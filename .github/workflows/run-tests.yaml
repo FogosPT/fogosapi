@@ -1,0 +1,54 @@
+name: "Run tests"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  testing:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        php: [8.0]
+
+    name: For PHP ${{ matrix.php }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Start MongoDB
+        uses: getong/mongo-action@v1.1
+        with:
+          mongo version: '4.4.6'
+          host port: 27017
+          mongo username: 'root'
+          mongo password: 'root'
+
+      - name: Cache dependencies
+        uses: actions/cache@v1
+        with:
+          path: ~/.composer/cache/files
+          key: dependencies-php-${{ matrix.php }}-composer-${{ hashFiles('composer.json') }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: pcov
+
+      - name: Duplicate example env file
+        run: cp .env.example .env
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-suggest
+
+      - name: Execute tests
+        run: vendor/bin/phpunit --testdox --coverage-clover build/logs/clover.xml
+        env:
+          DB_HOST: localhost

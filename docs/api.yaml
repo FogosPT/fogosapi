@@ -1,0 +1,78 @@
+openapi: 3.0.3
+
+info:
+  title: Fogos.pt
+  description: Fogos.pt Official API Documentation
+  version: 1.0.0
+  contact:
+    name: Tomahock
+    email: mail@fogos.pt
+
+servers:
+  - url: 'http://api.fogos.test'
+    description: Development Server
+  - url: 'https://api.fogos.pt'
+    description: Production Server
+
+tags:
+  - name: Assets
+  - name: Fires
+  - name: Misc
+  - name: Stats
+  - name: Warnings
+
+paths:
+  /v1/aerial:
+    $ref: './assets/paths/legacy-v1-aerial.yaml'
+  /v1/now/data:
+    $ref: './assets/paths/legacy-v1-now-data.yaml'
+
+  /fires:
+    $ref: './fires/paths/legacy-fires.yaml'
+  /fires/danger:
+    $ref: './fires/paths/legacy-fires-danger.yaml'
+  /fires/data:
+    $ref: './fires/paths/legacy-fires-data.yaml'
+  /fires/status:
+    $ref: './fires/paths/legacy-fires-status.yaml'
+  /new/fires:
+    $ref: './fires/paths/legacy-new-fires.yaml'
+  /v1/active:
+    $ref: './fires/paths/legacy-v1-active.yaml'
+  /v1/list:
+    $ref: './fires/paths/legacy-v1-list.yaml'
+  /v1/now:
+    $ref: './fires/paths/legacy-v1-now.yaml'
+
+  /v1/risk-today:
+    $ref: './misc/paths/legacy-v1-risk-today.yaml'
+  /v1/risk:
+    $ref: './misc/paths/legacy-v1-risk.yaml'
+  /v1/status:
+    $ref: './misc/paths/legacy-v1-status.yaml'
+  /v2/other/mobile-contributors:
+    $ref: './misc/paths/v2-mobile-contributors.yaml'
+
+  /v1/madeira/warnings:
+    $ref: './warnings/paths/legacy-v1-madeira-warnings.yaml'
+  /v1/warnings:
+    $ref: './warnings/paths/legacy-v1-warnings.yaml'
+  /v1/warnings/site:
+    $ref: './warnings/paths/legacy-v1-warnings-site.yaml'
+
+  /v1/stats:
+    $ref: './stats/paths/legacy-v1-stats.yaml'
+  /v1/stats/8hours:
+    $ref: './stats/paths/legacy-v1-stats-8hours.yaml'
+  /v1/stats/8hours/yesterday:
+    $ref: './stats/paths/legacy-v1-stats-8hours-yesterday.yaml'
+  /v1/stats/last-night:
+    $ref: './stats/paths/legacy-v1-stats-last-night.yaml'
+  /v1/stats/week:
+    $ref: './stats/paths/legacy-v1-stats-week.yaml'
+
+  /v2/incidents/active:
+    $ref: './fires/paths/v2-active.yaml'
+  /v2/incidents/search:
+    $ref: './fires/paths/v2-search.yaml'
+

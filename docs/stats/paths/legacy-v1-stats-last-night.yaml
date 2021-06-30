@@ -1,0 +1,10 @@
+get:
+  operationId: getStatsLastNight,
+  summary: Last night fires (21H to 09H today)
+  tags:
+    - Stats
+  responses:
+    200:
+      $ref: '../responses/legacy-stats-list.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

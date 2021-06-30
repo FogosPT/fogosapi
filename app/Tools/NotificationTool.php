@@ -4,6 +4,7 @@ namespace App\Tools;
 
 use App\Models\Incident;
 use App\Models\IncidentStatusHistory;
+use Illuminate\Support\Facades\Log;
 
 class NotificationTool
 {
@@ -77,13 +78,15 @@ class NotificationTool
         return $topic;
     }
 
-    private static function buildLegacyImportantTopic($id)
+    private static function buildLegacyImportantTopic()
     {
         if (env('APP_ENV') === 'production') {
             $topic = "'web-important' in topics || 'mobile-android-important' in topics || 'mobile-ios-important' in topics";
         } else {
             $topic = "'dev-web-important' in topics || 'dev-mobile-android-important' in topics || 'dev-mobile-ios-important' in topics";
         }
+
+        Log::debug('buildLegacyImportantTopic => ' . $topic);
 
         return $topic;
     }
@@ -119,6 +122,39 @@ class NotificationTool
             $topic = self::buildLegacyTopic($id);
             self::sendRequest($topic, $status, $location, $id);
         }
+    }
+
+    public static function sendImportant($status)
+    {
+        $topic = self::buildLegacyImportantTopic();
+
+        $title = 'Ocorrência Importante';
+
+        $headers = [
+            'allow_redirects' => true,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'key='.env('FIREBASE_KEY'),
+            ],
+            'json' => [
+                'condition' => $topic,
+                'notification' => [
+                    'title' => "Fogos.pt - {$title}",
+                    'body' => $status,
+                    'sound' => 'default',
+                    'click_action' => 'https://fogos.pt/fogo/{$id}',
+                    'icon' => 'https://fogos.pt/img/logo.svg',
+                ],
+            ],
+        ];
+
+        $client = new \GuzzleHttp\Client();
+        $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
+
+        Log::debug('sendImportant => ' . $status );
+        Log::debug($response->getStatusCode());
+        Log::debug($response->getBody());
     }
 
     public static function sendNewCosNotification(Incident $incident)

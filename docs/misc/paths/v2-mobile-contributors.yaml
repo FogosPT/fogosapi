@@ -1,0 +1,10 @@
+get:
+  operationId: getMiscMobileContributors,
+  summary: List of mobile contributors
+  tags:
+    - Misc
+  responses:
+    200:
+      $ref: '../responses/mobile-contributors-list.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'
