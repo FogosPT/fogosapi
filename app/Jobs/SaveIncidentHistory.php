@@ -132,6 +132,10 @@ class SaveIncidentHistory extends Job
                 FacebookTool::publish($statusf);
 
                 TelegramTool::publish($status);
+
+                $notification = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:%0A  👩‍🚒 {$this->incident->man} 🚒 {$this->incident->terrain} 🚁 {$this->incident->aerial} 🚨ℹ";
+
+                NotificationTool::sendImportant($notification);
             }
         } else {
             $this->saveNewIncidentHistory();
