@@ -46,4 +46,8 @@ $router->group(['prefix' => 'v2'], function () use ($router) {
     $router->group(['prefix' => 'other'], function () use ($router) {
         $router->get('mobile-contributors', '\App\Http\Controllers\OtherController@getMobileContributors');
     });
+    $router->group(['prefix' => 'incidents'], function () use ($router) {
+        $router->get('search', '\App\Http\Controllers\IncidentController@search');
+        $router->get('active', '\App\Http\Controllers\IncidentController@active');
+    });
 });

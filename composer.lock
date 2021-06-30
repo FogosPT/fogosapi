@@ -4,8 +4,57 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "88d50c9dd71fa410ae8126f1f656e4d1",
+    "content-hash": "379ac9f735eec72f063667b180155c16",
     "packages": [
+        {
+            "name": "anik/form-request",
+            "version": "v4.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ssi-anik/form-request.git",
+                "reference": "f3c0a1459a30bea673ebcba6813005b56e19d8d3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ssi-anik/form-request/zipball/f3c0a1459a30bea673ebcba6813005b56e19d8d3",
+                "reference": "f3c0a1459a30bea673ebcba6813005b56e19d8d3",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/support": "^6.0|^7.0|^8.0",
+                "php": "^7.2|^8.0"
+            },
+            "require-dev": {
+                "anik/testbench-lumen": "^1.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Anik\\Form\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Syed Sirajul Islam Anik",
+                    "email": "sirajul.islam.anik@gmail.com"
+                }
+            ],
+            "description": "Form request is a package for Lumen that lets developer validate form requests like Laravel does.",
+            "keywords": [
+                "form-request",
+                "lumen",
+                "validation"
+            ],
+            "support": {
+                "issues": "https://github.com/ssi-anik/form-request/issues",
+                "source": "https://github.com/ssi-anik/form-request/tree/v4.2"
+            },
+            "time": "2021-04-13T07:51:33+00:00"
+        },
         {
             "name": "brick/math",
             "version": "0.9.2",
