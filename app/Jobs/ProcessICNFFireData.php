@@ -177,15 +177,15 @@ class ProcessICNFFireData extends Job
             $name = "screenshot-{$this->incident->id}";
             $path = "/var/www/html/public/screenshots/{$name}.png";
 
-            //ScreenShotTool::takeScreenShot($url, $name);
+            ScreenShotTool::takeScreenShot($url, $name);
 
-            //$lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
+            $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
-            //$this->incident->lastTweetId = $lastTweetId;
-            //$this->incident->save();
+            $this->incident->lastTweetId = $lastTweetId;
+            $this->incident->save();
 
-            //FacebookTool::publish($status);
-            //TelegramTool::publish($status);
+            FacebookTool::publish($status);
+            TelegramTool::publish($status);
             ScreenShotTool::removeScreenShotFile($name);
         }
 
@@ -217,16 +217,16 @@ class ProcessICNFFireData extends Job
             $name = "screenshot-{$this->incident->id}";
             $path = "/var/www/html/public/screenshots/{$name}.png";
 
-//            ScreenShotTool::takeScreenShot($url, $name);
-//
-//            $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
-//
-//            $this->incident->lastTweetId = $lastTweetId;
-//            $this->incident->save();
-//
-//            FacebookTool::publish($status);
-//            TelegramTool::publishImage($status, $path);
-//            ScreenShotTool::removeScreenShotFile($name);
+            ScreenShotTool::takeScreenShot($url, $name);
+
+            $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
+
+            $this->incident->lastTweetId = $lastTweetId;
+            $this->incident->save();
+
+            FacebookTool::publish($status);
+            TelegramTool::publishImage($status, $path);
+            ScreenShotTool::removeScreenShotFile($name);
         }
     }
 
