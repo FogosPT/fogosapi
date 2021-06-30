@@ -1,5 +1,4 @@
-FROM ghcr.io/fogospt/fogosapi-php:8.0-fpm-prod
-
+FROM ghcr.io/fogospt/fogosapi-php
 LABEL description="Fogos.pt API Development PHP 8.0 image"
 LABEL org.opencontainers.image.source https://github.com/FogosPT/fogosapi
 ENV COMPOSER_HOME /tmp
