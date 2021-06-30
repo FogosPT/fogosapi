@@ -184,7 +184,7 @@ class ProcessICNFFireData extends Job
             $this->incident->lastTweetId = $lastTweetId;
             $this->incident->save();
 
-            FacebookTool::publish($status);
+            //FacebookTool::publish($status);
             TelegramTool::publish($status);
             ScreenShotTool::removeScreenShotFile($name);
         }
@@ -204,7 +204,7 @@ class ProcessICNFFireData extends Job
             $this->incident->lastTweetId = $lastTweetId;
             $this->incident->save();
 
-            FacebookTool::publish($status);
+            //FacebookTool::publish($status);
             TelegramTool::publishImage($status, $path);
             ScreenShotTool::removeScreenShotFile($name);
         }
@@ -224,7 +224,7 @@ class ProcessICNFFireData extends Job
             $this->incident->lastTweetId = $lastTweetId;
             $this->incident->save();
 
-            FacebookTool::publish($status);
+            //FacebookTool::publish($status);
             TelegramTool::publishImage($status, $path);
             ScreenShotTool::removeScreenShotFile($name);
         }
