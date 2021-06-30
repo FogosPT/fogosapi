@@ -4,6 +4,7 @@ namespace App\Tools;
 
 use App\Models\Incident;
 use App\Models\IncidentStatusHistory;
+use Illuminate\Support\Facades\Log;
 
 class NotificationTool
 {
@@ -85,6 +86,8 @@ class NotificationTool
             $topic = "'dev-web-important' in topics || 'dev-mobile-android-important' in topics || 'dev-mobile-ios-important' in topics";
         }
 
+        Log::debug('buildLegacyImportantTopic => ' . $topic);
+
         return $topic;
     }
 
@@ -147,7 +150,11 @@ class NotificationTool
         ];
 
         $client = new \GuzzleHttp\Client();
-        $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
+        $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
+
+        Log::debug('sendImportant => ' . $status );
+        Log::debug($response->getStatusCode());
+        Log::debug($response->getBody());
     }
 
     public static function sendNewCosNotification(Incident $incident)
