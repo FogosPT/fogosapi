@@ -1,0 +1,18 @@
+get:
+  operationId: getFiresActiveList,
+  summary: List active fires
+  tags:
+    - Fires
+  parameters:
+    - $ref: '../parameters/query/all.yaml'
+    - $ref: '../parameters/query/day.yaml'
+    - $ref: '../parameters/query/concelho.yaml'
+  responses:
+    200:
+      $ref: '../responses/legacy-fires-list.yaml'
+    404:
+      $ref: '../../common/responses/404.yaml'
+    422:
+      $ref: '../../common/responses/422.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'
