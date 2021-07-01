@@ -121,6 +121,8 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
             'natureza' => $data['Natureza']['NaturezaAbreviatura'],
             'statusCode' => $data['EstadoOcorrencia']['ID'],
             'statusColor' => Incident::STATUS_COLORS[$data['EstadoOcorrencia']['ID']],
+            'especieName' => $data['Natureza']['EspecieAbreviatura'],
+            'familiaName' => $data['Natureza']['FamiliaAbreviatura'],
             'status' => $data['EstadoOcorrencia']['Name'],
             'important' => false,
             'localidade' => $localidade,

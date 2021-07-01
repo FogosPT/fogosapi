@@ -25,6 +25,8 @@ class IncidentResource extends JsonResource
             'lng' => $this->lng,
             'naturezaCode' => $this->naturezaCode,
             'natureza' => $this->natureza,
+            'especieName' => $this->especieName,
+            'familiaName' => $this->familiaName,
             'statusCode' => $this->statusCode,
             'statusColor' => $this->statusColor,
             'status' => $this->status,
