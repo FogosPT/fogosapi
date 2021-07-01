@@ -41,7 +41,9 @@ class Incident extends Model
         'statusCode' => 'integer',
         'terrain' => 'integer',
         'detailLocation' => 'string',
-        'kml' => 'string'
+        'kml' => 'string',
+        'especieName' => 'string',
+        'familiaName' => 'string'
     ];
 
     protected $fillable = [
@@ -83,6 +85,8 @@ class Incident extends Model
         'coordinates',
         'kml',
         'icnf',
+        'especieName',
+        'familiaName'
     ];
 
     public const NATUREZA_CODE_FIRE = [
