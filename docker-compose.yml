@@ -16,7 +16,7 @@ services:
           - api.fogos.pt
 
   fogos.api:
-    image: ghcr.io/fogospt/fogosapi-php
+    image: ghcr.io/fogospt/fogosapi
     restart: unless-stopped
     volumes:
       - ./:/var/www/html
@@ -77,7 +77,7 @@ services:
     entrypoint: ./.docker/scheduler/entrypoint.sh
 
   fogos.worker:
-    image: ghcr.io/fogospt/fogosapi-php
+    image: ghcr.io/fogospt/fogosapi
     restart: unless-stopped
     volumes:
       - ./:/var/www/html

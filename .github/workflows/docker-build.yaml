@@ -29,7 +29,7 @@ jobs:
       - name: Prepare tags
         id: prep
         run: |
-          DOCKER_IMAGE=ghcr.io/fogospt/fogosapi-php
+          DOCKER_IMAGE=ghcr.io/fogospt/fogosapi
           VERSION=edge
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
