@@ -10,7 +10,7 @@ services:
           - api.fogos.test
 
   fogos.api:
-    image: ghcr.io/fogospt/fogosapi-php:dev
+    image: ghcr.io/fogospt/fogosapi:dev
     user: "1000:1000"
 
   fogos.mongodb:
