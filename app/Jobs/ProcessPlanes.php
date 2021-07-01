@@ -86,7 +86,7 @@ class ProcessPlanes extends Job
 
     private function sendSocialMedia($plane)
     {
-        $message = '🚁ℹ️ Meio aéreo do DECIR '.$plane[0].' - '.$plane[1].' - '.$plane[2].' com base em '.@$plane[5].' no radar! #FogosPT ℹ️🚁';
+        $message = '🚁ℹ️Meio aéreo do DECIR '.$plane[0].' - '.$plane[1].' - '.$plane[2].' com base em '.@$plane[5].' no radar! #FogosPT ℹ️🚁';
         TwitterTool::tweet($message);
         FacebookTool::publish($message);
         NotificationTool::sendPlaneNotification($message);

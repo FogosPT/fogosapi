@@ -116,7 +116,11 @@ class TwitterTool
 
             $r = json_decode($response);
 
-            $lastId = $r->id;
+            if($r->id){
+                $lastId = $r->id;
+            } else {
+                $lastId = null;
+            }
         }
 
         return $lastId;
