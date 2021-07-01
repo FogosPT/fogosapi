@@ -7,17 +7,23 @@ name: build docker images
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: 
+      - main
     paths:
       - .docker/**
+      - .github/workflows/docker-build.yml
   pull_request:
-    branches: [ main ]
+    branches:
+      - main 
     paths:
       - .docker/**
+      - .github/workflows/docker-build.yml
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build-fpm-prod:
     runs-on: ubuntu-latest
+    outputs:
+      prod-tag: ${{ steps.prep.outputs.version }}
     steps:
       - uses: actions/checkout@v2
       - name: Prepare tags
@@ -130,6 +136,8 @@ jobs:
           context: .docker/php/80-fpm-dev
           builder: ${{ steps.buildx.outputs.name }}
           push: true
+          build-args: |
+           PROD_TAG=${{needs.build-fpm-prod.outputs.prod-tag}} 
           tags:  ${{ steps.prep.outputs.tags }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
@@ -189,6 +197,8 @@ jobs:
           context: .docker/scheduler
           builder: ${{ steps.buildx.outputs.name }}
           push: true
+          build-args: |
+           PROD_TAG=${{needs.build-fpm-prod.outputs.prod-tag}} 
           tags:  ${{ steps.prep.outputs.tags }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
