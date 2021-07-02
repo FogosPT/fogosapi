@@ -33,7 +33,10 @@ class CheckImportantFireIncident extends Job implements ShouldQueue, ShouldBeUni
         $incidents = Incident::where('active', true)
             ->whereIn('statusCode', $activeStatus)
             ->where('isFire', true)
+            ->where('sentCheckImportant', false)
             ->get();
+
+
 
         foreach ($incidents as $incident) {
             if(isset($incidents->sentCheckImportant) && $incidents->sentCheckImportant){

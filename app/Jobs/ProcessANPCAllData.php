@@ -78,6 +78,7 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
     {
         $point = $this->prepareData($data);
         $incident = new Incident($point);
+        $incident->sentCheckImportant = false;
         $incident->save();
     }
 
