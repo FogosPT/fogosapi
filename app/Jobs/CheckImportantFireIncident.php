@@ -10,6 +10,7 @@ use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Support\Facades\Log;
 
 class CheckImportantFireIncident extends Job implements ShouldQueue, ShouldBeUnique
 {
@@ -30,19 +31,24 @@ class CheckImportantFireIncident extends Job implements ShouldQueue, ShouldBeUni
         ];
 
         $incidents = Incident::where('active', true)
-            ->whereIn('status', $activeStatus)
-            ->where('sentCheckImportant', false)
+            ->whereIn('statusCode', $activeStatus)
             ->where('isFire', true)
             ->get();
 
         foreach ($incidents as $incident) {
+            if(isset($incidents->sentCheckImportant) && $incidents->sentCheckImportant){
+                return;
+            }
+
             $totalAssets = $incident->aerial + $incident->terrain;
+
 
             if ($totalAssets > (int)env('IMPORTANT_INCIDENT_TOTAL_ASSETS')) {
                 $timestampLast = time();
                 $timestampLast = strtotime('-3 hours', $timestampLast);
 
                 if ($incident->dateTime->timestamp < $timestampLast) {
+
                     $hashTag = HashTagTool::getHashTag($incident->concelho);
 
                     $status = "ℹ🔥 Segundo os critérios da ANEPC o incêndio em {$incident->location} é considerado importante 🔥ℹ";
