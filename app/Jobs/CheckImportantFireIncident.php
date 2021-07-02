@@ -38,7 +38,7 @@ class CheckImportantFireIncident extends Job implements ShouldQueue, ShouldBeUni
         foreach ($incidents as $incident) {
             $totalAssets = $incident->aerial + $incident->terrain;
 
-            if ($totalAssets > env('IMPORTANT_INCIDENT_TOTAL_ASSETS')) {
+            if ($totalAssets > (int)env('IMPORTANT_INCIDENT_TOTAL_ASSETS')) {
                 $timestampLast = time();
                 $timestampLast = strtotime('-3 hours', $timestampLast);
 
