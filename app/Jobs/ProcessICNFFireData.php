@@ -10,6 +10,7 @@ use App\Tools\ScreenShotTool;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 
 class ProcessICNFFireData extends Job
 {
@@ -47,12 +48,14 @@ class ProcessICNFFireData extends Job
         $data = $xml->CODIGO;
 
         if (!$data) {
+            Log::debug('return');
             return;
         }
 
         $icnfData = [];
 
         $totalBurned = false;
+        $notifyBurn = false;
         if (isset($data->AREATOTAL) && (float) $data->AREATOTAL !== 0) {
             $icnfData['burnArea'] = [
                 'povoamento' => (float) $data->AREAPOV,
@@ -62,6 +65,10 @@ class ProcessICNFFireData extends Job
             ];
 
             $totalBurned = (float) $data->AREATOTAL;
+
+            if (!isset($this->incident->icnf['burnArea']) || (isset($this->incident->icnf['burnArea']) && $this->incident->icnf['burnArea']['total'] !==  $totalBurned)) {
+                $notifyBurn = true;
+            }
         }
 
         if (isset($data->ALTITUDEMEDIA) && (float) $data->ALTITUDEMEDIA !== 0) {
@@ -177,16 +184,16 @@ class ProcessICNFFireData extends Job
             $name = "screenshot-{$this->incident->id}";
             $path = "/var/www/html/public/screenshots/{$name}.png";
 
-//            ScreenShotTool::takeScreenShot($url, $name);
-//
-//            $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
-//
-//            $this->incident->lastTweetId = $lastTweetId;
-//            $this->incident->save();
-//
-//            //FacebookTool::publish($status);
-//            TelegramTool::publish($status);
-//            ScreenShotTool::removeScreenShotFile($name);
+            ScreenShotTool::takeScreenShot($url, $name);
+
+            $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
+
+            $this->incident->lastTweetId = $lastTweetId;
+            $this->incident->save();
+
+            //FacebookTool::publish($status);
+            TelegramTool::publish($status);
+            ScreenShotTool::removeScreenShotFile($name);
         }
 
         if ($notifyKML) {
@@ -197,19 +204,19 @@ class ProcessICNFFireData extends Job
             $name = "screenshot-{$this->incident->id}";
             $path = "/var/www/html/public/screenshots/{$name}.png";
 
-//            ScreenShotTool::takeScreenShot($url, $name);
-//
-//            $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
-//
-//            $this->incident->lastTweetId = $lastTweetId;
-//            $this->incident->save();
-//
-//            //FacebookTool::publish($status);
-//            TelegramTool::publishImage($status, $path);
-//            ScreenShotTool::removeScreenShotFile($name);
+            ScreenShotTool::takeScreenShot($url, $name);
+
+            $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
+
+            $this->incident->lastTweetId = $lastTweetId;
+            $this->incident->save();
+
+            //FacebookTool::publish($status);
+            TelegramTool::publishImage($status, $path);
+            ScreenShotTool::removeScreenShotFile($name);
         }
 
-        if($totalBurned){
+        if($notifyBurn){
             $this->updateIncident();
             $status = "ℹ🔥 Total de área ardida: {$totalBurned} ha https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
 
@@ -217,16 +224,16 @@ class ProcessICNFFireData extends Job
             $name = "screenshot-{$this->incident->id}";
             $path = "/var/www/html/public/screenshots/{$name}.png";
 
-//            ScreenShotTool::takeScreenShot($url, $name);
-//
-//            $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
-//
-//            $this->incident->lastTweetId = $lastTweetId;
-//            $this->incident->save();
-//
-//            //FacebookTool::publish($status);
-//            TelegramTool::publishImage($status, $path);
-//            ScreenShotTool::removeScreenShotFile($name);
+            ScreenShotTool::takeScreenShot($url, $name);
+
+            $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
+
+            $this->incident->lastTweetId = $lastTweetId;
+            $this->incident->save();
+
+            //FacebookTool::publish($status);
+            TelegramTool::publishImage($status, $path);
+            ScreenShotTool::removeScreenShotFile($name);
         }
     }
 
