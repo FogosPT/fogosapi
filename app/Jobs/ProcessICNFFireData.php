@@ -65,7 +65,7 @@ class ProcessICNFFireData extends Job
                 'total' => (float) $data->AREATOTAL->__toString(),
             ];
 
-            $totalBurned = (float) $data->AREATOTAL;
+            $totalBurned = (float) $data->AREATOTAL->__toString();
 
             Log::debug($totalBurned);
 
