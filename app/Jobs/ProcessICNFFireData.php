@@ -57,7 +57,7 @@ class ProcessICNFFireData extends Job
         $notifyBurn = false;
 
         Log::debug($data->AREATOTAL);
-        if (isset($data->AREATOTAL) && (float) $data->AREATOTAL !== 0) {
+        if (isset($data->AREATOTAL) && (float) $data->AREATOTAL->__toString() !== 0) {
             $icnfData['burnArea'] = [
                 'povoamento' => (float) $data->AREAPOV->__toString(),
                 'agricola' => (float) $data->AREAAGRIC->__toString(),
