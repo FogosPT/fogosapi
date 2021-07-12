@@ -48,7 +48,6 @@ class ProcessICNFFireData extends Job
         $data = $xml->CODIGO;
 
         if (!$data) {
-            Log::debug('return');
             return;
         }
 
@@ -67,7 +66,9 @@ class ProcessICNFFireData extends Job
             $totalBurned = (float) $data->AREATOTAL;
 
             if (!isset($this->incident->icnf['burnArea']) || (isset($this->incident->icnf['burnArea']) && $this->incident->icnf['burnArea']['total'] !==  $totalBurned)) {
-                $notifyBurn = true;
+                if($totalBurned !== 0){
+                    $notifyBurn = true;
+                }
             }
         }
 
