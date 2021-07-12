@@ -50,4 +50,10 @@ $router->group(['prefix' => 'v2'], function () use ($router) {
         $router->get('search', '\App\Http\Controllers\IncidentController@search');
         $router->get('active', '\App\Http\Controllers\IncidentController@active');
     });
+
+    $router->group(['prefix' => 'rcm'], function () use ($router) {
+        $router->get('today', '\App\Http\Controllers\RCMController@today');
+        $router->get('tomorrow', '\App\Http\Controllers\RCMController@tomorrow');
+        $router->get('after', '\App\Http\Controllers\RCMController@after');
+    });
 });
