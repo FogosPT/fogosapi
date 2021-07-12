@@ -167,8 +167,8 @@ class ProcessICNFFireData extends Job
             $notification = "Alerta via: {$this->incident->icnf['fontealerta']} - Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa}, {$this->incident->icnf->causa}";
         } else {
             if ($notifyCausa) {
-                $status = "ℹ🔥 Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥ℹ";
-                $notification = "Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa}";
+                $status = "ℹ🔥 Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf['tipocausa']} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥ℹ";
+                $notification = "Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf['tipocausa']}";
             }
 
             if ($notifyFonte) {
