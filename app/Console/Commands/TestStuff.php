@@ -45,13 +45,13 @@ class TestStuff extends Command
      */
     public function handle()
     {
-        //dispatch(new UpdateICNFData(2));
+        //dispatch(new UpdateICNFData(1));
 
         //dispatch(new CheckImportantFireIncident());
 
         //$incident = Incident::where('id', '2021010039521')->limit(1)->get()[0];
 
-        $incident = Incident::where('id', "2021050015647")->limit(1)->get()[0];
+        $incident = Incident::where('id', "2021110128965")->limit(1)->get()[0];
 
         dispatch(new ProcessICNFFireData($incident));
 
