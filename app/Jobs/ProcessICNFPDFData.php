@@ -87,7 +87,7 @@ class ProcessICNFPDFData extends Job implements ShouldQueue, ShouldBeUnique
                 $fileId = $match[1];
                 $url = env('ICNF_PDF_URL').$fileId;
 
-                dispatch(new ProcessICNFPDF($this->incident[0], $url));
+                dispatch((new ProcessICNFPDF($this->incident[0], $url))->onQueue('low'));
             }
         }
     }

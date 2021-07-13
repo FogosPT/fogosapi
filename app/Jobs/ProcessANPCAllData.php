@@ -50,8 +50,8 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
 
         $this->handleIncidents($incidents);
 
-        dispatch(new CheckIsActive($incidents));
-        dispatch(new CheckImportantFireIncident());
+        dispatch((new CheckIsActive($incidents))->onQueue('high'));
+        dispatch((new CheckImportantFireIncident())->onQueue('low'));
     }
 
     private function handleIncidents($data)

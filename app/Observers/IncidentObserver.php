@@ -16,18 +16,19 @@ trait IncidentObserver
 
         static::created(function ($incident) {
             //Log::info("Incident Created Event Fire observer: ".$incident);
-            dispatch(new SaveIncidentHistory($incident));
-            dispatch(new SaveIncidentStatusHistory($incident));
+            dispatch((new SaveIncidentHistory($incident))->onQueue('low'));
+            dispatch((new SaveIncidentStatusHistory($incident))->onQueue('low'));
+            dispatch((new SaveIncidentStatusHistory($incident))->onQueue('low'));
             if ($incident->isFire) {
-                dispatch(new HandleNewIncidentSocialMedia($incident));
-                dispatch(new ProcessICNFFireData($incident));
+                dispatch((new HandleNewIncidentSocialMedia($incident))->onQueue('high'));
+                dispatch((new ProcessICNFFireData($incident))->onQueue('low'));
             }
         });
 
         static::updated(function ($incident) {
             //Log::info("Incident updated Event Fire observer: ".$incident);
-            dispatch(new SaveIncidentStatusHistory($incident));
-            dispatch(new SaveIncidentHistory($incident));
+            dispatch((new SaveIncidentStatusHistory($incident))->onQueue('low'));
+            dispatch((new SaveIncidentHistory($incident))->onQueue('low'));
         });
 
         static::deleted(function ($incident) {
