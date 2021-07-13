@@ -53,11 +53,10 @@ class ProcessICNFFireData extends Job
 
         $icnfData = [];
 
-        $totalBurned = false;
         $notifyBurn = false;
+        $totalBurned = (float) $data->AREATOTAL->__toString();
 
-        Log::debug($data->AREATOTAL);
-        if (isset($data->AREATOTAL) && (float) $data->AREATOTAL->__toString() !== 0) {
+        if (isset($data->AREATOTAL) && $totalBurned !== 0.0) {
             $icnfData['burnArea'] = [
                 'povoamento' => (float) $data->AREAPOV->__toString(),
                 'agricola' => (float) $data->AREAAGRIC->__toString(),
@@ -65,14 +64,9 @@ class ProcessICNFFireData extends Job
                 'total' => (float) $data->AREATOTAL->__toString(),
             ];
 
-            $totalBurned = (float) $data->AREATOTAL->__toString();
-
-            Log::debug($totalBurned);
-
 
             if (!isset($this->incident->icnf['burnArea'])) {
                 if($totalBurned !== 0){
-                    Log::debug('xx');
                     $notifyBurn = true;
                 }
             }
@@ -160,7 +154,6 @@ class ProcessICNFFireData extends Job
 
         $this->incident->detailLocation = (string) $data->LOCAL;
 
-        Log::debug(json_encode($icnfData));
         $this->incident->icnf = $icnfData;
         $this->incident->save();
 
