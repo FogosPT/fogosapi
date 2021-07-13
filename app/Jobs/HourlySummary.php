@@ -50,7 +50,7 @@ class HourlySummary extends Job
         }
 
         $url = 'estatisticas?phantom=1';
-        $name = 'stats';
+        $name = 'stats' . rand(0,255);
         $path = "/var/www/html/public/screenshots/{$name}.png";
         $urlImage = "https://api-dev.fogos.pt/screenshots/{$name}.png";
 

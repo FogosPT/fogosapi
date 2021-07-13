@@ -182,7 +182,7 @@ class ProcessICNFFireData extends Job
             NotificationTool::send($notification, $this->incident->location, $this->incident->id);
 
             $url = "fogo/{$this->incident->id}/detalhe";
-            $name = "screenshot-{$this->incident->id}";
+            $name = "screenshot-{$this->incident->id}"  . rand(0,255);
             $path = "/var/www/html/public/screenshots/{$name}.png";
 
             ScreenShotTool::takeScreenShot($url, $name);
@@ -202,7 +202,7 @@ class ProcessICNFFireData extends Job
             $status = "ℹ🔥 Area ardida disponível https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
 
             $url = "fogo/{$this->incident->id}/detalhe";
-            $name = "screenshot-{$this->incident->id}";
+            $name = "screenshot-{$this->incident->id}" . rand(0,255);
             $path = "/var/www/html/public/screenshots/{$name}.png";
 
             ScreenShotTool::takeScreenShot($url, $name);
@@ -222,7 +222,7 @@ class ProcessICNFFireData extends Job
             $status = "ℹ🔥 Total de área ardida: {$totalBurned} ha https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
 
             $url = "fogo/{$this->incident->id}/detalhe";
-            $name = "screenshot-{$this->incident->id}";
+            $name = "screenshot-{$this->incident->id}"  . rand(0,255);
             $path = "/var/www/html/public/screenshots/{$name}.png";
 
             ScreenShotTool::takeScreenShot($url, $name);
