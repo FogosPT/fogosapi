@@ -4,7 +4,12 @@ namespace App\Jobs;
 
 use App\Models\Incident;
 use App\Models\IncidentStatusHistory;
+use App\Tools\FacebookTool;
+use App\Tools\HashTagTool;
 use App\Tools\NotificationTool;
+use App\Tools\ScreenShotTool;
+use App\Tools\TelegramTool;
+use App\Tools\TwitterTool;
 
 class SaveIncidentStatusHistory extends Job
 {
@@ -51,18 +56,56 @@ class SaveIncidentStatusHistory extends Job
             }
 
             if ($this->incident->status === 'Em Curso') {
-//                if ($last['status'] === 'Conclusão'){
-//                    return false;
-//                }
+                if ($last['status'] === 'Conclusão' || $last['status'] === 'Em Resolução'){
+                    $hashTag = HashTagTool::getHashTag($this->incident->concelho);
 
-//                if ($last['status'] === 'Em Resolução'){
-//                    return false;
-//                }
+                    $url = "fogo/{$this->incident->id}/detalhe";
+                    $name = "screenshot-{$this->incident->id}"  . rand(0,255);
+                    $path = "/var/www/html/public/screenshots/{$name}.png";
+
+                    ScreenShotTool::takeScreenShot($url, $name);
+
+                    $domain = env('SOCIAL_LINK_DOMAIN');
+
+                    $status = "⚠🔥 Reacendimento em {$this->incident->location} - {$this->incident->natureza} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥⚠";
+
+                    $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
+
+                    $this->incident->lastTweetId = $lastTweetId;
+                    $this->incident->save();
+
+                    $urlImage = "https://api-dev.fogos.pt/screenshots/{$name}.png";
+
+                    TelegramTool::publish($status);
+
+                    ScreenShotTool::removeScreenShotFile($name);
+                }
             }
 
-            if ($this->incident->status === 'Conclusão') {
-                if ($last['status'] === 'Em Resolução') {
-                    return;
+            if ($this->incident->status === 'Conclusão' || $this->incident->status === 'Em Resolução') {
+                if ($last['status'] === 'Em Curso') {
+                    $hashTag = HashTagTool::getHashTag($this->incident->concelho);
+
+                    $url = "fogo/{$this->incident->id}/detalhe";
+                    $name = "screenshot-{$this->incident->id}"  . rand(0,255);
+                    $path = "/var/www/html/public/screenshots/{$name}.png";
+
+                    ScreenShotTool::takeScreenShot($url, $name);
+
+                    $domain = env('SOCIAL_LINK_DOMAIN');
+
+                    $status = "⚠🔥 Dominado {$this->incident->location} - {$this->incident->natureza} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥⚠";
+
+                    $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
+
+                    $this->incident->lastTweetId = $lastTweetId;
+                    $this->incident->save();
+
+                    $urlImage = "https://api-dev.fogos.pt/screenshots/{$name}.png";
+
+                    TelegramTool::publish($status);
+
+                    ScreenShotTool::removeScreenShotFile($name);
                 }
             }
         }
