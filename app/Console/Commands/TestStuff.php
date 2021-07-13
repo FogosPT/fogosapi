@@ -51,7 +51,7 @@ class TestStuff extends Command
 
         //$incident = Incident::where('id', '2021010039521')->limit(1)->get()[0];
 
-        $incident = Incident::where('id', "2021110128965")->limit(1)->get()[0];
+        $incident = Incident::where('id', "2021130104232")->limit(1)->get()[0];
 
         dispatch(new ProcessICNFFireData($incident));
 
