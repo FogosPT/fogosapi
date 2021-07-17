@@ -486,7 +486,7 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
 
         $whenUrl = $this->tomorrow ? '?risk-tomorrow=1' : '?risk=1';
         $url = "{$whenUrl}";
-        $name = 'risk';
+        $name = 'risk' . rand(0,255);
         $path = "/var/www/html/public/screenshots/{$name}.png";
         $urlImage = "https://api-dev.fogos.pt/screenshots/{$name}.png";
 

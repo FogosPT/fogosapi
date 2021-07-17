@@ -72,52 +72,52 @@ class ProcessICNFFireData extends Job
             }
         }
 
-        if (isset($data->ALTITUDEMEDIA) && (float) $data->ALTITUDEMEDIA !== 0) {
-            $icnfData['altitude'] = (float) $data->ALTITUDEMEDIA;
+        if (isset($data->ALTITUDEMEDIA) && (float) $data->ALTITUDEMEDIA->__toString() !== 0) {
+            $icnfData['altitude'] = (float) $data->ALTITUDEMEDIA->__toString();
         }
 
-        if (isset($data->REACENDIMENTOS) && (bool) $data->REACENDIMENTOS) {
-            $icnfData['reacendimentos'] = (bool) $data->REACENDIMENTOS;
+        if (isset($data->REACENDIMENTOS) && (bool) $data->REACENDIMENTOS->__toString()) {
+            $icnfData['reacendimentos'] = (bool) $data->REACENDIMENTOS->__toString();
         }
 
-        if (isset($data->QUEIMADA) && boolval((int)$data->QUEIMADA)) {
-            $icnfData['queimada'] = boolval((int)$data->QUEIMADA);
+        if (isset($data->QUEIMADA) && boolval((int)$data->QUEIMADA->__toString())) {
+            $icnfData['queimada'] = boolval((int)$data->QUEIMADA->__toString());
         }
 
-        if (isset($data->FALSOALARME) && boolval((int)$data->FALSOALARME)) {
-            $icnfData['falsoalarme'] = boolval((int)$data->FALSOALARME);
+        if (isset($data->FALSOALARME) && boolval((int)$data->FALSOALARME->__toString())) {
+            $icnfData['falsoalarme'] = boolval((int)$data->FALSOALARME->__toString());
         }
 
-        if (isset($data->FOGACHO) && boolval((int)$data->FOGACHO)) {
-            $icnfData['fogacho'] = boolval((int)$data->FOGACHO);
+        if (isset($data->FOGACHO) && boolval((int)$data->FOGACHO->__toString())) {
+            $icnfData['fogacho'] = boolval((int)$data->FOGACHO->__toString());
         }
 
-        if (isset($data->INCENDIO) && boolval((int)$data->INCENDIO)) {
-            $icnfData['incendio'] = boolval((int)$data->INCENDIO);
+        if (isset($data->INCENDIO) && boolval((int)$data->INCENDIO->__toString())) {
+            $icnfData['incendio'] = boolval((int)$data->INCENDIO->__toString());
         }
 
-        if (isset($data->AGRICOLA) && boolval((int)$data->AGRICOLA)) {
-            $icnfData['agricola'] = boolval((int)$data->AGRICOLA);
+        if (isset($data->AGRICOLA) && boolval((int)$data->AGRICOLA->__toString())) {
+            $icnfData['agricola'] = boolval((int)$data->AGRICOLA->__toString());
         }
 
-        if (isset($data->QUEIMA) && boolval((int)$data->QUEIMA)) {
-            $icnfData['queima'] = boolval((int)$data->QUEIMA);
+        if (isset($data->QUEIMA) && boolval((int)$data->QUEIMA->__toString())) {
+            $icnfData['queima'] = boolval((int)$data->QUEIMA->__toString());
         }
 
         $notifyFonte = false;
-        if (isset($data->FONTEALERTA) && !empty((string) $data->FONTEALERTA)) {
+        if (isset($data->FONTEALERTA) && !empty((string) $data->FONTEALERTA->__toString())) {
             $icnfData['fontealerta'] = (string) $data->FONTEALERTA;
 
-            if (!isset($this->incident->icnf['fontealerta']) || (isset($this->incident->icnf['fontealerta']) && $this->incident->icnf['fontealerta'] !== (string) $data->FONTEALERTA)) {
+            if (!isset($this->incident->icnf['fontealerta']) || (isset($this->incident->icnf['fontealerta']) && $this->incident->icnf['fontealerta'] !== (string) $data->FONTEALERTA->__toString())) {
                 $notifyFonte = true;
             }
         }
 
         $notifyCausa = false;
-        if (isset($data->CAUSA) && !empty((string) $data->CAUSA)) {
+        if (isset($data->CAUSA) && !empty((string) $data->CAUSA->__toString())) {
             $icnfData['causa'] = (string) $data->CAUSA;
 
-            if (isset($this->incident->icnf['causa']) || (isset($this->incident->icnf['causa']) && $this->incident->icnf['causa'] !== (string) $data->CAUSA)) {
+            if (isset($this->incident->icnf['causa']) || (isset($this->incident->icnf['causa']) && $this->incident->icnf['causa'] !== (string) $data->CAUSA->__toString())) {
                 $notifyCausa = true;
             }
         }
@@ -182,7 +182,7 @@ class ProcessICNFFireData extends Job
             NotificationTool::send($notification, $this->incident->location, $this->incident->id);
 
             $url = "fogo/{$this->incident->id}/detalhe";
-            $name = "screenshot-{$this->incident->id}";
+            $name = "screenshot-{$this->incident->id}"  . rand(0,255);
             $path = "/var/www/html/public/screenshots/{$name}.png";
 
             ScreenShotTool::takeScreenShot($url, $name);
@@ -202,7 +202,7 @@ class ProcessICNFFireData extends Job
             $status = "ℹ🔥 Area ardida disponível https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
 
             $url = "fogo/{$this->incident->id}/detalhe";
-            $name = "screenshot-{$this->incident->id}";
+            $name = "screenshot-{$this->incident->id}" . rand(0,255);
             $path = "/var/www/html/public/screenshots/{$name}.png";
 
             ScreenShotTool::takeScreenShot($url, $name);
@@ -222,7 +222,7 @@ class ProcessICNFFireData extends Job
             $status = "ℹ🔥 Total de área ardida: {$totalBurned} ha https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥ℹ";
 
             $url = "fogo/{$this->incident->id}/detalhe";
-            $name = "screenshot-{$this->incident->id}";
+            $name = "screenshot-{$this->incident->id}"  . rand(0,255);
             $path = "/var/www/html/public/screenshots/{$name}.png";
 
             ScreenShotTool::takeScreenShot($url, $name);
@@ -233,7 +233,7 @@ class ProcessICNFFireData extends Job
             $this->incident->save();
 
             //FacebookTool::publish($status);
-            TelegramTool::publishImage($status, $path);
+            TelegramTool::publish($status);
             ScreenShotTool::removeScreenShotFile($name);
         }
     }
