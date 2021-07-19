@@ -4,9 +4,13 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - .docker/**
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - .docker/**
 
 jobs:
   testing:
