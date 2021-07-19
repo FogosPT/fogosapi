@@ -9,6 +9,8 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Laravel\Lumen\Routing\Controller;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class IncidentController extends Controller
 {
@@ -55,5 +57,20 @@ class IncidentController extends Controller
             'success' => true,
             'data' => IncidentResource::collection($incidents),
         ]);
+    }
+
+    public function kml(Request $request, $id)
+    {
+        $incident = Incident::where('id', $id)->get()[0];
+        $incidentkml = $incident->kml;
+
+        $response = new StreamedResponse();
+        $response->setCallBack(function () use($incidentkml) {
+            echo $incidentkml;
+        });
+        $disposition = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $incident->id . '.kml');
+        $response->headers->set('Content-Disposition', $disposition);
+
+        return $response;
     }
 }
