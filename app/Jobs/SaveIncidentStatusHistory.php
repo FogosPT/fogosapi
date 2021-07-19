@@ -57,7 +57,7 @@ class SaveIncidentStatusHistory extends Job
 
             if($this->incident->isFire){
                 if ($this->incident->status === 'Em Curso') {
-                    if ($last['status'] === 'Conclusão' || $last['status'] === 'Em Resolução'){
+                    if ($last['status'] === 'Conclusão' || $last['status'] === 'Em Resolução' || $last['status'] === 'Vigilância'){
                         $hashTag = HashTagTool::getHashTag($this->incident->concelho);
 
                         $url = "fogo/{$this->incident->id}/detalhe";
