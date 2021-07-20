@@ -33,25 +33,54 @@ class IncidentController extends Controller
     public function search(IncidentSearchRequest $request): JsonResponse
     {
         $day = $request->get('day');
+        $before = $request->get('before');
+        $after = $request->get('after');
 
-        $date = new Carbon($day);
+        if($day && ($before || $after)){
+            abort(422);
+        }
+
+        $timeRange = false;
+        if($after){
+            $after = new Carbon($after);
+            $before = $before ? new Carbon($before) : new Carbon();
+            $timeRange = [$after, $before];
+        }
+
+        if($day){
+            $day = new Carbon($day);
+        }
+
         $all = $request->get('all');
+        $extend = $request->get('extend');
         $concelho = $request->get('concelho');
 
-        $incidents = Incident::whereBetween(
+
+        $incidents = Incident::when($day, function($query, $day){
+            return $query->whereBetween(
+                'dateTime',
+
+                [
+                    Carbon::parse($day->startOfDay()),
+                    Carbon::parse($day->endOfDay())
+                ]
+            );
+        })->when($timeRange, function($query,$timeRange){
+            return $query->whereBetween(
                 'dateTime',
                 [
-                    Carbon::parse($date->startOfDay()),
-                    Carbon::parse($date->endOfDay())
+                    Carbon::parse($timeRange[0]->startOfDay()),
+                    Carbon::parse($timeRange[1]->endOfDay())
                 ]
-            )
-            ->when($concelho, function($query, $concelho){
-                return $query->where('concelho', $concelho);
-            })
-            ->when(!$all, function ($query, $all){
-                return $query->isFire();
-            })
-            ->get();
+            );
+        })->when($concelho, function($query, $concelho){
+            return $query->where('concelho', $concelho);
+        })->when(!$all, function ($query, $all){
+            return $query->isFire();
+        })->when($extend, function ($query, $extend){
+            return $query->with(['history', 'statusHistory']);
+        })
+        ->get();
 
         return new JsonResponse([
             'success' => true,

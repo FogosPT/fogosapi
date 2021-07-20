@@ -40,6 +40,8 @@ class IncidentResource extends JsonResource
             'icnf' => $this->icnf,
             'detailLocation' => $this->detailLocation,
             'kml' => $this->kml,
+            'history' => $this->history,
+            'statusHistory' => $this->statusHistory,
             'created' => $this->createdObject,
             'updated' => $this->updatedObject,
         ];

@@ -179,4 +179,15 @@ class Incident extends Model
             'sec' => $this->updated->getTimestamp(),
         ];
     }
+
+    public function history()
+    {
+        return $this->hasMany(IncidentHistory::class, 'id', 'id');
+    }
+
+    public function statusHistory()
+    {
+        return $this->hasMany(IncidentStatusHistory::class, 'id', 'id');
+
+    }
 }
