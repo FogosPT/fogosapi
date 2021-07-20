@@ -1,0 +1,5 @@
+name: after
+in: query
+description: After date
+schema:
+  type: date

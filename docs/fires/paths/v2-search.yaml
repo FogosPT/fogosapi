@@ -6,6 +6,9 @@ get:
   parameters:
     - $ref: '../parameters/query/all.yaml'
     - $ref: '../parameters/query/day.yaml'
+    - $ref: '../parameters/query/after.yaml'
+    - $ref: '../parameters/query/before.yaml'
+    - $ref: '../parameters/query/extend.yaml'
     - $ref: '../parameters/query/concelho.yaml'
   responses:
     200:
