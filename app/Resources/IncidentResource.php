@@ -9,6 +9,7 @@ class IncidentResource extends JsonResource
     public function toArray($request): array
     {
         return [
+            '_id' => ['$id' => $this->_id],
             'id' => $this->id,
             'coords' => $this->coords,
             'dateTime' => $this->dateTimeObject,
@@ -20,6 +21,7 @@ class IncidentResource extends JsonResource
             'terrain' => $this->terrain,
             'district' => $this->district,
             'concelho' => $this->concelho,
+            'freguesia' => $this->freguesia,
             'dico' => $this->dico,
             'lat' => $this->lat,
             'lng' => $this->lng,
