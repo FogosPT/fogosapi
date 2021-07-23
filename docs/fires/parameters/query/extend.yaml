@@ -1,0 +1,6 @@
+name: extend
+in: query
+description: Extend information. Includes status history and history
+required: false
+schema:
+  type: bool
