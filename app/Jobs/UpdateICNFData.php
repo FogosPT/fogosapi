@@ -82,7 +82,7 @@ class UpdateICNFData extends Job
             ->get();
 
         foreach ($incidents as $incident) {
-            dispatch(new ProcessICNFFireData($incident));
+            dispatch((new ProcessICNFFireData($incident))->onQueue('low'));
         }
     }
 }

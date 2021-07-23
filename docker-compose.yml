@@ -87,7 +87,7 @@ services:
       - fogos.mongodb
     networks:
       - fogos
-    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    command: php artisan queue:work --queue=high,default,low --sleep=3 --tries=3 --max-time=3600
 
 volumes:
   mongodb_data:
