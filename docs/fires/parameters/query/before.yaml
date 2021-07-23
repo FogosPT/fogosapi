@@ -1,0 +1,5 @@
+name: before
+in: query
+description: Before date
+schema:
+  type: date

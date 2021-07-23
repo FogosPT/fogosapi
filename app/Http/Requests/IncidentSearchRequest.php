@@ -26,7 +26,10 @@ class IncidentSearchRequest extends FormRequest
         return [
             'all' => 'boolean',
             'concelho' => 'string',
-            'day' => 'required|date_format:Y-m-d'
+            'day' => 'date_format:Y-m-d',
+            'before' => 'date_format:Y-m-d',
+            'after' => 'date_format:Y-m-d',
+            'extend' => 'boolean'
         ];
     }
 }
