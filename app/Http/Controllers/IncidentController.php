@@ -43,7 +43,7 @@ class IncidentController extends Controller
         $timeRange = false;
         if($after){
             $after = new Carbon($after);
-            $before = new Carbon($before)
+            $before = new Carbon($before);
             $timeRange = [$after, $before];
         }
 
