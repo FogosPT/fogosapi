@@ -58,4 +58,9 @@ $router->group(['prefix' => 'v2'], function () use ($router) {
         $router->get('tomorrow', '\App\Http\Controllers\RCMController@tomorrow');
         $router->get('after', '\App\Http\Controllers\RCMController@after');
     });
+
+    $router->group(['prefix' => 'planes'], function () use ($router) {
+        $router->get('{icao}', '\App\Http\Controllers\PlanesController@icao');
+
+    });
 });
