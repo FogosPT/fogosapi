@@ -14,7 +14,7 @@ class PlanesController extends Controller
         $plane = Planes::where('icao', $icao)
             ->where('lat', '<>', '')
             ->orderBy('created', 'desc')
-            ->limit(10)
+            ->limit(20)
             ->get();
 
         return new JsonResponse([
