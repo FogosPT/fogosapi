@@ -96,7 +96,7 @@ class ProcessICNFPDFData extends Job implements ShouldQueue, ShouldBeUnique
     {
         if (isset($this->incident[0])) {
             $kmlExists = false;
-            if (isset($this->incident[0]->kml) && $this->incident[0]->kml) {
+            if (isset($this->incident[0]->kml) && !empty($this->incident[0]->kml)) {
                 $kmlExists = true;
             }
 
