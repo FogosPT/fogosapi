@@ -99,7 +99,7 @@ class LegacyController extends Controller
         if (isset($incident[0])) {
             $response = [
                 'success' => true,
-                'data' => $incident[0],
+                'data' => IncidentResource::collection($incident),
             ];
 
             return response()->json($response);

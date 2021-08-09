@@ -149,7 +149,7 @@ class ProcessICNFFireData extends Job
 
             if (!isset($this->incident->kml)) {
                 $notifyKML = true;
-            } else if (isset($this->incident->kml) && $this->incident->kml !== $kml) {
+            } else if (isset($this->incident->kml) && empty($this->incident->kml)) {
                 $notifyKML = true;
             }
         }
