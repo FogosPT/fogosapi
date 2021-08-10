@@ -12,6 +12,7 @@ use App\Models\Warning;
 use App\Models\WarningMadeira;
 use App\Models\WarningSite;
 use App\Resources\IncidentResource;
+use App\Resources\V1\HistoryTotalResource;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -97,13 +98,13 @@ class LegacyController extends Controller
         $incident = Incident::where('id', $id)->get();
 
         if (isset($incident[0])) {
-            $response = [
+
+            return new JsonResponse([
                 'success' => true,
                 'data' => IncidentResource::collection($incident)[0],
-            ];
-
-            return response()->json($response);
+            ]);
         }
+
         abort(404);
     }
 
@@ -307,10 +308,11 @@ class LegacyController extends Controller
     public function nowData()
     {
         $data = HistoryTotal::orderBy('created', 'desc')->limit(50)->get();
-        $response = [
+
+        return new JsonResponse([
             'success' => true,
-            'data' => $data,
-        ];
+            'data' => HistoryTotalResource::collection($data),
+        ]);
 
         return response()->json($response);
     }
@@ -423,7 +425,7 @@ class LegacyController extends Controller
                 $cars += $f['terrain'];
             }
 
-            $status = "{$date} - {$total} Incêndios em curso combatidos por {$man} meios humanos, {$cars} meios terrestres e {$areal} meios aereos. https://fogos.pt #FogosPT";
+            $status = "{$date} - {$total} Incêndios em curso combatidos por {$man} operacionais, {$cars} meios terrestres e {$areal} meios aereos. https://fogos.pt #FogosPT";
         }
 
         $response = [
