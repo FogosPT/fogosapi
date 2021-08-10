@@ -20,4 +20,18 @@ class HistoryTotal extends Model
         'man',
         'total',
     ];
+
+    public function getCreatedObjectAttribute(): array
+    {
+        return [
+            'sec' => $this->created->getTimestamp(),
+        ];
+    }
+
+    public function getUpdatedObjectAttribute(): array
+    {
+        return [
+            'sec' => $this->updated->getTimestamp(),
+        ];
+    }
 }
