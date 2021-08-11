@@ -131,11 +131,11 @@ class ProcessICNFFireData extends Job
         }
 
         $kmlUrl = false;
-        if (isset($data->AREASFICHEIROS_GNR) && !empty((string) $data->AREASFICHEIROS_GNR)) {
+        if (isset($data->AREASFICHEIROS_GNR) && !empty((string) $data->AREASFICHEIROS_GNR->__toString())) {
             $kmlUrl = (string) $data->AREASFICHEIROS_GNR;
         }
 
-        if (isset($data->AREASFICHEIROS_GTF) && !empty((string) $data->AREASFICHEIROS_GTF)) {
+        if (isset($data->AREASFICHEIROS_GTF) && !empty((string) $data->AREASFICHEIROS_GTF->__toString())) {
             $kmlUrl = (string) $data->AREASFICHEIROS_GTF;
         }
 
@@ -145,13 +145,14 @@ class ProcessICNFFireData extends Job
             $res = $client->request('GET', $kmlUrl, $options);
             $kml = $res->getBody()->getContents();
 
-            $this->incident->kml = $kml;
 
             if (!isset($this->incident->kml)) {
                 $notifyKML = true;
             } else if (isset($this->incident->kml) && empty($this->incident->kml)) {
                 $notifyKML = true;
             }
+
+            $this->incident->kml = $kml;
         }
 
         $this->incident->detailLocation = (string) $data->LOCAL;
