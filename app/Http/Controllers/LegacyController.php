@@ -12,6 +12,7 @@ use App\Models\Warning;
 use App\Models\WarningMadeira;
 use App\Models\WarningSite;
 use App\Resources\IncidentResource;
+use App\Resources\V1\HistoryStatusResource;
 use App\Resources\V1\HistoryTotalResource;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -230,8 +231,7 @@ class LegacyController extends Controller
             $incident = $incident[0];
             $statusHistory = IncidentStatusHistory::where('id', $id)
                 ->orderBy('created', 'desc')
-                ->get()
-                ->toArray();
+                ->get();
 
             $first = [
                 'label' => $incident['date'].' '.$incident['hour'],
@@ -240,23 +240,14 @@ class LegacyController extends Controller
                 'created' => $incident['dateTime'],
             ];
 
-            $data = [];
-
-            foreach ($statusHistory as &$history) {
-                $label = date('d-m-Y H:i', strtotime($history['created']));
-                $history['label'] = $label;
-
-                $data[] = $history;
-            }
+            $data = HistoryStatusResource::collection($statusHistory)->toArray($request);
 
             $data[] = $first;
 
-            $response = [
+            return response()->json([
                 'success' => true,
-                'data' => $data,
-            ];
-
-            return response()->json($response);
+                'data' => $data
+            ]);
         }
         abort(404);
     }

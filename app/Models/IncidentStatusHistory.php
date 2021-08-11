@@ -22,4 +22,18 @@ class IncidentStatusHistory extends Model
         'statusCode',
         'location',
     ];
+
+    public function getCreatedObjectAttribute(): array
+    {
+        return [
+            'sec' => $this->created->getTimestamp(),
+        ];
+    }
+
+    public function getUpdatedObjectAttribute(): array
+    {
+        return [
+            'sec' => $this->updated->getTimestamp(),
+        ];
+    }
 }
