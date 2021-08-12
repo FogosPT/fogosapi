@@ -10,6 +10,7 @@ class HistoryTotalResource extends JsonResource
     {
         return [
             '_id' => ['$id' => $this->_id],
+            'id' => $this->id,
             'aerial' => $this->aerial,
             'man' => $this->man,
             'terrain' => $this->terrain,
