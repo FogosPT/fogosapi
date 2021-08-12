@@ -6,6 +6,7 @@ use App\Jobs\HandleNewIncidentSocialMedia;
 use App\Jobs\ProcessICNFFireData;
 use App\Jobs\SaveIncidentHistory;
 use App\Jobs\SaveIncidentStatusHistory;
+use App\Tools\DiscordTool;
 use Illuminate\Support\Facades\Log;
 
 trait IncidentObserver
@@ -21,6 +22,8 @@ trait IncidentObserver
             if ($incident->isFire) {
                 dispatch(new HandleNewIncidentSocialMedia($incident));
                 dispatch(new ProcessICNFFireData($incident));
+            } elseif ( $incident->naturezaCode === '2409' ) {
+                DiscordTool::postAero("🚨 Novo acidente aereo em {$incident->location} 🚨");
             }
         });
 
