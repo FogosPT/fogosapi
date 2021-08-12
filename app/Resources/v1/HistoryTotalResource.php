@@ -16,6 +16,7 @@ class HistoryTotalResource extends JsonResource
             'total' => $this->total,
             'created' => $this->createdObject,
             'updated' => $this->updatedObject,
+            'label' => date('H:i', $this->created->getTimestamp())
         ];
     }
 }

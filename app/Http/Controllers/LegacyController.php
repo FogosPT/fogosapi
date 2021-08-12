@@ -207,10 +207,18 @@ class LegacyController extends Controller
                 ->orderBy('created', 'desc')
                 ->get();
 
+
             if (isset($rcm[0])) {
+                $rcm = $rcm[0];
+                $created = $rcm->created;
+                $updated = $rcm->updated;
+                $rcm = $rcm->toArray();
+                $rcm['created'] = ['sec' => $created->getTimestamp()];
+                $rcm['updated'] = ['sec' => $updated->getTimestamp()];
+
                 $response = [
                     'success' => true,
-                    'data' => [$rcm[0]],
+                    'data' => [$rcm],
                 ];
 
                 return response()->json($response);
