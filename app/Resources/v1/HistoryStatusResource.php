@@ -12,6 +12,7 @@ class HistoryStatusResource extends JsonResource
     {
         return [
             '_id' => ['$id' => $this->_id],
+            'id' => $this->id,
             'sharepointId' => $this->sharepointId,
             'location' => $this->location,
             'status' => $this->status,
