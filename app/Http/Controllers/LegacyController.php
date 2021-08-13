@@ -245,7 +245,7 @@ class LegacyController extends Controller
                 'label' => $incident['date'].' '.$incident['hour'],
                 'status' => 'Início',
                 'statusCode' => 99,
-                'created' => $incident['dateTime'],
+                'created' =>  date('d-m-Y H:i', strtotime($incident['dateTime'])),
             ];
 
             $data = HistoryStatusResource::collection($statusHistory)->toArray($request);
