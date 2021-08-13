@@ -28,6 +28,8 @@ class SaveIncidentStatusHistory extends Job
      */
     public function handle()
     {
+        $this->updateIncident();
+
         $last = IncidentStatusHistory::where('id', $this->incident->id)
             ->orderBy('created', 'desc')
             ->limit(1)
@@ -117,5 +119,10 @@ class SaveIncidentStatusHistory extends Job
         $incidentStatusHistory->save();
 
         NotificationTool::sendNewStatusNotification($this->incident, $incidentStatusHistory);
+    }
+
+    private function updateIncident()
+    {
+        $this->incident = Incident::where('id', $this->incident->id)->get()[0];
     }
 }

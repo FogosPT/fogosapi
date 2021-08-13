@@ -46,6 +46,8 @@ class SaveIncidentHistory extends Job
      */
     public function handle()
     {
+        $this->updateIncident();
+
         $last = IncidentHistory::where('id', $this->incident->id)
             ->orderBy('created', 'desc')
             ->limit(1)
@@ -140,5 +142,10 @@ class SaveIncidentHistory extends Job
         } else {
             $this->saveNewIncidentHistory();
         }
+    }
+
+    private function updateIncident()
+    {
+        $this->incident = Incident::where('id', $this->incident->id)->get()[0];
     }
 }
