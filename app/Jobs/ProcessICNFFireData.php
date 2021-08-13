@@ -222,22 +222,26 @@ class ProcessICNFFireData extends Job
 
         if($notifyBurn){
             $this->updateIncident();
-            $status = "ℹ Total de área ardida: {$totalBurned} ha https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  ℹ";
 
-            $url = "fogo/{$this->incident->id}/detalhe";
-            $name = "screenshot-{$this->incident->id}"  . rand(0,255);
-            $path = "/var/www/html/public/screenshots/{$name}.png";
+            if($totalBurned > 0.5){
+                $status = "ℹ Total de área ardida: {$totalBurned} ha https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  ℹ";
 
-            ScreenShotTool::takeScreenShot($url, $name);
+                $url = "fogo/{$this->incident->id}/detalhe";
+                $name = "screenshot-{$this->incident->id}"  . rand(0,255);
+                $path = "/var/www/html/public/screenshots/{$name}.png";
 
-            $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
+                ScreenShotTool::takeScreenShot($url, $name);
 
-            $this->incident->lastTweetId = $lastTweetId;
-            $this->incident->save();
+                $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
-            //FacebookTool::publish($status);
-            TelegramTool::publish($status);
-            ScreenShotTool::removeScreenShotFile($name);
+                $this->incident->lastTweetId = $lastTweetId;
+                $this->incident->save();
+
+                //FacebookTool::publish($status);
+                TelegramTool::publish($status);
+                ScreenShotTool::removeScreenShotFile($name);
+            }
+
         }
     }
 
