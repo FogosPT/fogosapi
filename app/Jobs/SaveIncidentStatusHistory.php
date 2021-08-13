@@ -68,7 +68,7 @@ class SaveIncidentStatusHistory extends Job
 
                         $domain = env('SOCIAL_LINK_DOMAIN');
 
-                        $status = "⚠🔥 Reacendimento em {$this->incident->location} - {$this->incident->natureza} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥⚠";
+                        $status = "🚨🔥 Reacendimento em {$this->incident->location} - {$this->incident->natureza} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥🚨";
 
                         $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
