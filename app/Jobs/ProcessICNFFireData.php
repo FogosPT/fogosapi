@@ -38,10 +38,16 @@ class ProcessICNFFireData extends Job
             'verify' => false,
         ];
 
-        $client = new \GuzzleHttp\Client();
-        $res = $client->request('GET', $url, $options);
+        try{
+            $client = new \GuzzleHttp\Client();
+            $res = $client->request('GET', $url, $options);
 
-        $data = $res->getBody()->getContents();
+            $data = $res->getBody()->getContents();
+        }
+        catch(\GuzzleHttp\Exception\RequestException $e) {
+            Log::error('Error occurred in request.', ['url' => $url, 'statusCode' => $e->getCode(), 'message' => $e->getMessage()]);
+            return;
+        }
 
         $xml = new \SimpleXMLElement($data);
 
