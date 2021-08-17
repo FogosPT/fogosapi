@@ -129,7 +129,6 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
             'active' => true,
             'sadoId' => $data['Numero'],
             'sharepointId' => $data['ID'],
-            'extra' => '',
             'disappear' => false,
             'isFire' => $isFire,
             'isUrbanFire' => $isUrbanFire,
