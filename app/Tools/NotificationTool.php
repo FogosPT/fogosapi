@@ -38,9 +38,9 @@ class NotificationTool
         $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
     }
 
-    private static function sendCustomTitleRequest($topic, $status, $title)
+    private static function sendCustomTitleRequest($topic, $status, $title, $forceEnable = false)
     {
-        if (!env('NOTIFICATIONS_ENABLE')) {
+        if (!env('NOTIFICATIONS_ENABLE') && !$forceEnable) {
             return;
         }
 
@@ -57,11 +57,14 @@ class NotificationTool
                     'title' => "Fogos.pt - {$title}",
                     'body' => $status,
                     'sound' => 'default',
-                    'click_action' => 'https://fogos.pt/fogo/{$id}',
                     'icon' => 'https://fogos.pt/img/logo.svg',
                 ],
             ],
         ];
+
+        Log::debug('sendCustomTitleRequest => ' . $topic);
+        Log::debug('sendCustomTitleRequest => ' . $status);
+
 
         $client = new \GuzzleHttp\Client();
         $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
@@ -243,6 +246,6 @@ class NotificationTool
     {
         $topic = "'mobile-android-planes' in topics || 'mobile-ios-planes' in topics";
         $title = 'Fogos.pt - Meio Aéreo';
-        self::sendCustomTitleRequest($topic, $status, $title);
+        self::sendCustomTitleRequest($topic, $status, $title,true);
     }
 }
