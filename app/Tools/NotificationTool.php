@@ -61,6 +61,16 @@ class NotificationTool
                 ],
                 'data' => [
                     'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                ],
+                'android' => [
+                    'priority' => 'high'
+                ],
+                'apns' => [
+                    [
+                        'headers' => [
+                            'apns-priority' => "5"
+                        ]
+                    ]
                 ]
             ],
 
