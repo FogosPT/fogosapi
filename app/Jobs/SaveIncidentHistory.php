@@ -121,7 +121,7 @@ class SaveIncidentHistory extends Job
                 $this->incident->notifyBig = true;
                 $this->incident->save();
 
-                if($this->isFire){
+                if($this->incident->isFire){
                     $date = date('H:i');
 
                     $status = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:\r\n 👩‍🚒 {$this->incident->man}\r\n 🚒 {$this->incident->terrain}\r\n 🚁 {$this->incident->aerial}\r\n https://{$domain}/fogo/{$this->incident->id} {$hashTag} @vostpt #FogosPT 🚨ℹ";
