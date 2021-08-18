@@ -162,7 +162,7 @@ class NotificationTool
                 'condition' => $topic,
                 'notification' => [
                     'title' => "Fogos.pt - {$title}",
-                    'body' => $_GET['body'],
+                    'body' => $status,
                     'sound' => 'default',
                     'icon' => 'https://fogos.pt/img/logo.svg',
                 ],
