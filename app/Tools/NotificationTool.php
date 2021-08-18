@@ -57,6 +57,7 @@ class NotificationTool
                     'title' => "Fogos.pt - {$title}",
                     'body' => $status,
                     'sound' => 'default',
+                    'click_action' => 'https://fogos.pt/avisos',
                     'icon' => 'https://fogos.pt/img/logo.svg',
                 ],
             ],
@@ -67,7 +68,11 @@ class NotificationTool
 
 
         $client = new \GuzzleHttp\Client();
-        $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
+        $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
+
+        Log::debug('sendImportant => ' . $status );
+        Log::debug($response->getStatusCode());
+        Log::debug($response->getBody());
     }
 
     private static function buildLegacyTopic($id)

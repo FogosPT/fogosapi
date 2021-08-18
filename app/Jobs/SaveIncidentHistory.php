@@ -121,23 +121,25 @@ class SaveIncidentHistory extends Job
                 $this->incident->notifyBig = true;
                 $this->incident->save();
 
-                $date = date('H:i');
+                if($this->isFire){
+                    $date = date('H:i');
 
-                $status = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:\r\n 👩‍🚒 {$this->incident->man}\r\n 🚒 {$this->incident->terrain}\r\n 🚁 {$this->incident->aerial}\r\n https://{$domain}/fogo/{$this->incident->id} {$hashTag} @vostpt #FogosPT 🚨ℹ";
+                    $status = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:\r\n 👩‍🚒 {$this->incident->man}\r\n 🚒 {$this->incident->terrain}\r\n 🚁 {$this->incident->aerial}\r\n https://{$domain}/fogo/{$this->incident->id} {$hashTag} @vostpt #FogosPT 🚨ℹ";
 
-                $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
+                    $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
 
-                $this->incident->lastTweetId = $lastTweetId;
-                $this->incident->save();
+                    $this->incident->lastTweetId = $lastTweetId;
+                    $this->incident->save();
 
-                $statusf = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:%0A  👩‍🚒 {$this->incident->man}%0A 🚒 {$this->incident->terrain}%0A 🚁 {$this->incident->aerial}%0A https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT 🚨ℹ";
-                FacebookTool::publish($statusf);
+                    $statusf = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:%0A  👩‍🚒 {$this->incident->man}%0A 🚒 {$this->incident->terrain}%0A 🚁 {$this->incident->aerial}%0A https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT 🚨ℹ";
+                    FacebookTool::publish($statusf);
 
-                TelegramTool::publish($status);
+                    TelegramTool::publish($status);
 
-                $notification = "ℹ🚨 {$this->incident->location} - Grande mobilização de meios:  👩‍🚒 {$this->incident->man} 🚒 {$this->incident->terrain} 🚁 {$this->incident->aerial} 🚨ℹ";
+                    $notification = "ℹ🚨 {$this->incident->location} - Grande mobilização de meios:  👩‍🚒 {$this->incident->man} 🚒 {$this->incident->terrain} 🚁 {$this->incident->aerial} 🚨ℹ";
 
-                NotificationTool::sendImportant($notification);
+                    NotificationTool::sendImportant($notification);
+                }
             }
         } else {
             $this->saveNewIncidentHistory();
