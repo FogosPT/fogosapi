@@ -57,10 +57,13 @@ class NotificationTool
                     'title' => "Fogos.pt - {$title}",
                     'body' => $status,
                     'sound' => 'default',
-                    'click_action' => 'https://fogos.pt/avisos',
                     'icon' => 'https://fogos.pt/img/logo.svg',
                 ],
+                'data' => [
+                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                ]
             ],
+
         ];
 
         Log::debug('sendCustomTitleRequest => ' . $topic);
@@ -132,7 +135,7 @@ class NotificationTool
         }
     }
 
-    public static function sendImportant($status)
+    public static function sendImportant($status, $incidentId)
     {
         $topic = self::buildLegacyImportantTopic();
 
@@ -149,13 +152,17 @@ class NotificationTool
                 'condition' => $topic,
                 'notification' => [
                     'title' => "Fogos.pt - {$title}",
-                    'body' => $status,
+                    'body' => $_GET['body'],
                     'sound' => 'default',
-                    'click_action' => 'https://fogos.pt/fogo/{$id}',
                     'icon' => 'https://fogos.pt/img/logo.svg',
                 ],
+                'data' => [
+                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                    'fireId' => $incidentId
+                ]
             ],
         ];
+
 
         $client = new \GuzzleHttp\Client();
         $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);

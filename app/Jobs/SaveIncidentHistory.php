@@ -138,7 +138,7 @@ class SaveIncidentHistory extends Job
 
                     $notification = "ℹ🚨 {$this->incident->location} - Grande mobilização de meios:  👩‍🚒 {$this->incident->man} 🚒 {$this->incident->terrain} 🚁 {$this->incident->aerial} 🚨ℹ";
 
-                    NotificationTool::sendImportant($notification);
+                    NotificationTool::sendImportant($notification, $this->incident->id);
                 }
             }
         } else {
