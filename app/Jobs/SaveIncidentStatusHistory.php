@@ -77,6 +77,7 @@ class SaveIncidentStatusHistory extends Job
                         $this->incident->lastTweetId = $lastTweetId;
                         $this->incident->save();
 
+                        FacebookTool::publish($status);
                         TelegramTool::publish($status);
 
                         ScreenShotTool::removeScreenShotFile($name);
