@@ -14,6 +14,7 @@ use App\Models\WarningSite;
 use App\Resources\IncidentResource;
 use App\Resources\V1\HistoryStatusResource;
 use App\Resources\V1\HistoryTotalResource;
+use App\Resources\V1\WarningResource;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -109,26 +110,15 @@ class LegacyController extends Controller
         abort(404);
     }
 
-    public function warnings()
+    public function warnings() : JsonResponse
     {
         $warnings = Warning::orderBy('created', 'desc')
             ->take(50);
 
-        $data = [];
-        foreach ($warnings as $warning) {
-            $label = date('d-m-Y H:i', strtotime($warning['created']));
-
-            $warning['label'] = $label;
-
-            $data[] = $warning;
-        }
-
-        $response = [
+        return new JsonResponse([
             'success' => true,
-            'data' => $data,
-        ];
-
-        return response()->json($response);
+            'data' => WarningResource::collection($warnings),
+        ]);
     }
 
     public function warningsSite()
