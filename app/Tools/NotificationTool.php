@@ -27,9 +27,22 @@ class NotificationTool
                     'title' => "Fogos.pt - {$location}",
                     'body' => $status,
                     'sound' => 'default',
-                    'click_action' => 'https://fogos.pt/fogo/{$id}',
                     'icon' => 'https://fogos.pt/img/logo.svg',
                 ],
+                'data' => [
+                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                    'fireId' => $id
+                ],
+                'android' => [
+                    'priority' => 'high'
+                ],
+                'apns' => [
+                    [
+                        'headers' => [
+                            'apns-priority' => "5"
+                        ]
+                    ]
+                ]
             ],
         ];
 
@@ -78,7 +91,6 @@ class NotificationTool
 
         Log::debug('sendCustomTitleRequest => ' . $topic);
         Log::debug('sendCustomTitleRequest => ' . $status);
-
 
         $client = new \GuzzleHttp\Client();
         $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
@@ -268,6 +280,13 @@ class NotificationTool
     {
         $topic = "'mobile-android-planes' in topics || 'mobile-ios-planes' in topics";
         $title = 'Fogos.pt - Meio Aéreo';
+        self::sendCustomTitleRequest($topic, $status, $title,true);
+    }
+
+    public static function sendWarningNotification($status)
+    {
+        $topic = "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in  || 'web-warnings' in topics";
+        $title = 'Fogos.pt - Alerta';
         self::sendCustomTitleRequest($topic, $status, $title,true);
     }
 }

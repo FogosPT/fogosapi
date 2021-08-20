@@ -123,7 +123,7 @@ class ProcessICNFFireData extends Job
         if (isset($data->CAUSA) && !empty((string) $data->CAUSA->__toString())) {
             $icnfData['causa'] = (string) $data->CAUSA;
 
-            if (isset($this->incident->icnf['causa']) || (isset($this->incident->icnf['causa']) && $this->incident->icnf['causa'] !== (string) $data->CAUSA->__toString())) {
+            if (!isset($this->incident->icnf['causa']) || (isset($this->incident->icnf['causa']) && $this->incident->icnf['causa'] !== (string) $data->CAUSA->__toString())) {
                 $notifyCausa = true;
             }
         }
