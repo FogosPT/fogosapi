@@ -102,4 +102,23 @@ class IncidentController extends Controller
 
         return $response;
     }
+
+    public function addPosit(Request $request, $id)
+    {
+        $key = $request->header('key');
+
+        if(env('API_WRITE_KEY') !== $key){
+            abort(401);
+        }
+
+        $incident = Incident::where('id', $id)->get()[0];
+
+        $incident->extra = $request->post('posit') . ' ' . $incident->extra;
+
+        $incident->save();
+
+        return new JsonResponse([
+            'success' => true,
+        ]);
+    }
 }
