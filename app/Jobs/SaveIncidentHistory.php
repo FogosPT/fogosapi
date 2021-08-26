@@ -60,6 +60,20 @@ class SaveIncidentHistory extends Job
 
         if (isset($last[0])) {
             $last = $last[0];
+            if (isset($this->incident->extra, $last['extra']) && $this->incident->extra !== $last['extra']) {
+                NotificationTool::sendNewPOSITNotification($this->incident);
+
+                $status = "ℹ🔥{$date} - {$this->incident->location} - Novo Ponto de situaçã:: {$this->incident->extra} - https://{$domain}/fogo/{$this->incident->sadoId} {$hashTag} #FogosPT 🔥ℹ";
+
+                $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
+
+                $this->incident->lastTweetId = $lastTweetId;
+                $this->incident->save();
+
+                FacebookTool::publish($status);
+                TelegramTool::publish($status);
+            }
+
             if (isset($this->incident->cos, $last['cos']) && $this->incident->cos !== $last['cos']) {
                 NotificationTool::sendNewCosNotification($this->incident);
 

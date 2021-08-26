@@ -50,6 +50,7 @@ $router->group(['prefix' => 'v2'], function () use ($router) {
         $router->get('search', '\App\Http\Controllers\IncidentController@search');
         $router->get('active', '\App\Http\Controllers\IncidentController@active');
         $router->get('{id}/kml', '\App\Http\Controllers\IncidentController@kml');
+        $router->post('{id}/posit', '\App\Http\Controllers\IncidentController@addPosit');
 
     });
 
