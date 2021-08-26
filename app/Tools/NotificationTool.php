@@ -46,9 +46,16 @@ class NotificationTool
             ],
         ];
 
+        Log::debug('sendRequest => ' . $topic);
+        Log::debug('sendRequest => ' . $status);
+        Log::debug('sendRequest => ' . json_encode($headers));
+
         $client = new \GuzzleHttp\Client();
         sleep(1);
-        $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
+        $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
+
+        Log::debug($response->getStatusCode());
+        Log::debug($response->getBody());
     }
 
     private static function sendCustomTitleRequest($topic, $status, $title, $forceEnable = false)
