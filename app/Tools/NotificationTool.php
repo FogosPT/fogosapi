@@ -46,12 +46,12 @@ class NotificationTool
             ],
         ];
 
-        Log::debug('sendRequest => ' . $topic);
-        Log::debug('sendRequest => ' . $status);
+
+
+        Log::debug('sendRequest => ' . $topic . ' => ' . $status);
         Log::debug('sendRequest => ' . json_encode($headers));
 
         $client = new \GuzzleHttp\Client();
-        sleep(1);
         $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
 
         Log::debug($response->getStatusCode());
@@ -60,7 +60,7 @@ class NotificationTool
 
     private static function sendCustomTitleRequest($topic, $status, $title, $forceEnable = false)
     {
-        if (!env('NOTIFICATIONS_ENABLE') && !$forceEnable) {
+        if (!env('NOTIFICATIONS_ENABLE')) {
             return;
         }
 
@@ -153,10 +153,10 @@ class NotificationTool
     public static function send($status, $location, $id, $topic = false)
     {
         if (!$topic) {
-            $topic = self::buildTopic($id, true);
+            //$topic = self::buildTopic($id, true);
         }
 
-        self::sendRequest($topic, $status, $location, $id);
+        //self::sendRequest($topic, $status, $location, $id);
 
         if (env('LEGACY_ENABLE')) {
             $topic = self::buildLegacyTopic($id);
