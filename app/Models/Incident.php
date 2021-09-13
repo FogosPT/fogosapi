@@ -80,6 +80,7 @@ class Incident extends Model
         'isTransporteFire',
         'isOtherFire',
         'isOtherIncident',
+        'isFMA',
         'lastTweetId',
         'notifyBig',
         'coordinates',
