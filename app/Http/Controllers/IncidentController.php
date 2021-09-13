@@ -17,11 +17,14 @@ class IncidentController extends Controller
     public function active(Request $request): JsonResponse
     {
         $all = $request->get('all');
+        $isFMA = $request->get('fma');
         $concelho = $request->get('concelho');
 
         $incidents = Incident::isActive()
                             ->when(!$all, function ($query, $all){
                                 return $query->isFire();
+                            })->when($isFMA, function ($query, $isFMA){
+                                return $query->isFMA();
                             })->when($concelho, function ($query, $concelho){
                                 return $query->where('concelho', $concelho);
                             })
@@ -55,6 +58,7 @@ class IncidentController extends Controller
         }
 
         $all = $request->get('all');
+        $isFMA = $request->get('fma');
         $extend = $request->get('extend');
         $concelho = $request->get('concelho');
 
@@ -82,6 +86,8 @@ class IncidentController extends Controller
             return $query->isFire();
         })->when($extend, function ($query, $extend){
             return $query->with(['history', 'statusHistory']);
+        })->when($isFMA, function ($query, $isFMA){
+            return $query->isFMA();
         })
         ->get();
 

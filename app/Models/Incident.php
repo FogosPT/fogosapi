@@ -174,6 +174,11 @@ class Incident extends Model
         return $query->where('isFire', true);
     }
 
+    public function scopeIsFMA(Builder $query): Builder
+    {
+        return $query->where('isFMA', true);
+    }
+
     public function getDateTimeObjectAttribute(): array
     {
         return [
