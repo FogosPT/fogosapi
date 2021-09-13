@@ -5,14 +5,14 @@ namespace App\Console\Commands;
 use App\Models\Incident;
 use Illuminate\Console\Command;
 
-class FixKMLData extends Command
+class FixFMA extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'fogospt:fix-kml';
+    protected $signature = 'fogospt:fix-fma';
 
     /**
      * The console command description.
