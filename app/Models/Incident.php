@@ -130,6 +130,21 @@ class Incident extends Model
         '3107'
     ];
 
+    public const NATUREZA_CODE_FMA = [
+        '3115',
+        '3317',
+        '3301',
+        '4305',
+        '3309',
+        '2419',
+        '3313',
+        '3319',
+        '3321',
+        '3329',
+        '4329',
+        '4339',
+    ];
+
     public const ACTIVE_STATUS_CODES = [
         3, 4, 5, 6,
     ];

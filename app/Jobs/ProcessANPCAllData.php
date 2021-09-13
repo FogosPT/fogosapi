@@ -100,6 +100,8 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
         $isOtherFire = in_array($data['Natureza']['Codigo'], Incident::NATUREZA_CODE_OTHER_FIRE);
         $isOtherIncident = !$isFire && !$isTransportFire && !$isUrbanFire && !$isOtherFire;
 
+        $isFMA = in_array($data['Natureza']['Codigo'], Incident::NATUREZA_CODE_FMA);
+
         $point = [
             'id' => $data['Numero'],
             'coords' => true,
@@ -135,6 +137,7 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
             'isTransporteFire' => $isTransportFire,
             'isOtherFire' => $isOtherFire,
             'isOtherIncident' => $isOtherIncident,
+            'isFMA' => $isFMA
         ];
 
         if ($data['EstadoOcorrencia']['ID'] == 11) {
