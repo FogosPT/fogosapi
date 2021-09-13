@@ -17,10 +17,13 @@ class IncidentController extends Controller
     public function active(Request $request): JsonResponse
     {
         $all = $request->get('all');
+        $concelho = $request->get('concelho');
 
         $incidents = Incident::isActive()
                             ->when(!$all, function ($query, $all){
                                 return $query->isFire();
+                            })->when($concelho, function ($query, $concelho){
+                                return $query->where('concelho', $concelho);
                             })
                             ->get();
 
