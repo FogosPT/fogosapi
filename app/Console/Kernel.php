@@ -22,6 +22,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         \App\Console\Commands\TestStuff::class,
         \App\Console\Commands\FixKMLData::class,
+        \App\Console\Commands\FixFMA::class,
     ];
 
     /**
