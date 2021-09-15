@@ -132,7 +132,7 @@ class Incident extends Model
     ];
 
     public const NATUREZA_CODE_FMA = [
-        '3115',
+        '3315',
         '3317',
         '3301',
         '4305',
