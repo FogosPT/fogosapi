@@ -20,6 +20,7 @@ class IncidentController extends Controller
         $isFMA = $request->get('fma');
         $concelho = $request->get('concelho');
 
+
         $incidents = Incident::isActive()
                             ->when(!$all, function ($query, $all){
                                 return $query->isFire();
