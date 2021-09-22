@@ -8,6 +8,8 @@ use App\Jobs\ProcessICNFFireData;
 use App\Jobs\ProcessICNFPDF;
 use App\Jobs\ProcessICNFPDFData;
 use App\Jobs\UpdateICNFData;
+use App\Jobs\UpdateWeatherData;
+use App\Jobs\UpdateWeatherStations;
 use App\Models\Incident;
 use Illuminate\Console\Command;
 use Spatie\Browsershot\Browsershot;
@@ -51,9 +53,9 @@ class TestStuff extends Command
 
         //$incident = Incident::where('id', '2021010039521')->limit(1)->get()[0];
 
-        $incident = Incident::where('id', "2021080029244")->limit(1)->get()[0];
+        //$incident = Incident::where('id', "2021080029244")->limit(1)->get()[0];
 
-        dispatch(new ProcessICNFFireData($incident));
+        dispatch(new UpdateWeatherData());
 
         //dispatch(new ProcessICNFFireData($incident));
         //$url = env('ICNF_PDF_URL') . 'AT32185';

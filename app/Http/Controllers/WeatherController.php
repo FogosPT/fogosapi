@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Redis;
 use Laravel\Lumen\Routing\Controller;
 
@@ -34,6 +36,42 @@ class WeatherController extends Controller
                 Redis::set('weather:' . $lat . ':' . $lng, json_encode($result), 'EX', 10800);
                 return $result;
             }
+        }
+    }
+
+    public function thunders()
+    {
+        return new JsonResponse([
+            'success' => true,
+            'message' => 'soon',
+        ]);
+
+        $exists = Redis::get('thunders:data');
+        if ($exists) {
+            return json_decode($exists, true);
+        } else {
+            $client = new Client();
+            $url = 'https://www.ipma.pt/pt/otempo/obs.dea/';
+
+            try {
+                $response = $client->request('GET', $url);
+
+            } catch (ClientException $e) {
+                return ['error' => $e->getMessage()];
+            } catch (RequestException $e) {
+                return ['error' => $e->getMessage()];
+            }
+
+            $body = $response->getBody();
+            $result = $body->getContents();
+
+            $pattern = '\{(?:[^{}]|(?R))*\}';
+            $data = str_replace(PHP_EOL, '', $result);
+            preg_match($pattern, $data, $riscoHoje);
+            dd($riscoHoje);
+
+            $riscoHoje = json_decode($riscoHoje[1], true);
+            dd($result);
         }
     }
 }
