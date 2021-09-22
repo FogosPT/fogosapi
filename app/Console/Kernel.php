@@ -9,6 +9,8 @@ use App\Jobs\ProcessMadeiraWarnings;
 use App\Jobs\ProcessPlanes;
 use App\Jobs\ProcessRCM;
 use App\Jobs\UpdateICNFData;
+use App\Jobs\UpdateWeatherData;
+use App\Jobs\UpdateWeatherStations;
 use Illuminate\Console\Scheduling\Schedule;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
 
@@ -49,6 +51,10 @@ class Kernel extends ConsoleKernel
             $schedule->job(new UpdateICNFData(6))->cron('0 3 * * 3'); // once a week, wednesday
             $schedule->job(new UpdateICNFData(7))->monthly();
             $schedule->job(new UpdateICNFData(8))->cron('0 0 1 */2 *'); // every two months
+
+
+            $schedule->job(new UpdateWeatherStations())->monthly();
+            $schedule->job(new UpdateWeatherData())->everyTwoHours();
         }
     }
 }
