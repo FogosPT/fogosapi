@@ -55,6 +55,7 @@ class TestStuff extends Command
 
         //$incident = Incident::where('id', "2021080029244")->limit(1)->get()[0];
 
+        dispatch(new UpdateWeatherStations());
         dispatch(new UpdateWeatherData());
 
         //dispatch(new ProcessICNFFireData($incident));
