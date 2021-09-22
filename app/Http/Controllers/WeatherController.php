@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Redis;
 use Laravel\Lumen\Routing\Controller;
 
@@ -40,6 +41,11 @@ class WeatherController extends Controller
 
     public function thunders()
     {
+        return new JsonResponse([
+            'success' => true,
+            'message' => 'soon',
+        ]);
+
         $exists = Redis::get('thunders:data');
         if ($exists) {
             return json_decode($exists, true);

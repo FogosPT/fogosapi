@@ -46,12 +46,16 @@ $router->group(['prefix' => 'v2'], function () use ($router) {
     $router->group(['prefix' => 'other'], function () use ($router) {
         $router->get('mobile-contributors', '\App\Http\Controllers\OtherController@getMobileContributors');
     });
+
     $router->group(['prefix' => 'incidents'], function () use ($router) {
         $router->get('search', '\App\Http\Controllers\IncidentController@search');
         $router->get('active', '\App\Http\Controllers\IncidentController@active');
         $router->get('{id}/kml', '\App\Http\Controllers\IncidentController@kml');
         $router->post('{id}/posit', '\App\Http\Controllers\IncidentController@addPosit');
+    });
 
+    $router->group(['prefix' => 'weather'], function () use ($router) {
+        $router->get('thunders', '\App\Http\Controllers\WeatherController@thunders');
     });
 
     $router->group(['prefix' => 'rcm'], function () use ($router) {
