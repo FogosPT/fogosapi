@@ -25,18 +25,6 @@ $app = new Laravel\Lumen\Application(
     dirname(__DIR__)
 );
 
-$app->withFacades();
-
-$app->register(Jenssegers\Mongodb\MongodbServiceProvider::class);
-$app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
-$app->register(Illuminate\Redis\RedisServiceProvider::class);
-$app->register(Sentry\Laravel\ServiceProvider::class);
-$app->register(\Anik\Form\FormRequestServiceProvider::class);
-
-$app->withEloquent();
-
-$app->configure('app');
-
 /*
 |--------------------------------------------------------------------------
 | Register Container Bindings
@@ -58,6 +46,9 @@ $app->singleton(
     App\Console\Kernel::class
 );
 
+$app->withFacades();
+$app->withEloquent();
+
 /*
 |--------------------------------------------------------------------------
 | Register Config Files
@@ -68,6 +59,7 @@ $app->singleton(
 | the default version. You may register other files below as needed.
 |
 */
+$app->configure('app');
 
 /*
 |--------------------------------------------------------------------------
@@ -102,6 +94,11 @@ $app->singleton(
 $app->register(App\Providers\AppServiceProvider::class);
 // $app->register(App\Providers\AuthServiceProvider::class);
 // $app->register(App\Providers\EventServiceProvider::class);
+$app->register(Jenssegers\Mongodb\MongodbServiceProvider::class);
+$app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
+$app->register(Illuminate\Redis\RedisServiceProvider::class);
+$app->register(Sentry\Laravel\ServiceProvider::class);
+$app->register(Anik\Form\FormRequestServiceProvider::class);
 
 /*
 |--------------------------------------------------------------------------
