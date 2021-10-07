@@ -46,9 +46,6 @@ $app->singleton(
     App\Console\Kernel::class
 );
 
-$app->withFacades();
-$app->withEloquent();
-
 /*
 |--------------------------------------------------------------------------
 | Register Config Files
@@ -99,6 +96,9 @@ $app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
 $app->register(Illuminate\Redis\RedisServiceProvider::class);
 $app->register(Sentry\Laravel\ServiceProvider::class);
 $app->register(Anik\Form\FormRequestServiceProvider::class);
+
+$app->withFacades();
+$app->withEloquent();
 
 /*
 |--------------------------------------------------------------------------
