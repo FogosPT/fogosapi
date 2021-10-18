@@ -11,7 +11,7 @@ class WarningResource extends JsonResource
         return [
             '_id' => ['$id' => $this->_id],
             'text' => $this->text,
-            'label' => date('H:i', $this->created->getTimestamp())
+            'label' => date('H:i', $this->created->getTimestamp()),
         ];
     }
 }
