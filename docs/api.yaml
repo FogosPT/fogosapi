@@ -9,7 +9,7 @@ info:
     email: mail@fogos.pt
 
 servers:
-  - url: 'http://api.fogos.test'
+  - url: 'http://api-dev.fogos.pt'
     description: Development Server
   - url: 'https://api.fogos.pt'
     description: Production Server
