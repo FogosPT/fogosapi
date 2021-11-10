@@ -1,0 +1,6 @@
+name: geojson
+in: query
+description: Set true if you want all incidents in geojson format
+required: false
+schema:
+  type: bool
