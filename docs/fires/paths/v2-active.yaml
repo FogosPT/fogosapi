@@ -5,6 +5,7 @@ get:
     - Fires
   parameters:
     - $ref: '../parameters/query/all.yaml'
+    - $ref: '../parameters/query/geojson.yaml'
   responses:
     200:
       $ref: '../responses/legacy-fires-list.yaml'

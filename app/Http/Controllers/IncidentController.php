@@ -20,6 +20,7 @@ class IncidentController extends Controller
         $isFMA = $request->get('fma');
         $concelho = $request->get('concelho');
 
+        $geoJson = $request->get('geojson');
 
         $incidents = Incident::isActive()
                             ->when(!$all, function ($query, $all){
@@ -31,10 +32,29 @@ class IncidentController extends Controller
                             })
                             ->get();
 
-        return new JsonResponse([
-            'success' => true,
-            'data' => IncidentResource::collection($incidents),
-        ]);
+        if($geoJson){
+            return new JsonResponse($this->transformToGeoJSON(IncidentResource::collection($incidents)));
+        } else {
+            return new JsonResponse([
+                'success' => true,
+                'data' => IncidentResource::collection($incidents),
+            ]);
+        }
+    }
+
+    private function transformToGeoJSON($data)
+    {
+        foreach($data as $d) {
+            $features[] = array(
+                'type' => 'Feature',
+                'geometry' => array('type' => 'Point', 'coordinates' => array((float)$d['lat'],(float)$d['lng'])),
+                'properties' => $d,
+            );
+        };
+
+        $allfeatures = array('type' => 'FeatureCollection', 'features' => $features);
+
+        return $allfeatures;
     }
 
     public function search(IncidentSearchRequest $request): JsonResponse
