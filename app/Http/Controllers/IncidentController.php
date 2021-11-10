@@ -47,7 +47,7 @@ class IncidentController extends Controller
         foreach($data as $d) {
             $features[] = array(
                 'type' => 'Feature',
-                'geometry' => array('type' => 'Point', 'coordinates' => array((float)$d['lat'],(float)$d['lng'])),
+                'geometry' => array('type' => 'Point', 'coordinates' => array((float)$d['lng'],(float)$d['lat'])),
                 'properties' => $d,
             );
         };
