@@ -24,9 +24,13 @@ use voku\helper\UTF8;
 /** @deprecated */
 class LegacyController extends Controller
 {
-    public function newFires(): JsonResponse
+    public function newFires(Request $request): JsonResponse
     {
-        $incidents = Incident::isActive()->isFire()->get();
+        $concelho = $request->get('concelho');
+
+        $incidents = Incident::isActive()->isFire()->when($concelho, function($query, $concelho){
+            return $query->where('concelho', $concelho);
+        })->get();
 
         return new JsonResponse([
             'success' => true,
