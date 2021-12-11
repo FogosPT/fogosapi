@@ -27,9 +27,12 @@ class LegacyController extends Controller
     public function newFires(Request $request): JsonResponse
     {
         $concelho = $request->get('concelho');
+        $distrito = $request->get('distrito');
 
         $incidents = Incident::isActive()->isFire()->when($concelho, function($query, $concelho){
             return $query->where('concelho', $concelho);
+        })->when($distrito, function($query, $distrito){
+            return $query->where('distrito', $distrito);
         })->get();
 
         return new JsonResponse([
