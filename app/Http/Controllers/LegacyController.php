@@ -185,6 +185,37 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
+    public function statsToday()
+    {
+        $date_start = Carbon::today()->startOfDay();
+        $date_end = Carbon::today()->endOfDay();
+
+        $data = $this->getForStatsTimestamp($date_start, $date_end);
+
+        $response = [
+            'success' => true,
+            'data' => $data,
+        ];
+
+        return response()->json($response);
+    }
+
+    public function statsYesterday()
+    {
+        $date_start = Carbon::yesterday()->startOfDay();
+        $date_end = Carbon::yesterday()->endOfDay();
+
+        $data = $this->getForStatsTimestamp($date_start, $date_end);
+
+        $response = [
+            'success' => true,
+            'data' => $data,
+        ];
+
+        return response()->json($response);
+    }
+
+
     public function firesDanger(Request $request)
     {
         $id = $request->get('id');
