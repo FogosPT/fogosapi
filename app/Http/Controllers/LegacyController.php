@@ -32,7 +32,7 @@ class LegacyController extends Controller
         $incidents = Incident::isActive()->isFire()->when($concelho, function($query, $concelho){
             return $query->where('concelho', $concelho);
         })->when($distrito, function($query, $distrito){
-            return $query->where('distrito', $distrito);
+            return $query->where('district', $distrito);
         })->get();
 
         return new JsonResponse([
