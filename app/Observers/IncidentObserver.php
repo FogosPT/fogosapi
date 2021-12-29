@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Jobs\HandleNewIncidentEmergenciasSocialMedia;
 use App\Jobs\HandleNewIncidentSocialMedia;
 use App\Jobs\ProcessICNFFireData;
 use App\Jobs\SaveIncidentHistory;
@@ -22,7 +23,11 @@ trait IncidentObserver
             if ($incident->isFire) {
                 dispatch(new HandleNewIncidentSocialMedia($incident));
                 dispatch(new ProcessICNFFireData($incident));
-            } elseif ( $incident->naturezaCode === '2409' ) {
+            } else {
+                dispatch(new HandleNewIncidentEmergenciasSocialMedia($incident));
+            }
+
+            if ( $incident->naturezaCode === '2409' ) {
                 DiscordTool::postAero("🚨 Novo acidente aereo em {$incident->location} 🚨");
             }
         });

@@ -14,6 +14,16 @@ class FacebookTool
         return "https://graph.facebook.com/{$pageId}/feed?client_id={$clientId}&client_secret={$clientSecret}&access_token={$accessCode}&message={$message}";
     }
 
+    private static function getEmergenciasUrl($message)
+    {
+        $pageId = env('FACEBOOK_PAGE_ID_EMERGENCIAS');
+        $clientId = env('FACEBOOK_CLIENT_ID_EMERGENCIAS');
+        $clientSecret = env('FACEBOOK_CLIENT_SECRET_EMERGENCIAS');
+        $accessCode = env('FACEBOOK_ACCESS_CODE_EMERGENCIAS');
+
+        return "https://graph.facebook.com/{$pageId}/feed?client_id={$clientId}&client_secret={$clientSecret}&access_token={$accessCode}&message={$message}";
+    }
+
     private static function getImageUrl($message, $imageUrl)
     {
         $clientId = env('FACEBOOK_CLIENT_ID');
@@ -43,5 +53,15 @@ class FacebookTool
 
         $client = new \GuzzleHttp\Client();
         $client->request('POST', self::getImageUrl($status, $imageUrl));
+    }
+
+    public static function publishEmergencias($status)
+    {
+        if (!env('FACEBOOK_ENABLE')) {
+            return;
+        }
+
+        $client = new \GuzzleHttp\Client();
+        $client->request('POST', self::getEmergenciasUrl($status));
     }
 }
