@@ -20,6 +20,12 @@ class IncidentController extends Controller
         $isFMA = $request->get('fma');
         $concelho = $request->get('concelho');
 
+        if($request->exists('limit')){
+            $limit = $request->get('limit');
+        } else {
+            $limit = 300;
+        }
+
         $geoJson = $request->get('geojson');
 
         $incidents = Incident::isActive()
@@ -30,6 +36,8 @@ class IncidentController extends Controller
                             })->when($concelho, function ($query, $concelho){
                                 return $query->where('concelho', $concelho);
                             })
+                            ->orderBy('created_at', 'desc')
+                            ->paginate($limit)
                             ->get();
 
         if($geoJson){
