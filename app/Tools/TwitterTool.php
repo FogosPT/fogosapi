@@ -22,6 +22,22 @@ class TwitterTool
         return self::$client;
     }
 
+    public static function getClientEmergencias()
+    {
+        if (!self::$client) {
+            $settings = [
+                'oauth_access_token' => env('TWITTER_OAUTH_ACCESS_TOKEN_EMERGENCIAS'),
+                'oauth_access_token_secret' => env('TWITTER_OAUTH_ACCESS_TOKEN_SECRET_EMERGENCIAS'),
+                'consumer_key' => env('TWITTER_CONSUMER_KEY_EMERGENCIAS'),
+                'consumer_secret' => env('TWITTER_CONSUMER_SECRET_EMERGENCIAS'),
+            ];
+
+            self::$client = new \TwitterAPIExchange($settings);
+        }
+
+        return self::$client;
+    }
+
     private static function splitTweets($long_string, $max_length = 280, $max_sentences = 10, $encoding = 'UTF-8')
     {
         $string_length = mb_strlen($long_string, $encoding);
@@ -66,13 +82,18 @@ class TwitterTool
         return $sentences_array;
     }
 
-    public static function tweet($text, $lastId = false, $imagePath = false)
+    public static function tweet($text, $lastId = false, $imagePath = false, $emergencias = false)
     {
         if (!env('TWITTER_ENABLE')) {
             return false;
         }
 
-        $client = self::getClient();
+        if(!$emergencias){
+            $client = self::getClient();
+        } else {
+            $client = self::getClientEmergencias();
+        }
+
         $fields = [];
 
         if ($imagePath) {
