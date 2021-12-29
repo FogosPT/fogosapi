@@ -21,7 +21,7 @@ class IncidentController extends Controller
         $concelho = $request->get('concelho');
 
         if($request->exists('limit')){
-            $limit = $request->get('limit');
+            $limit = (int)$request->get('limit');
         } else {
             $limit = 300;
         }
