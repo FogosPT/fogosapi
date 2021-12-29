@@ -27,7 +27,7 @@ class HandleNewIncidentEmergenciasSocialMedia extends Job
      */
     public function handle()
     {
-        NotificationTool::sendNewFireNotification($this->incident);
+        //NotificationTool::sendNewFireNotification($this->incident);
 
         $hashTag = "#{$this->incident->concelho}";
 
