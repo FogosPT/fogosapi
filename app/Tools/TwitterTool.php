@@ -2,6 +2,8 @@
 
 namespace App\Tools;
 
+use Illuminate\Support\Facades\Log;
+
 class TwitterTool
 {
     private static $client = false;
@@ -136,6 +138,10 @@ class TwitterTool
                 ->performRequest();
 
             $r = json_decode($response);
+
+            if($emergencias){
+                Log::debug($response);
+            }
 
             if(isset($r->id)){
                 $lastId = $r->id;
