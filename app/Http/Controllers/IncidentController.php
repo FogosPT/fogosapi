@@ -37,8 +37,7 @@ class IncidentController extends Controller
                                 return $query->where('concelho', $concelho);
                             })
                             ->orderBy('created_at', 'desc')
-                            ->paginate($limit)
-                            ->get();
+                            ->paginate($limit);
 
         if($geoJson){
             return new JsonResponse($this->transformToGeoJSON(IncidentResource::collection($incidents)));
