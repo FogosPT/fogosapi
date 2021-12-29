@@ -2,6 +2,8 @@
 
 namespace App\Tools;
 
+use Illuminate\Support\Facades\Log;
+
 class FacebookTool
 {
     private static function getUrl($message)
@@ -62,6 +64,8 @@ class FacebookTool
         }
 
         $client = new \GuzzleHttp\Client();
-        $client->request('POST', self::getEmergenciasUrl($status));
+        $response = $client->request('POST', self::getEmergenciasUrl($status));
+
+        Log::debug($response->getBody());
     }
 }
