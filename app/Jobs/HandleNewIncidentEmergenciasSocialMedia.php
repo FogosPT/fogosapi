@@ -29,15 +29,17 @@ class HandleNewIncidentEmergenciasSocialMedia extends Job
     {
         //NotificationTool::sendNewFireNotification($this->incident);
 
-        $hashTag = "#{$this->incident->concelho}";
+        $hashTag = HashTagTool::getHashTagEmergencias($this->incident->concelho);
 
         $status = "⚠🚨 Nova emergência em {$this->incident->location} - {$this->incident->natureza} {$hashTag} 🚨⚠";
+        $statusFb = "⚠🚨 Nova emergência em {$this->incident->location} - {$this->incident->natureza} 🚨⚠";
+
 
         $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, false, true);
 
         $this->incident->lastTweetId = $lastTweetId;
         $this->incident->save();
 
-        FacebookTool::publishEmergencias($status);
+        FacebookTool::publishEmergencias($statusFb);
     }
 }
