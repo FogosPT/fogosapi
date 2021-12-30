@@ -139,9 +139,7 @@ class TwitterTool
 
             $r = json_decode($response);
 
-            if($emergencias){
-                Log::debug($response);
-            }
+            Log::debug($response);
 
             if(isset($r->id)){
                 $lastId = $r->id;
