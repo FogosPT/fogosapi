@@ -17,15 +17,16 @@ trait IncidentObserver
         parent::boot();
 
         static::created(function ($incident) {
-            //Log::info("Incident Created Event Fire observer: ".$incident);
+            Log::info("Incident Created Event Fire observer: ". json_encode($incident));
             dispatch(new SaveIncidentHistory($incident));
             dispatch(new SaveIncidentStatusHistory($incident));
+
             if ($incident->isFire) {
                 dispatch(new HandleNewIncidentSocialMedia($incident));
                 dispatch(new ProcessICNFFireData($incident));
-            } else {
-                dispatch(new HandleNewIncidentEmergenciasSocialMedia($incident));
             }
+
+            dispatch(new HandleNewIncidentEmergenciasSocialMedia($incident));
 
             if ( $incident->naturezaCode === '2409' ) {
                 DiscordTool::postAero("🚨 Novo acidente aereo em {$incident->location} 🚨");
