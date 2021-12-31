@@ -65,7 +65,5 @@ class FacebookTool
 
         $client = new \GuzzleHttp\Client();
         $response = $client->request('POST', self::getEmergenciasUrl($status));
-
-        Log::debug($response->getBody());
     }
 }
