@@ -35,10 +35,10 @@ class HandleNewIncidentEmergenciasSocialMedia extends Job
         $statusFb = "⚠🚨 Nova emergência em {$this->incident->location} - {$this->incident->natureza} 🚨⚠";
 
 
-        $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, false, true);
+        //$lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, false, true);
 
-        $this->incident->lastTweetId = $lastTweetId;
-        $this->incident->save();
+        //$this->incident->lastTweetId = $lastTweetId;
+        //$this->incident->save();
 
         FacebookTool::publishEmergencias($statusFb);
     }
