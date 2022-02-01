@@ -120,7 +120,8 @@ class LegacyController extends Controller
     public function warnings() : JsonResponse
     {
         $warnings = Warning::orderBy('created', 'desc')
-            ->take(50);
+            ->limit(50)
+            ->get();
 
         return new JsonResponse([
             'success' => true,
@@ -131,7 +132,8 @@ class LegacyController extends Controller
     public function warningsSite()
     {
         $warnings = WarningSite::orderBy('created', 'desc')
-            ->take(50);
+            ->limit(50)
+            ->get();
 
         $response = [
             'success' => true,
@@ -144,8 +146,9 @@ class LegacyController extends Controller
     public function warningsMadeira()
     {
         $warnings = WarningMadeira::orderBy('created', 'desc')
-            ->take(50);
-
+            ->limit(50)
+            ->get();
+        
         $data = [];
         foreach ($warnings as $warning) {
             $label = date('d-m-Y H:i', strtotime($warning['created']));
