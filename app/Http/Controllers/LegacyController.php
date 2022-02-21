@@ -148,7 +148,7 @@ class LegacyController extends Controller
         $warnings = WarningMadeira::orderBy('created', 'desc')
             ->limit(50)
             ->get();
-        
+
         $data = [];
         foreach ($warnings as $warning) {
             $label = date('d-m-Y H:i', strtotime($warning['created']));

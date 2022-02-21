@@ -8,7 +8,7 @@ class IncidentResource extends JsonResource
 {
     public function toArray($request): array
     {
-        return [
+        $ob = [
             '_id' => ['$id' => $this->_id],
             'id' => $this->id,
             'coords' => $this->coords,
@@ -42,10 +42,15 @@ class IncidentResource extends JsonResource
             'icnf' => $this->icnf,
             'detailLocation' => $this->detailLocation,
             'kml' => $this->kml,
-            'history' => $this->history,
-            'statusHistory' => $this->statusHistory,
             'created' => $this->createdObject,
             'updated' => $this->updatedObject,
         ];
+
+        if($request->get('extend')){
+            $ob['history'] = $this->history;
+            $ob['statusHistory'] = $this->statusHistory;
+        }
+
+        return $ob;
     }
 }

@@ -70,6 +70,12 @@ class IncidentController extends Controller
         $before = $request->get('before');
         $after = $request->get('after');
 
+        if($request->exists('limit')){
+            $limit = (int)$request->get('limit');
+        } else {
+            $limit = 50;
+        }
+
         if($day && ($before || $after)){
             abort(422);
         }
@@ -117,7 +123,7 @@ class IncidentController extends Controller
         })->when($isFMA, function ($query, $isFMA){
             return $query->isFMA();
         })
-        ->get();
+        ->paginate($limit);
 
         return new JsonResponse([
             'success' => true,
