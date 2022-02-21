@@ -125,8 +125,15 @@ class IncidentController extends Controller
         })
         ->paginate($limit);
 
+        $paginator = [
+            'currentPage' => $incidents->currentPage(),
+            'totalPages' => $incidents->lastPage(),
+            'totalItems' => $incidents->total()
+        ];
+
         return new JsonResponse([
             'success' => true,
+            'paginator' => $paginator,
             'data' => IncidentResource::collection($incidents),
         ]);
     }
