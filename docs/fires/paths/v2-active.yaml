@@ -1,5 +1,5 @@
 get:
-  operationId: getFiresActiveList,
+  operationId: v2getFiresActiveList
   summary: List active fires
   tags:
     - V2
