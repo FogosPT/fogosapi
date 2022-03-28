@@ -1,8 +1,8 @@
 get:
   operationId: getFiresActiveList,
-  summary: List active fires
+  summary: Search incidents (fires and other ANEPC incidents)
   tags:
-    - Fires
+    - V2
   parameters:
     - $ref: '../parameters/query/all.yaml'
     - $ref: '../parameters/query/day.yaml'
