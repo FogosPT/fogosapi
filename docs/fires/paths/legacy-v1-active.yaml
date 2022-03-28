@@ -1,6 +1,6 @@
 get:
   operationId: getFiresActiveList,
-  summary: List active fires
+  summary: List active fires (only dispatch and running status)
   tags:
     - Fires
   responses:

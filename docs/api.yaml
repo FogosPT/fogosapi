@@ -9,7 +9,7 @@ info:
     email: mail@fogos.pt
 
 servers:
-  - url: 'http://api-dev.fogos.pt'
+  - url: 'https://api-dev.fogos.pt'
     description: Development Server
   - url: 'https://api.fogos.pt'
     description: Production Server
@@ -20,6 +20,7 @@ tags:
   - name: Misc
   - name: Stats
   - name: Warnings
+  - name: V2
 
 paths:
   /v1/aerial:

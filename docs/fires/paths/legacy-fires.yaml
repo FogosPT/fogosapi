@@ -1,6 +1,6 @@
 get:
   operationId: getFires,
-  summary: List fires details
+  summary: Get single fire information
   tags:
     - Fires
   parameters:
