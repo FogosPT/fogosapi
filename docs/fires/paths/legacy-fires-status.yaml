@@ -1,6 +1,6 @@
 get:
   operationId: getFiresStatus,
-  summary: List fires status history
+  summary: Get fire history status
   tags:
     - Fires
   parameters:

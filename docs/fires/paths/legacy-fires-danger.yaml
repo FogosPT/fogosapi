@@ -1,6 +1,6 @@
 get:
   operationId: getFiresDanger,
-  summary: List fires RCM
+  summary: Get fire RCM for today, tomorrow and after
   tags:
     - Fires
   parameters:
