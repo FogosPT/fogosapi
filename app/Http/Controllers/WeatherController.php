@@ -82,9 +82,9 @@ class WeatherController extends Controller
     {
         $id = $request->get('id');
 
-        $station = WeatherStation::where('id', $id)->get();
+        $station = WeatherStation::where('id', (int)$id)->get();
 
-        if (isset($incident[0])) {
+        if (isset($station[0])) {
             return response()->json($station);
         } else {
             abort(404);

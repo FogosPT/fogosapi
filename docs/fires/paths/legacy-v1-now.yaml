@@ -1,8 +1,8 @@
 get:
   operationId: getFiresActive,
-  summary: List active fires
+  summary: Get active fires resources count
   tags:
-    - Fires
+    - Stats
   responses:
     200:
       $ref: '../responses/legacy-fires-list.yaml'

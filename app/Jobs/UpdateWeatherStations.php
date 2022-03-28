@@ -47,8 +47,7 @@ class UpdateWeatherStations extends Job
         $data = json_decode($data);
 
         foreach($data as $d){
-            print_r($d);
-            $id = $d->properties->idEstacao;
+            $id = (int)$d->properties->idEstacao;
 
             $station = WeatherStation::where('id', $id)->get();
 
@@ -56,7 +55,7 @@ class UpdateWeatherStations extends Job
                 $station = $station[0];
             } else {
                 $station = new WeatherStation();
-                $station->id = $id;
+                $station->id = (int)$id;
             }
 
             $station->type = "point";
