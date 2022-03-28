@@ -59,6 +59,7 @@ $router->group(['prefix' => 'v2'], function () use ($router) {
 
     $router->group(['prefix' => 'weather'], function () use ($router) {
         $router->get('thunders', '\App\Http\Controllers\WeatherController@thunders');
+        $router->get('stations', '\App\Http\Controllers\WeatherController@stations');
     });
 
     $router->group(['prefix' => 'rcm'], function () use ($router) {
