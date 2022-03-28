@@ -2,7 +2,7 @@ get:
   operationId: getFiresActiveList,
   summary: List active fires
   tags:
-    - Fires
+    - V2
   parameters:
     - $ref: '../parameters/query/all.yaml'
     - $ref: '../parameters/query/geojson.yaml'
