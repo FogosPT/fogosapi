@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\WeatherStation;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Redis;
 use Laravel\Lumen\Routing\Controller;
+use Illuminate\Http\Request;
+
 
 class WeatherController extends Controller
 {
@@ -72,6 +75,19 @@ class WeatherController extends Controller
 
             $riscoHoje = json_decode($riscoHoje[1], true);
             dd($result);
+        }
+    }
+
+    public function stations(Request $request)
+    {
+        $id = $request->get('id');
+
+        $station = WeatherStation::where('id', $id)->get();
+
+        if (isset($incident[0])) {
+            return response()->json($station);
+        } else {
+            abort(404);
         }
     }
 }
