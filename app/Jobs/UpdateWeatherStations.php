@@ -62,6 +62,14 @@ class UpdateWeatherStations extends Job
             $station->location = $d->properties->localEstacao;
             $station->coordinates = $d->geometry->coordinates;
 
+            if($station->coordinates[1] < 34){
+                $station->place = 'Madeira';
+            } elseif ($station->coordinates[0] < -20 && $station->coordinates[1] > 34){
+                $station->place = 'Açores';
+            } else {
+                $station->place = 'Portugal';
+            }
+
             $station->save();
         }
     }
