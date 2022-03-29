@@ -81,8 +81,15 @@ class WeatherController extends Controller
     public function stations(Request $request)
     {
         $id = $request->get('id');
+        $place = $request->get('place');
 
-        $station = WeatherStation::where('id', (int)$id)->get();
+        if($id){
+            $station = WeatherStation::where('id', (int)$id)->get();
+        } elseif($place){
+            $station = WeatherStation::where('place', $place)->get();
+        } else {
+            $station = WeatherStation::all();
+        }
 
         if (isset($station[0])) {
             return response()->json($station);
