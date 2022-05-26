@@ -475,7 +475,7 @@ class LegacyController extends Controller
 
         $response = [
             'success' => true,
-            'data' => $data,
+            'data' => array_reverse($data),
         ];
 
         return response()->json($response);
