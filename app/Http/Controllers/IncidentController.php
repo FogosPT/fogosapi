@@ -18,6 +18,7 @@ class IncidentController extends Controller
     {
         $all = $request->get('all');
         $isFMA = $request->get('fma');
+        $isOtherFire = $request->get('otherfire');
         $concelho = $request->get('concelho');
 
         if($request->exists('limit')){
@@ -33,6 +34,8 @@ class IncidentController extends Controller
                                 return $query->isFire();
                             })->when($isFMA, function ($query, $isFMA){
                                 return $query->isFMA();
+                            })->when($isOtherFire, function ($query, $isOtherFire){
+                                return $query->isOtherFire();
                             })->when($concelho, function ($query, $concelho){
                                 return $query->where('concelho', $concelho);
                             })
