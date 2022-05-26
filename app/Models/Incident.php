@@ -182,7 +182,7 @@ class Incident extends Model
 
     public function scopeIsOtherFire(Builder $query): Builder
     {
-        return $query->where('isUrbanFire', true)->orWhere('isTransporteFire', true)->orWhere('isOtherFire', true);
+        return $query->where('isOtherFire', true)->orWhere('isTransporteFire', true)->orWhere('isUrbanFire', true);
     }
 
     public function getDateTimeObjectAttribute(): array
