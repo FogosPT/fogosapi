@@ -35,7 +35,7 @@ class IncidentController extends Controller
                             })->when($isFMA, function ($query, $isFMA){
                                 return $query->isFMA();
                             })->when($isOtherFire, function ($query, $isOtherFire){
-                                return $query->where('isOtherFire', true)->orWhere('isTransporteFire', true)->orWhere('isUrbanFire', true);
+                                return $query->isOtherFire();
                             })->when($concelho, function ($query, $concelho){
                                 return $query->where('concelho', $concelho);
                             })
