@@ -153,10 +153,10 @@ class NotificationTool
     public static function send($status, $location, $id, $topic = false)
     {
         if (!$topic) {
-            //$topic = self::buildTopic($id, true);
+            $topic = self::buildTopic($id, true);
         }
 
-        //self::sendRequest($topic, $status, $location, $id);
+        self::sendRequest($topic, $status, $location, $id);
 
         if (env('LEGACY_ENABLE')) {
             $topic = self::buildLegacyTopic($id);
