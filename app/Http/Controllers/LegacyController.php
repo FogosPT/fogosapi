@@ -441,17 +441,37 @@ class LegacyController extends Controller
     {
         $data = [];
 
+        $timestampLast = Carbon::today();
+        $timestamp = Carbon::today()->endOfDay();
+        $data[$timestampLast->format('d-m-Y')] = $this->getForBurnedArea($timestampLast, $timestamp);
+
         $timestampLast = Carbon::yesterday();
         $timestamp = Carbon::yesterday()->endOfDay();
-        $data[$timestampLast->format('DD-MM-YYYY')] = $this->getForBurnedArea($timestampLast, $timestamp);
+        $data[$timestampLast->format('d-m-Y')] = $this->getForBurnedArea($timestampLast, $timestamp);
 
         $timestampLast = Carbon::yesterday()->subDays(1);
         $timestamp = Carbon::yesterday()->subDays(1)->endOfDay();
-        $data[$timestampLast->format('DD-MM-YYYY')] = $this->getForBurnedArea($timestampLast, $timestamp);
+        $data[$timestampLast->format('d-m-Y')] = $this->getForBurnedArea($timestampLast, $timestamp);
 
         $timestampLast = Carbon::yesterday()->subDays(2);
         $timestamp = Carbon::yesterday()->subDays(2)->endOfDay();
-        $data[$timestampLast->format('DD-MM-YYYY')] = $this->getForBurnedArea($timestampLast, $timestamp);
+        $data[$timestampLast->format('d-m-Y')] = $this->getForBurnedArea($timestampLast, $timestamp);
+
+        $timestampLast = Carbon::yesterday()->subDays(3);
+        $timestamp = Carbon::yesterday()->subDays(3)->endOfDay();
+        $data[$timestampLast->format('d-m-Y')] = $this->getForBurnedArea($timestampLast, $timestamp);
+
+        $timestampLast = Carbon::yesterday()->subDays(4);
+        $timestamp = Carbon::yesterday()->subDays(4)->endOfDay();
+        $data[$timestampLast->format('d-m-Y')] = $this->getForBurnedArea($timestampLast, $timestamp);
+
+        $timestampLast = Carbon::yesterday()->subDays(5);
+        $timestamp = Carbon::yesterday()->subDays(5)->endOfDay();
+        $data[$timestampLast->format('d-m-Y')] = $this->getForBurnedArea($timestampLast, $timestamp);
+
+        $timestampLast = Carbon::yesterday()->subDays(6);
+        $timestamp = Carbon::yesterday()->subDays(6)->endOfDay();
+        $data[$timestampLast->format('d-m-Y')] = $this->getForBurnedArea($timestampLast, $timestamp);
 
         $response = [
             'success' => true,
