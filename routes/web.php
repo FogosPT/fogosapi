@@ -41,6 +41,7 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
         $router->get('week', '\App\Http\Controllers\LegacyController@statsWeek');
         $router->get('today', '\App\Http\Controllers\LegacyController@statsToday');
         $router->get('yesterday', '\App\Http\Controllers\LegacyController@statsYesterday');
+        $router->get('burn-area', '\App\Http\Controllers\LegacyController@burnedAreaLastDays');
 
     });
 });

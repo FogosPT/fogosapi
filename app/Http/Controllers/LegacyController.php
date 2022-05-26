@@ -371,6 +371,22 @@ class LegacyController extends Controller
         ];
     }
 
+    private function getForBurnedArea($start, $end)
+    {
+        $incidents = Incident::where('isFire', true)
+            ->where('icnf.burnArea.total', '>', 0)
+            ->where([['dateTime', '>=', $start], ['dateTime', '<=', $end]])
+            ->get();
+
+        $total = 0;
+
+        foreach ($incidents as $r) {
+            $total += (float)$r['icnf']['burnArea']['total'];
+        }
+
+        return $total;
+    }
+
     public function stats8hours()
     {
         $data = [];
@@ -412,6 +428,30 @@ class LegacyController extends Controller
         $timestampLast = Carbon::yesterday()->addHours(16);
         $timestamp = Carbon::yesterday()->addHours(24);
         $data['16h-24h'] = $this->getForStatsTimestamp($timestampLast, $timestamp);
+
+        $response = [
+            'success' => true,
+            'data' => $data,
+        ];
+
+        return response()->json($response);
+    }
+
+    public function burnedAreaLastDays()
+    {
+        $data = [];
+
+        $timestampLast = Carbon::yesterday();
+        $timestamp = Carbon::yesterday()->endOfDay();
+        $data[$timestampLast->format('DD-MM-YYYY')] = $this->getForBurnedArea($timestampLast, $timestamp);
+
+        $timestampLast = Carbon::yesterday()->subDays(1);
+        $timestamp = Carbon::yesterday()->subDays(1)->endOfDay();
+        $data[$timestampLast->format('DD-MM-YYYY')] = $this->getForBurnedArea($timestampLast, $timestamp);
+
+        $timestampLast = Carbon::yesterday()->subDays(2);
+        $timestamp = Carbon::yesterday()->subDays(2)->endOfDay();
+        $data[$timestampLast->format('DD-MM-YYYY')] = $this->getForBurnedArea($timestampLast, $timestamp);
 
         $response = [
             'success' => true,
