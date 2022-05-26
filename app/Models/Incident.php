@@ -180,6 +180,11 @@ class Incident extends Model
         return $query->where('isFMA', true);
     }
 
+    public function scopeIsOtherFire(Builder $query): Builder
+    {
+        return $query->where('isUrbanFire', true)->orWhere('isTransporteFire', true)->orWhere('isOtherFire', true);
+    }
+
     public function getDateTimeObjectAttribute(): array
     {
         return [
