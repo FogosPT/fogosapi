@@ -419,6 +419,8 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
             $statusFacebook = date('d-m-Y')." {$concelhos} com risco Moderado de incêndio para {$when}: %0A";
             $status = date('d-m-Y')." {$concelhos} com risco Moderado de incêndio para {$when}: \r\n";
 
+            sort($moderado);
+
             foreach ($moderado as $e) {
                 $statusFacebook .= $e.'%0A';
                 $status .= $e."\r\n";
@@ -437,6 +439,8 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
 
             $statusFacebook = date('d-m-Y')." {$concelhos} com risco Elevado de incêndio para {$when}: %0A";
             $status = date('d-m-Y')." {$concelhos} com risco Elevado de incêndio para {$when}: \r\n";
+
+            sort($elevado);
 
             foreach ($elevado as $e) {
                 $statusFacebook .= $e.'%0A';
@@ -457,6 +461,8 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
             $statusFacebook = date('d-m-Y')." {$concelhos} com risco Muito Elevado de incêndio para {$when}: %0A";
             $status = date('d-m-Y')." {$concelhos} com risco Muito Elevado de incêndio para {$when}: \r\n";
 
+            sort($muitoElevado);
+
             foreach ($muitoElevado as $e) {
                 $statusFacebook .= $e.'%0A';
                 $status .= $e."\r\n";
@@ -475,6 +481,8 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
             $statusFacebook = date('d-m-Y')." {$concelhos} com risco Máximo de incêndio para {$when}: %0A";
             $status = date('d-m-Y')." {$concelhos} com risco Máximo de incêndio para {$when}: \r\n";
 
+            sort($maximo);
+            
             foreach ($maximo as $e) {
                 $statusFacebook .= $e.'%0A';
                 $status .= $e."\r\n";
