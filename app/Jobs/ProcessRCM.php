@@ -482,7 +482,7 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
             $status = date('d-m-Y')." {$concelhos} com risco Máximo de incêndio para {$when}: \r\n";
 
             sort($maximo);
-            
+
             foreach ($maximo as $e) {
                 $statusFacebook .= $e.'%0A';
                 $status .= $e."\r\n";

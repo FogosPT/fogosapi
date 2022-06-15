@@ -3,7 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Jobs\CheckImportantFireIncident;
+use App\Jobs\DailySummary;
 use App\Jobs\HandleNewIncidentSocialMedia;
+use App\Jobs\ProcessANPCAllData;
 use App\Jobs\ProcessICNFFireData;
 use App\Jobs\ProcessICNFPDF;
 use App\Jobs\ProcessICNFPDFData;
@@ -48,6 +50,7 @@ class TestStuff extends Command
     public function handle()
     {
         //dispatch(new UpdateICNFData(1));
+        dispatch(new DailySummary());
 
         //dispatch(new CheckImportantFireIncident());
 
@@ -55,7 +58,7 @@ class TestStuff extends Command
 
         //$incident = Incident::where('id', "2021080029244")->limit(1)->get()[0];
 
-        dispatch(new UpdateWeatherStations());
+        //dispatch(new UpdateWeatherStations());
         //dispatch(new UpdateWeatherData());
 
         //dispatch(new ProcessICNFFireData($incident));
