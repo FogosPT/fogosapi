@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Jobs\DailySummary;
 use App\Jobs\HourlySummary;
 use App\Jobs\ProcessANPCAllData;
 use App\Jobs\ProcessDataForHistoryTotal;
@@ -56,6 +57,8 @@ class Kernel extends ConsoleKernel
 
             $schedule->job(new UpdateWeatherStations())->monthly();
             $schedule->job(new UpdateWeatherData())->everyTwoHours();
+
+            $schedule->job(new DailySummary())->daily()->at('09:30');
         }
     }
 }
