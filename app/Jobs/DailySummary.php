@@ -54,16 +54,14 @@ class DailySummary extends Job
                     $maxCars += max(array_column($history, 'terrain')) ;
                 }
 
-                if(!empty(array_column($history, 'planes'))){
-                    $maxPlanes += max(array_column($history, 'planes')) ;
+                if(!empty(array_column($history, 'aerial'))){
+                    $maxPlanes += max(array_column($history, 'aerial')) ;
                 }
             }
         }
 
         $status = "ℹ Resumo diário de ontem:\r\n - Total de incêndios: {$total} \r\n - Total de Operacionais: {$maxMan} \r\n - Total de veiculos: {$maxCars} \r\n - Total de Meios Aéreos: {$maxPlanes} \r\n - Total Área Ardida: {$totalBurnArea} ha ℹ";
         $statusf = "ℹ Resumo diário de ontem:%0A - Total de incêndios: {$total} %0A - Total de Operacionais: {$maxMan} %0A - Total de veiculos: {$maxCars} %0A - Total de Meios Aéreos: {$maxPlanes} %0A - Total Área Ardida: {$totalBurnArea} ha ℹ";
-
-        var_dump($status);
 
         TwitterTool::tweet($status, false);
         FacebookTool::publish($statusf);
