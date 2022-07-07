@@ -45,8 +45,8 @@ class HourlySummary extends Job
 
             $incendio = ($total === 1) ? 'Incêndio' : 'Incêndios';
 
-            $status = "{$date} - {$total} {$incendio} em curso combatidos por:\r\n👩‍ {$man}\r\n🚒 {$cars}\r\n🚁 {$areal} \r\n https://fogos.pt #FogosPT";
-            $statusf = "{$date} - {$total} {$incendio} em curso combatidos por:%0A👩‍ {$man}%0A🚒 {$cars}%0A🚁 {$areal} %0A https://fogos.pt #FogosPT";
+            $status = "{$date} - {$total} {$incendio} em curso. Meios Mobilizados:\r\n👩‍ {$man}\r\n🚒 {$cars}\r\n🚁 {$areal} \r\n https://fogos.pt #FogosPT";
+            $statusf = "{$date} - {$total} {$incendio} em curso. Meios Mobilizados:%0A👩‍ {$man}%0A🚒 {$cars}%0A🚁 {$areal} %0A https://fogos.pt #FogosPT";
         }
 
         $url = 'estatisticas?phantom=1';
