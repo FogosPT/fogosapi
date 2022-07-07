@@ -60,8 +60,8 @@ class DailySummary extends Job
             }
         }
 
-        $status = "ℹ Resumo diário de ontem:\r\n - Total de incêndios: {$total} \r\n - Total de Operacionais: {$maxMan} \r\n - Total de veiculos: {$maxCars} \r\n - Total de Meios Aéreos: {$maxPlanes} \r\n - Total Área Ardida: {$totalBurnArea} ha ℹ";
-        $statusf = "ℹ Resumo diário de ontem:%0A - Total de incêndios: {$total} %0A - Total de Operacionais: {$maxMan} %0A - Total de veiculos: {$maxCars} %0A - Total de Meios Aéreos: {$maxPlanes} %0A - Total Área Ardida: {$totalBurnArea} ha ℹ";
+        $status = "ℹ Resumo diário de ontem {$start->format('d-m-Y')}:\r\n - Total de incêndios: {$total} \r\n - Total de Operacionais: {$maxMan} \r\n - Total de veiculos: {$maxCars} \r\n - Total de Meios Aéreos: {$maxPlanes} \r\n - Total Área Ardida: {$totalBurnArea} ha ℹ";
+        $statusf = "ℹ Resumo diário de ontem {$start->format('d-m-Y')}:%0A - Total de incêndios: {$total} %0A - Total de Operacionais: {$maxMan} %0A - Total de veiculos: {$maxCars} %0A - Total de Meios Aéreos: {$maxPlanes} %0A - Total Área Ardida: {$totalBurnArea} ha ℹ";
 
         TwitterTool::tweet($status, false);
         FacebookTool::publish($statusf);

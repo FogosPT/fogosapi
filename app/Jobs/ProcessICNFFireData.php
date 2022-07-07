@@ -221,7 +221,7 @@ class ProcessICNFFireData extends Job
             $this->incident->lastTweetId = $lastTweetId;
             $this->incident->save();
 
-            //FacebookTool::publish($status);
+            FacebookTool::publish($status);
             TelegramTool::publishImage($status, $path);
             ScreenShotTool::removeScreenShotFile($name);
         }
