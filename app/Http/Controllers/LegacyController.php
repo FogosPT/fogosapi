@@ -338,6 +338,7 @@ class LegacyController extends Controller
     public function nowData()
     {
         $data = HistoryTotal::orderBy('created', 'desc')->limit(50)->get();
+        $data = array_reverse($data);
 
         return new JsonResponse([
             'success' => true,
