@@ -341,7 +341,7 @@ class LegacyController extends Controller
 
         return new JsonResponse([
             'success' => true,
-            'data' => array_reverse(HistoryTotalResource::collection($data)),
+            'data' => HistoryTotalResource::collection($data),
         ]);
 
         return response()->json($response);
