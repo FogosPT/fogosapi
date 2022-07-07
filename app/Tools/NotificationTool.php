@@ -79,9 +79,6 @@ class NotificationTool
                     'sound' => 'default',
                     'icon' => 'https://fogos.pt/img/logo.svg',
                 ],
-                'data' => [
-                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                ],
                 'android' => [
                     'priority' => 'high'
                 ],
