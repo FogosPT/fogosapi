@@ -52,6 +52,64 @@ class IncidentController extends Controller
         }
     }
 
+    public function activeKML(Request $request): JsonResponse
+    {
+        $all = $request->get('all');
+        $isFMA = $request->get('fma');
+        $isOtherFire = $request->get('otherfire');
+        $concelho = $request->get('concelho');
+
+        if($request->exists('limit')){
+            $limit = (int)$request->get('limit');
+        } else {
+            $limit = 300;
+        }
+
+        $geoJson = $request->get('geojson');
+
+        $incidents = Incident::isActive()
+            ->when(!$all, function ($query, $all){
+                return $query->isFire();
+            })->when($isFMA, function ($query, $isFMA){
+                return $query->isFMA();
+            })->when($isOtherFire, function ($query, $isOtherFire){
+                return $query->isOtherFire();
+            })->when($concelho, function ($query, $concelho){
+                return $query->where('concelho', $concelho);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate($limit);
+
+        $r=new \XMLWriter();
+        $r->openMemory();
+        $r->startDocument('1.0','UTF-8');
+        $r->startElement('kml');
+        $r->startElement('document');
+        $r->startElement('Placemark');
+        foreach($incidents as $i){
+            $r->startElement('name');
+            $r->text($i['location']);
+            $r->endElement();
+            $r->startElement('description');
+            $r->text($i['natureza']);
+            $r->endElement();
+            $r->startElement('Point');
+            $r->startElement('coordinates');
+            $r->text($i['lng'].' , '.$i['lat']);
+            $r->endElement(); // coordinates
+            $r->endElement(); // point
+        }
+
+        $r->endElement(); // Placemark
+        $r->endElement(); // document
+        $r->endElement(); // kml
+        $newxml = $r->outputMemory(true);
+
+
+        echo $newxml;
+        die();
+    }
+
     private function transformToGeoJSON($data)
     {
         foreach($data as $d) {
