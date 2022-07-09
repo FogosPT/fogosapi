@@ -399,8 +399,8 @@ class LegacyController extends Controller
 
         foreach ($incidents as $r) {
             $key = false;
-            if(isset($r['icnf']['causa']) && isset($r['icnf']['causafamilia'])){
-                $key = $r['icnf']['causa'] . ' ' . $r['icnf']['causafamilia'];
+            if(isset($r['icnf']['tipocausa']) && isset($r['icnf']['causafamilia'])){
+                $key = $r['icnf']['tipocausa'] . ' ' . $r['icnf']['causafamilia'];
             }
 
             if($key && isset($motives[$key])){
