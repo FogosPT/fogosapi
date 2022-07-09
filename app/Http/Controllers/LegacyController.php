@@ -513,7 +513,7 @@ class LegacyController extends Controller
     {
         $timestampLast = Carbon::today();
         $timestamp = Carbon::today()->startOfMonth();
-        $data = $this->getForMotive($timestampLast, $timestamp);
+        $data = $this->getForMotive($timestamp,$timestampLast);
 
         $response = [
             'success' => true,
