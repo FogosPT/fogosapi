@@ -210,9 +210,9 @@ class NotificationTool
         self::send($status, $incident->location, $incident->id);
     }
 
-    public static function sendNewStatusNotification(Incident $incident, IncidentStatusHistory $incidentStatusHistory)
+    public static function sendNewStatusNotification(Incident $incident, $incidentStatusHistory)
     {
-        $status = "Alteração de estado: de {$incidentStatusHistory->status} para {$incident->status}";
+        $status = "Alteração de estado: de {$incidentStatusHistory['status']} para {$incident->status}";
         self::send($status, $incident->location, $incident->id);
     }
 
