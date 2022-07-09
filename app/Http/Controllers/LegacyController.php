@@ -398,8 +398,6 @@ class LegacyController extends Controller
         $motives = [];
 
         foreach ($incidents as $r) {
-            $total += (float)$r['icnf']['burnArea']['total'];
-
             $key = false;
             if(isset($r['icnf']['causa']) && isset($r['icnf']['causafamilia'])){
                 $key = $r['icnf']['causa'] . ' ' . $r['icnf']['causafamilia'];
