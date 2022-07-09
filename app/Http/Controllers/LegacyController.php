@@ -387,6 +387,34 @@ class LegacyController extends Controller
         return $total;
     }
 
+    private function getForMotive($start, $end)
+    {
+        $incidents = Incident::where('isFire', true)
+            ->where('icnf.causa', 'exists', true)
+            ->where([['dateTime', '>=', $start], ['dateTime', '<=', $end]])
+            ->get();
+
+
+        $motives = [];
+
+        foreach ($incidents as $r) {
+            $total += (float)$r['icnf']['burnArea']['total'];
+
+            $key = false;
+            if(isset($r['icnf']['causa']) && isset($r['icnf']['causafamilia'])){
+                $key = $r['icnf']['causa'] . ' ' . $r['icnf']['causafamilia'];
+            }
+
+            if($key && isset($motives[$key])){
+                $motives[$key]++;
+            } elseif ($key){
+                $motives[$key] = 1;
+            }
+        }
+
+        return $motives;
+    }
+
     public function stats8hours()
     {
         $data = [];
@@ -472,6 +500,20 @@ class LegacyController extends Controller
         $timestampLast = Carbon::yesterday()->subDays(6);
         $timestamp = Carbon::yesterday()->subDays(6)->endOfDay();
         $data[$timestampLast->format('d-m-Y')] = $this->getForBurnedArea($timestampLast, $timestamp);
+
+        $response = [
+            'success' => true,
+            'data' => array_reverse($data),
+        ];
+
+        return response()->json($response);
+    }
+
+    public function motivesThisMonths()
+    {
+        $timestampLast = Carbon::today();
+        $timestamp = Carbon::today()->startOfMonth();
+        $data = $this->getForMotive($timestampLast, $timestamp);
 
         $response = [
             'success' => true,
