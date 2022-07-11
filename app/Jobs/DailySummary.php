@@ -62,8 +62,8 @@ class DailySummary extends Job
 
         $totalBurnArea = round($totalBurnArea);
 
-        $status = "ℹ Resumo diário de ontem {$start->format('d-m-Y')}:\r\n - Total de incêndios: {$total} \r\n - Total de Operacionais: {$maxMan} \r\n - Total de veiculos: {$maxCars} \r\n - Total de Meios Aéreos: {$maxPlanes} \r\n - Total Área Ardida contabilizada: {$totalBurnArea} ha ℹ";
-        $statusf = "ℹ Resumo diário de ontem {$start->format('d-m-Y')}:%0A - Total de incêndios: {$total} %0A - Total de Operacionais: {$maxMan} %0A - Total de veiculos: {$maxCars} %0A - Total de Meios Aéreos: {$maxPlanes} %0A - Total Área Ardida contabilizada: {$totalBurnArea} ha ℹ";
+        $status = "ℹ Resumo diário de ontem {$start->format('d-m-Y')}:\r\n - Total de ignições: {$total} \r\n - Operacionais Mobilizados: {$maxMan} \r\n - Veiculos Mobilizados: {$maxCars} \r\n - Missões com Meios Aéreos: {$maxPlanes} \r\n - Total Área Ardida contabilizada: {$totalBurnArea} ha ℹ";
+        $statusf = "ℹ Resumo diário de ontem {$start->format('d-m-Y')}:%0A - Total de ignições: {$total} %0A - Operacionais Mobilizados: {$maxMan} %0A - Veiculos Mobilizados: {$maxCars} %0A - Missões com Meios Aéreos: {$maxPlanes} %0A - Total Área Ardida contabilizada: {$totalBurnArea} ha ℹ";
 
         TwitterTool::tweet($status, false);
         FacebookTool::publish($statusf);
