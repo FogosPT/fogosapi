@@ -30,7 +30,6 @@ class SaveIncidentStatusHistory extends Job
     {
         $this->updateIncident();
 
-        sleep(5);
         $last = IncidentStatusHistory::where('id', $this->incident->id)
             ->orderBy('created', 'desc')
             ->limit(1)
