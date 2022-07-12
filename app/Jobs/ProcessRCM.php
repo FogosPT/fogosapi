@@ -365,7 +365,7 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
         foreach ($cities['features'] as $c) {
             ++$i;
             $data = [
-                'concelho' => UTF8::ucwords(mb_strtolower($c['properties']['Concelho'], 'UTF-8')),
+                'concelho' => UTF8::ucwords(mb_strtolower( UTF8::fix_simple_utf8($c['properties']['Concelho']), 'UTF-8')),
                 'date' => $riscoHoje['dataPrev'],
                 'hoje' => RCM::RCM_TO_HUMAN[$riscoHoje['local'][$c['properties']['DICO']]['data']['rcm']],
                 'amanha' => RCM::RCM_TO_HUMAN[$riscoAmanha['local'][$c['properties']['DICO']]['data']['rcm']],
