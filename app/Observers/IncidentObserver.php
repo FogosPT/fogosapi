@@ -17,7 +17,6 @@ trait IncidentObserver
         parent::boot();
 
         static::created(function ($incident) {
-            Log::info("Incident Created Event Fire observer: ". json_encode($incident));
             dispatch(new SaveIncidentHistory($incident));
             dispatch(new SaveIncidentStatusHistory($incident));
 
