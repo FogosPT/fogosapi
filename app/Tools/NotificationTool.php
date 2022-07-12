@@ -297,6 +297,6 @@ class NotificationTool
     {
         $topic = "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in topics || 'web-warnings' in topics";
 
-        self::sendWarning($topic, $status);
+        self::sendWarning($status, $topic);
     }
 }
