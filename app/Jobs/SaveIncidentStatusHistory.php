@@ -110,6 +110,9 @@ class SaveIncidentStatusHistory extends Job
                     }
                 }
             }
+
+            NotificationTool::sendNewStatusNotification($this->incident, $last);
+
         }
 
         $incidentStatusHistory = new IncidentStatusHistory();
@@ -120,7 +123,6 @@ class SaveIncidentStatusHistory extends Job
         $incidentStatusHistory->statusCode = $this->incident->statusCode;
         $incidentStatusHistory->save();
 
-        NotificationTool::sendNewStatusNotification($this->incident, $last);
     }
 
     private function updateIncident()
