@@ -295,7 +295,8 @@ class NotificationTool
 
     public static function sendWarningNotification($status)
     {
-        $topic = "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in  || 'web-warnings' in topics";
+        $topic = "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in topics || 'web-warnings' in topics";
+
         self::sendWarning($topic, $status);
     }
 }
