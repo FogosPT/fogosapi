@@ -139,8 +139,6 @@ class TwitterTool
 
             $r = json_decode($response);
 
-            Log::debug($response);
-
             if(isset($r->id)){
                 $lastId = $r->id;
             } else {

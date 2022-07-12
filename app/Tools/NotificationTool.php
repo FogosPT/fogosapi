@@ -46,16 +46,8 @@ class NotificationTool
             ],
         ];
 
-
-
-        Log::debug('sendRequest => ' . $topic . ' => ' . $status);
-        Log::debug('sendRequest => ' . json_encode($headers));
-
         $client = new \GuzzleHttp\Client();
         $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
-
-        Log::debug($response->getStatusCode());
-        Log::debug($response->getBody());
     }
 
     private static function sendCustomTitleRequest($topic, $status, $title, $forceEnable = false)
@@ -93,15 +85,8 @@ class NotificationTool
 
         ];
 
-        Log::debug('sendCustomTitleRequest => ' . $topic);
-        Log::debug('sendCustomTitleRequest => ' . $status);
-
         $client = new \GuzzleHttp\Client();
         $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
-
-        Log::debug('sendImportant => ' . $status );
-        Log::debug($response->getStatusCode());
-        Log::debug($response->getBody());
     }
 
     private static function buildLegacyTopic($id)
@@ -122,8 +107,6 @@ class NotificationTool
         } else {
             $topic = "'dev-web-important' in topics || 'dev-mobile-android-important' in topics || 'dev-mobile-ios-important' in topics";
         }
-
-        Log::debug('buildLegacyImportantTopic => ' . $topic);
 
         return $topic;
     }
@@ -192,10 +175,6 @@ class NotificationTool
 
         $client = new \GuzzleHttp\Client();
         $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
-
-        Log::debug('sendImportant => ' . $status );
-        Log::debug($response->getStatusCode());
-        Log::debug($response->getBody());
     }
 
     public static function sendNewCosNotification(Incident $incident)
