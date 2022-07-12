@@ -30,6 +30,7 @@ class SaveIncidentStatusHistory extends Job
     {
         $this->updateIncident();
 
+        sleep(5);
         $last = IncidentStatusHistory::where('id', $this->incident->id)
             ->orderBy('created', 'desc')
             ->limit(1)
@@ -70,7 +71,7 @@ class SaveIncidentStatusHistory extends Job
 
                         $domain = env('SOCIAL_LINK_DOMAIN');
 
-                        $status = "🚨🔥 Reacendimento em {$this->incident->location} - {$this->incident->natureza} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥🚨";
+                        $status = "🚨🔥 Reacendimento em {$this->incident->location} - {$this->incident->natureza} https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🔥🚨";
 
                         $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
@@ -96,7 +97,7 @@ class SaveIncidentStatusHistory extends Job
 
                         $domain = env('SOCIAL_LINK_DOMAIN');
 
-                        $status = "✅ Dominado {$this->incident->location} - {$this->incident->natureza} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  ✅";
+                        $status = "✅ Dominado {$this->incident->location} - {$this->incident->natureza} https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  ✅";
 
                         $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
