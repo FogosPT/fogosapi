@@ -177,6 +177,33 @@ class NotificationTool
         $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
     }
 
+    public static function sendWarning($status, $topic)
+    {
+        $title = 'Alerta';
+
+        $headers = [
+            'allow_redirects' => true,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'key='.env('FIREBASE_KEY'),
+            ],
+            'json' => [
+                'condition' => $topic,
+                'notification' => [
+                    'title' => "Fogos.pt - {$title}",
+                    'body' => $status,
+                    'sound' => 'default',
+                    'icon' => 'https://fogos.pt/img/logo.svg',
+                ],
+            ],
+        ];
+
+
+        $client = new \GuzzleHttp\Client();
+        $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
+    }
+
     public static function sendNewCosNotification(Incident $incident)
     {
         $status = 'Novo Comandante de Operações de socorro: '.$incident->cos;
@@ -269,7 +296,6 @@ class NotificationTool
     public static function sendWarningNotification($status)
     {
         $topic = "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in  || 'web-warnings' in topics";
-        $title = 'Fogos.pt - Alerta';
-        self::sendCustomTitleRequest($topic, $status, $title,true);
+        self::sendWarning($topic, $status);
     }
 }
