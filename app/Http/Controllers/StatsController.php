@@ -22,10 +22,10 @@ class StatsController extends Controller
         $hours = [];
 
         foreach ($incidents as $i){
-            if(isset($hours[$i->created->hour])){
-                $hours[$i->created->hour]++;
+            if(isset($hours[(string)$i->created->hour])){
+                $hours[(string)$i->created->hour]++;
             } else {
-                $hours[$i->created->hour] = 1;
+                $hours[(string)$i->created->hour] = 1;
             }
         }
 
