@@ -40,7 +40,7 @@ class Kernel extends ConsoleKernel
             $schedule->job(new ProcessANPCAllData())->everyTwoMinutes();
             $schedule->job(new ProcessDataForHistoryTotal())->everyTwoMinutes();
             //$schedule->job(new ProcessMadeiraWarnings())->everyTenMinutes();
-            $schedule->job(new ProcessPlanes())->everyFiveMinutes();
+            //$schedule->job(new ProcessPlanes())->everyFiveMinutes();
             $schedule->job(new ProcessRCM(true))->daily()->at('09:00');
             $schedule->job(new ProcessRCM(false))->hourly(); // update RCM
             $schedule->job(new ProcessRCM(true, true))->daily()->at('18:00');
