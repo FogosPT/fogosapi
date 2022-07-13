@@ -29,6 +29,8 @@ class IncidentController extends Controller
 
         $geoJson = $request->get('geojson');
 
+        $csv = $request->get('csv');
+
         $incidents = Incident::isActive()
                             ->when(!$all, function ($query, $all){
                                 return $query->isFire();
@@ -42,7 +44,31 @@ class IncidentController extends Controller
                             ->orderBy('created_at', 'desc')
                             ->paginate($limit);
 
-        if($geoJson){
+        if($csv){
+            $csv = 'incendios.csv';
+
+            header('Content-Disposition: attachment; filename="'.$csv.'";');
+            header('Content-Type: application/csv; charset=UTF-8');
+
+            // open the "output" stream
+            $f = fopen('php://output', 'w');
+            // Write utf-8 bom to the file
+            fputs($f, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            foreach ($incidents as $i) {
+                $_i = $i->toArray();
+                unset($_i['icnf']);
+                unset($_i['coordinates']);
+                fputcsv($f, $_i, ';');
+            }
+
+
+
+
+
+            // use exit to get rid of unexpected output afterward
+            exit();
+        } else if($geoJson){
             return new JsonResponse($this->transformToGeoJSON(IncidentResource::collection($incidents)));
         } else {
             return new JsonResponse([
