@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Jobs\CheckImportantFireIncident;
 use App\Jobs\DailySummary;
+use App\Jobs\HandleANEPCImportantData;
 use App\Jobs\HandleNewIncidentSocialMedia;
 use App\Jobs\ProcessANPCAllData;
 use App\Jobs\ProcessICNFFireData;
@@ -14,9 +15,11 @@ use App\Jobs\UpdateWeatherData;
 use App\Jobs\UpdateWeatherStations;
 use App\Models\Incident;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Spatie\Browsershot\Browsershot;
 use HeadlessChromium\Communication\Connection;
 use HeadlessChromium\Browser;
+use voku\helper\UTF8;
 
 class TestStuff extends Command
 {
@@ -49,8 +52,13 @@ class TestStuff extends Command
      */
     public function handle()
     {
+//
+        dispatch(new HandleANEPCImportantData());
+
+
+
         //dispatch(new UpdateICNFData(1));
-        dispatch(new DailySummary());
+        //dispatch(new DailySummary());
 
         //dispatch(new CheckImportantFireIncident());
 
