@@ -80,13 +80,13 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
 
     private function createIncident($data)
     {
-        $point = $this->prepareData($data);
+        $point = $this->prepareData($data, true);
         $incident = new Incident($point);
         $incident->sentCheckImportant = false;
         $incident->save();
     }
 
-    private function prepareData($data)
+    private function prepareData($data, $create = false)
     {
         $ticks = explode('+', explode('(', $data['DataOcorrencia'])[1])[0];
         $ticks = substr($ticks, 0, -3);
@@ -130,7 +130,6 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
             'especieName' => $data['Natureza']['EspecieAbreviatura'],
             'familiaName' => $data['Natureza']['FamiliaAbreviatura'],
             'status' => $data['EstadoOcorrencia']['Name'],
-            'important' => false,
             'localidade' => $localidade,
             'active' => true,
             'sadoId' => $data['Numero'],
@@ -143,6 +142,10 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
             'isOtherIncident' => $isOtherIncident,
             'isFMA' => $isFMA
         ];
+
+        if($create){
+            $data['important'] = false;
+        }
 
         if ($data['EstadoOcorrencia']['ID'] == 11) {
             $point['extra'] = 'Falso Alarme';
