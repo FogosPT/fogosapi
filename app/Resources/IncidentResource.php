@@ -32,7 +32,7 @@ class IncidentResource extends JsonResource
             'statusCode' => $this->statusCode,
             'statusColor' => $this->statusColor,
             'status' => $this->status,
-            'important' => $this->important,
+            'important' => isset($this->important) ? $this->important : false,
             'localidade' => $this->localidade,
             'active' => $this->active,
             'sadoId' => $this->sadoId,
