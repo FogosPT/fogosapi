@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Incident;
+use Illuminate\Support\Facades\Log;
 use PhpImap\Mailbox;
 use voku\helper\UTF8;
 
@@ -58,45 +59,45 @@ class HandleANEPCPositEmail extends Job
 
                 $rows = $tables->item(0)->getElementsByTagName('tr');
 
-                $i = 0;
                 $fires = array();
 
                 foreach ($rows as $row) {
-                    if($i !== 0){
-                        $cols = $row->getElementsByTagName('td');
+                    $cols = $row->getElementsByTagName('td');
 
-                        $j = 0;
-                        $fire = [];
-                        foreach($cols as $col){
+                    $j = 0;
+                    $fire = [];
+                    foreach($cols as $col){
 
-                            switch ($j){
-                                case 0:
-                                    $fire['id'] = $col->nodeValue;
-                                    break;
-                                case 11:
-                                    $fire['heliFight'] = (int)$col->nodeValue;
-                                    break;
-                                case 12:
-                                    $fire['planeFight'] = (int)$col->nodeValue;
-                                    break;
-                                case 13:
-                                    $fire['heliCoord'] = (int)$col->nodeValue;
-                                    break;
-                                case 15:
-                                    $fire['cos'] = UTF8::fix_utf8($col->nodeValue);
-                                    break;
-                                case 16:
-                                    $fire['pco'] = UTF8::fix_utf8($col->nodeValue);
-                                    break;
-                            }
-
-                            $j++;
+                        switch ($j){
+                            case 0:
+                                $fire['id'] = $col->nodeValue;
+                                break;
+                            case 11:
+                                $fire['heliFight'] = (int)$col->nodeValue;
+                                break;
+                            case 12:
+                                $fire['planeFight'] = (int)$col->nodeValue;
+                                break;
+                            case 13:
+                                $fire['heliCoord'] = (int)$col->nodeValue;
+                                break;
+                            case 15:
+                                $fire['cos'] = UTF8::fix_utf8($col->nodeValue);
+                                break;
+                            case 16:
+                                $fire['pco'] = UTF8::fix_utf8($col->nodeValue);
+                                break;
                         }
-                        $fires[] = $fire;
+
+                        $j++;
                     }
-                    $i++;
+                    $fires[] = $fire;
                 }
             }
+
+
+            print_r($fires);
+            Log::debug(json_encode($fires));
 
             foreach($fires as $fire){
                 $incident = Incident::where('id', $fire['id'])->get()[0];
