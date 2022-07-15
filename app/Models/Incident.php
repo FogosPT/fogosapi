@@ -43,7 +43,11 @@ class Incident extends Model
         'detailLocation' => 'string',
         'kml' => 'string',
         'especieName' => 'string',
-        'familiaName' => 'string'
+        'familiaName' => 'string',
+        'heliFight' => 'integer',
+        'heliCoord' => 'integer',
+        'planeFight' => 'integer',
+        'anepcDirectUpdate' => 'boolean'
     ];
 
     protected $fillable = [
@@ -87,7 +91,11 @@ class Incident extends Model
         'kml',
         'icnf',
         'especieName',
-        'familiaName'
+        'familiaName',
+        'heliFight',
+        'heliCoord',
+        'planeFight',
+        'anepcDirectUpdate'
     ];
 
     public const NATUREZA_CODE_FIRE = [

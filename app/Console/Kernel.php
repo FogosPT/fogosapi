@@ -4,6 +4,7 @@ namespace App\Console;
 
 use App\Jobs\DailySummary;
 use App\Jobs\HandleANEPCImportantData;
+use App\Jobs\HandleANEPCPositEmail;
 use App\Jobs\HourlySummary;
 use App\Jobs\ProcessANPCAllData;
 use App\Jobs\ProcessDataForHistoryTotal;
@@ -63,6 +64,7 @@ class Kernel extends ConsoleKernel
 
 
             $schedule->job(new HandleANEPCImportantData())->everyTenMinutes();
+            $schedule->job(new HandleANEPCPositEmail())->everyTenMinutes();
         }
     }
 }

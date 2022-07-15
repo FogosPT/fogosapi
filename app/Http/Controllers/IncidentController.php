@@ -30,6 +30,7 @@ class IncidentController extends Controller
         $geoJson = $request->get('geojson');
 
         $csv = $request->get('csv');
+        $csv2 = $request->get('csv2');
 
         $incidents = Incident::isActive()
                             ->when(!$all, function ($query, $all){
@@ -44,10 +45,10 @@ class IncidentController extends Controller
                             ->orderBy('created_at', 'desc')
                             ->paginate($limit);
 
-        if($csv){
+        if($csv) {
             $csv = 'incendios.csv';
 
-            header('Content-Disposition: attachment; filename="'.$csv.'";');
+            header('Content-Disposition: attachment; filename="' . $csv . '";');
             header('Content-Type: application/csv; charset=UTF-8');
 
             // open the "output" stream
@@ -66,8 +67,42 @@ class IncidentController extends Controller
             }
 
 
+            // use exit to get rid of unexpected output afterward
+            exit();
+        } else if($csv2){
+            $csv = 'incendios.csv';
+
+            header('Content-Disposition: attachment; filename="' . $csv . '";');
+            header('Content-Type: application/csv; charset=UTF-8');
+
+            // open the "output" stream
+            $f = fopen('php://output', 'w');
+            // Write utf-8 bom to the file
+            fputs($f, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            $arr = IncidentResource::collection($incidents)->resolve();
+
+            $keys = $arr[0];
+            unset($keys['_id']);
+            unset($keys['dateTime']);
+            unset($keys['created']);
+            unset($keys['updated']);
+            unset($keys['icnf']);
+            unset($keys['coordinates']);
+
+            fputcsv($f, array_keys($keys), ';');
 
 
+            foreach ($arr as $i) {
+                $_i = $i;
+                unset($_i['_id']);
+                unset($_i['dateTime']);
+                unset($_i['created']);
+                unset($_i['updated']);
+                unset($_i['icnf']);
+                unset($_i['coordinates']);
+                fputcsv($f, $_i, ';');
+            }
 
             // use exit to get rid of unexpected output afterward
             exit();
