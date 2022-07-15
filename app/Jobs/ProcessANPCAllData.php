@@ -145,6 +145,10 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
 
         if($create){
             $data['important'] = false;
+            $data['heliFight'] = 0;
+            $data['heliCoord'] = 0;
+            $data['planeFight'] = 0;
+            $data['anepcDirectUpdate'] = false;
         }
 
         if ($data['EstadoOcorrencia']['ID'] == 11) {

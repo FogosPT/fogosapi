@@ -19,6 +19,7 @@
         "j7mbo/twitter-api-php": "^1.0",
         "jenssegers/mongodb": "^3.8",
         "laravel/lumen-framework": "^8.0",
+        "php-imap/php-imap": "^5.0",
         "predis/predis": "^1.1",
         "sentry/sentry-laravel": "^2.7",
         "smalot/pdfparser": "^1.0",

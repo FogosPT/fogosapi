@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Jobs\CheckImportantFireIncident;
 use App\Jobs\DailySummary;
 use App\Jobs\HandleANEPCImportantData;
+use App\Jobs\HandleANEPCPositEmail;
 use App\Jobs\HandleNewIncidentSocialMedia;
 use App\Jobs\ProcessANPCAllData;
 use App\Jobs\ProcessICNFFireData;
@@ -16,6 +17,8 @@ use App\Jobs\UpdateWeatherStations;
 use App\Models\Incident;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use PhpImap\Imap;
+use PhpImap\Mailbox;
 use Spatie\Browsershot\Browsershot;
 use HeadlessChromium\Communication\Connection;
 use HeadlessChromium\Browser;
@@ -53,9 +56,11 @@ class TestStuff extends Command
     public function handle()
     {
 //
-        dispatch(new HandleANEPCImportantData());
+       // dispatch(new HandleANEPCImportantData());
 
+        dispatch( new HandleANEPCPositEmail());
 
+// Create PhpImap\Mailbox instance for all further actions
 
         //dispatch(new UpdateICNFData(1));
         //dispatch(new DailySummary());

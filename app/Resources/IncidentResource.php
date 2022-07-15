@@ -44,6 +44,10 @@ class IncidentResource extends JsonResource
             'kml' => $this->kml,
             'pco' => $this->pco,
             'cos' => $this->cos,
+            'heliFight' => $this->heliFight,
+            'heliCoord' => $this->heliCoord,
+            'planeFight' => $this->planeFight,
+            'anepcDirectUpdate' => $this->anepcDirectUpdate,
             'created' => $this->createdObject,
             'updated' => $this->updatedObject,
         ];
