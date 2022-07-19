@@ -288,7 +288,7 @@ class IncidentController extends Controller
 
         $incident = Incident::where('id', $id)->get()[0];
 
-        $incident->extra = $request->post('posit') . ' ' . $incident->extra;
+        $incident->extra = $request->post('posit');
 
         $incident->save();
 
