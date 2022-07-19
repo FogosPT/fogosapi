@@ -93,7 +93,7 @@ class IncidentController extends Controller
             fputcsv($f, array_keys($keys), ';');
 
 
-            foreach ($arr as $i) {
+            foreach ($arr as &$i) {
                 $_i = $i;
                 unset($_i['_id']);
                 unset($_i['dateTime']);
@@ -101,6 +101,7 @@ class IncidentController extends Controller
                 unset($_i['updated']);
                 unset($_i['icnf']);
                 unset($_i['coordinates']);
+                $_i['kml'] = null;
                 fputcsv($f, $_i, ';');
             }
 
