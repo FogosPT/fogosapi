@@ -296,4 +296,23 @@ class IncidentController extends Controller
             'success' => true,
         ]);
     }
+
+    public function addKML(Request $request, $id)
+    {
+        $key = $request->header('key');
+
+        if(env('API_WRITE_KEY') !== $key){
+            abort(401);
+        }
+
+        $incident = Incident::where('id', $id)->get()[0];
+
+        $incident->kml = $request->post('kml');
+
+        $incident->save();
+
+        return new JsonResponse([
+            'success' => true,
+        ]);
+    }
 }
