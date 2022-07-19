@@ -6,6 +6,7 @@ use App\Models\Incident;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Support\Facades\Log;
 use voku\helper\UTF8;
 
 class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
@@ -47,6 +48,11 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
 
         $data = json_decode($res->getBody(), true);
         $incidents = $data['GetHistoryOccurrencesByLocationResult']['ArrayInfo'][0]['Data'];
+
+        if(empty($incidents)){
+            Log::debug('empty incidents retuning');
+            return;
+        }
 
         $this->handleIncidents($incidents);
 
