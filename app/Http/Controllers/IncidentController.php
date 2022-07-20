@@ -102,6 +102,7 @@ class IncidentController extends Controller
                 unset($_i['icnf']);
                 unset($_i['coordinates']);
                 $_i['kml'] = null;
+                $_i['extra'] = null;
                 fputcsv($f, $_i, ';');
             }
 
