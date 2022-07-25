@@ -96,7 +96,6 @@ class HandleANEPCPositEmail extends Job
             }
 
 
-            print_r($fires);
             Log::debug(json_encode($fires));
 
             foreach($fires as $fire){
@@ -108,7 +107,6 @@ class HandleANEPCPositEmail extends Job
                 $incident->planeFight = $fire['planeFight'];
                 $incident->heliFight = $fire['heliFight'];
                 $incident->anepcDirectUpdate = true;
-                $incident->important = true;
                 $incident->save();
             }
         }
