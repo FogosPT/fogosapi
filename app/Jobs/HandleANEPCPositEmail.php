@@ -95,9 +95,6 @@ class HandleANEPCPositEmail extends Job
                 }
             }
 
-
-            Log::debug(json_encode($fires));
-
             foreach($fires as $fire){
                 $incident = Incident::where('id', $fire['id'])->get()[0];
 
