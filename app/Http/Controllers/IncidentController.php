@@ -8,6 +8,7 @@ use App\Resources\IncidentResource;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Laravel\Lumen\Routing\Controller;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -79,6 +80,23 @@ class IncidentController extends Controller
             $f = fopen('php://output', 'w');
             // Write utf-8 bom to the file
             fputs($f, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            if(empty($incidents)){
+                Log::debug(json_encode($incidents));
+
+                $incidents = Incident::isActive()
+                    ->when(!$all, function ($query, $all){
+                        return $query->isFire();
+                    })->when($isFMA, function ($query, $isFMA){
+                        return $query->isFMA();
+                    })->when($isOtherFire, function ($query, $isOtherFire){
+                        return $query->isOtherFire();
+                    })->when($concelho, function ($query, $concelho){
+                        return $query->where('concelho', $concelho);
+                    })
+                    ->orderBy('created_at', 'desc')
+                    ->paginate($limit);
+            }
 
             $arr = IncidentResource::collection($incidents)->resolve();
 

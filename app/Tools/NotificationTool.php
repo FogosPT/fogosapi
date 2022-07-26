@@ -52,6 +52,7 @@ class NotificationTool
 
     private static function sendCustomTitleRequest($topic, $status, $title, $forceEnable = false)
     {
+        Log::debug();
         if (!env('NOTIFICATIONS_ENABLE')) {
             return;
         }
