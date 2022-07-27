@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\IncidentSearchRequest;
 use App\Models\Incident;
 use App\Resources\IncidentResource;
+use App\Tools\FacebookTool;
+use App\Tools\ScreenShotTool;
+use App\Tools\TelegramTool;
+use App\Tools\TwitterTool;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -330,6 +334,16 @@ class IncidentController extends Controller
         $incident->kml = $request->post('kml');
 
         $incident->save();
+
+        $url = "fogo/{$this->incident->id}/detalhe";
+        $name = "screenshot-{$this->incident->id}"  . rand(0,255);
+        $path = "/var/www/html/public/screenshots/{$name}.png";
+
+        $status = $request->post('status');
+
+        ScreenShotTool::takeScreenShot($url, $name, 1200, 450);
+
+        TwitterTool::tweet($status, false, $path, false, true);
 
         return new JsonResponse([
             'success' => true,

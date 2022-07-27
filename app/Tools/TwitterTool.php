@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Log;
 class TwitterTool
 {
     private static $client = false;
+    private static $clientVOST = false;
 
     public static function getClient()
     {
@@ -22,6 +23,22 @@ class TwitterTool
         }
 
         return self::$client;
+    }
+
+    public static function getVOSTClient()
+    {
+        if (!self::$clientVOST) {
+            $settings = [
+                'oauth_access_token' => env('TWITTER_OAUTH_ACCESS_TOKEN_VOST'),
+                'oauth_access_token_secret' => env('TWITTER_OAUTH_ACCESS_TOKEN_SECRET_VOST'),
+                'consumer_key' => env('TWITTER_CONSUMER_KEY_VOST'),
+                'consumer_secret' => env('TWITTER_CONSUMER_SECRET_VOST'),
+            ];
+
+            self::$clientVOST = new \TwitterAPIExchange($settings);
+        }
+
+        return self::$clientVOST;
     }
 
     public static function getClientEmergencias()
@@ -84,16 +101,18 @@ class TwitterTool
         return $sentences_array;
     }
 
-    public static function tweet($text, $lastId = false, $imagePath = false, $emergencias = false)
+    public static function tweet($text, $lastId = false, $imagePath = false, $emergencias = false, $vost = false)
     {
         if (!env('TWITTER_ENABLE')) {
             return false;
         }
 
-        if(!$emergencias){
-            $client = self::getClient();
-        } else {
+        if($vost){
+            $client = self::getVOSTClient();
+        } else if($emergencias){
             $client = self::getClientEmergencias();
+        } else {
+            $client = self::getClient();
         }
 
         $fields = [];

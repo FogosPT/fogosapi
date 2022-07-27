@@ -77,6 +77,10 @@ $router->group(['prefix' => 'v2'], function () use ($router) {
 
     });
 
+    $router->group(['prefix' => 'warnings'], function () use ($router) {
+        $router->post('add', '\App\Http\Controllers\WarningsController@add');
+    });
+
     $router->group(['prefix' => 'stats'], function () use ($router) {
         $router->group(['prefix' => 'today'], function () use ($router) {
             $router->get('ignitions-hourly', '\App\Http\Controllers\StatsController@ignitionsHourly');
