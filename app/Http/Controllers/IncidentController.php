@@ -341,9 +341,13 @@ class IncidentController extends Controller
 
         $status = $request->post('status');
 
-        ScreenShotTool::takeScreenShot($url, $name, 1200, 450);
+        if($status)
+        {
+            ScreenShotTool::takeScreenShot($url, $name, 1200, 450);
 
-        TwitterTool::tweet($status, false, $path, false, true);
+            TwitterTool::tweet($status, false, $path, false, true);
+        }
+
 
         return new JsonResponse([
             'success' => true,
