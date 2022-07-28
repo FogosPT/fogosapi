@@ -97,4 +97,27 @@ class WeatherController extends Controller
             abort(404);
         }
     }
+
+    public function ipmaServicesHTTPS()
+    {
+        $client = new Client();
+        $url = 'https://mf2.ipma.pt/services?SERVICE=WMS&REQUEST=GetCapabilities';
+
+        try {
+            $response = $client->request('GET', $url);
+
+        } catch (ClientException $e) {
+            return ['error' => $e->getMessage()];
+        } catch (RequestException $e) {
+            return ['error' => $e->getMessage()];
+        }
+
+        $body = $response->getBody();
+        $result = $body->getContents();
+
+        $data = str_replace('http://', 'https://', $result);
+        header("Content-Type: application/xml; charset=utf-8");
+        echo $data;
+        die();
+    }
 }
