@@ -9,7 +9,7 @@ get:
     - $ref: '../parameters/query/concelho-optional.yaml'
     - $ref: '../parameters/query/limit.yaml'
     - $ref: '../parameters/query/fma.yaml'
-    - $ref: '../parameters/query/otherFire.yaml'
+    - $ref: '../parameters/query/otherFires.yaml'
     - $ref: '../parameters/query/csv.yaml'
     - $ref: '../parameters/query/csv2.yaml'
   responses:
