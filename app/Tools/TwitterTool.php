@@ -172,10 +172,11 @@ class TwitterTool
     {
         $client = self::getVOSTClient();
 
-        $url = 'https://api.twitter.com/2/users/' . $id . '/retweets';
+        $url = 'https://api.twitter.com/1.1/statuses/retweet/' . $id . '.json';
 
         $response = $client
             ->buildOauth($url, 'POST')
+            ->setPostfields([])
             ->performRequest();
     }
 }
