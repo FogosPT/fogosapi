@@ -15,6 +15,7 @@ use App\Jobs\UpdateICNFData;
 use App\Jobs\UpdateWeatherData;
 use App\Jobs\UpdateWeatherStations;
 use App\Models\Incident;
+use App\Tools\TwitterTool;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use PhpImap\Imap;
@@ -58,7 +59,7 @@ class TestStuff extends Command
 //
        // dispatch(new HandleANEPCImportantData());
 
-        dispatch( new HandleANEPCPositEmail());
+        //dispatch( new HandleANEPCPositEmail());
 
 // Create PhpImap\Mailbox instance for all further actions
 
@@ -127,5 +128,7 @@ class TestStuff extends Command
 //            // bye
 //            $browser->close();
 //        }
+
+        TwitterTool::retweetVost("1559872724645941254");
     }
 }
