@@ -32,7 +32,7 @@ class IncidentController extends Controller
             $limit = 300;
         }
 
-        $geoJson = $request->get('geojson');
+        $geoJson = filter_var($request->get('geojson'), FILTER_VALIDATE_BOOLEAN);;
 
         $csv = $request->get('csv');
         $csv2 = $request->get('csv2');
