@@ -27,10 +27,15 @@ class HourlySummary extends Job
             ->whereIn('statusCode', Incident::ACTIVE_STATUS_CODES)
             ->get();
 
+        $incidentsNotActive = Incident::where('active', true)
+            ->where('isFire', true)
+            ->whereIn('statusCode', Incident::NOT_ACTIVE_STATUS_CODES)
+            ->get();
+
         $date = date('H:i');
 
         if ($incidents->count() === 0) {
-            $status = "{$date} - Sem registo de incêndios ativos. https://fogos.pt #FogosPT #Status";
+            $status = "{$date} - Sem registo de incêndios ativos.";
             $statusf = $status;
         } else {
             $total = count($incidents);
@@ -45,8 +50,28 @@ class HourlySummary extends Job
 
             $incendio = ($total === 1) ? 'Incêndio' : 'Incêndios';
 
-            $status = "{$date} - {$total} {$incendio} em curso. Meios Mobilizados:\r\n👩‍ {$man}\r\n🚒 {$cars}\r\n🚁 {$areal} \r\n https://fogos.pt #FogosPT";
-            $statusf = "{$date} - {$total} {$incendio} em curso. Meios Mobilizados:%0A👩‍ {$man}%0A🚒 {$cars}%0A🚁 {$areal} %0A https://fogos.pt #FogosPT";
+            $status = "{$date} - {$total} {$incendio} em curso. Meios Mobilizados:\r\n👩‍ {$man}\r\n🚒 {$cars}\r\n🚁 {$areal} \r\n";
+            $statusf = "{$date} - {$total} {$incendio} em curso. Meios Mobilizados:%0A👩‍ {$man}%0A🚒 {$cars}%0A🚁 {$areal} %0A";
+        }
+
+        if($incidentsNotActive->count() === 0){
+            $status .= ' https://fogos.pt #FogosPT #Status';
+            $statusf .= ' https://fogos.pt #FogosPT #Status';
+        } else {
+            $total = count($incidentsNotActive);
+            $man = 0;
+            $areal = 0;
+            $cars = 0;
+            foreach ($incidentsNotActive as $f) {
+                $man += $f['man'];
+                $areal += $f['aerial'];
+                $cars += $f['terrain'];
+            }
+
+            $incendio = ($total === 1) ? 'Incêndio' : 'Incêndios';
+
+            $status .= "{$total} {$incendio} em resolução. Meios Mobilizados:\r\n👩‍ {$man}\r\n🚒 {$cars}\r\n🚁 {$areal} \r\n https://fogos.pt #FogosPT";
+            $statusf .= "{$total} {$incendio} em resolução. Meios Mobilizados:%0A👩‍ {$man}%0A🚒 {$cars}%0A🚁 {$areal} %0A https://fogos.pt #FogosPT";
         }
 
         $url = 'estatisticas?phantom=1';
