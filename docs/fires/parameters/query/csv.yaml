@@ -1,0 +1,6 @@
+name: csv
+in: query
+description: Set true if you want the results exported as csv
+required: false
+schema:
+  type: bool
