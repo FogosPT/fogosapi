@@ -1,0 +1,6 @@
+name: fma
+in: query
+description: Set true if you want all incidents marked as adverse weather phenomenon
+required: false
+schema:
+  type: bool

@@ -76,4 +76,3 @@ paths:
     $ref: './fires/paths/v2-active.yaml'
   /v2/incidents/search:
     $ref: './fires/paths/v2-search.yaml'
-
