@@ -167,4 +167,15 @@ class TwitterTool
 
         return $lastId;
     }
+
+    public static function retweetVost($id)
+    {
+        $client = self::getVOSTClient();
+
+        $url = 'https://api.twitter.com/2/users/' . $id . '/retweets';
+
+        $response = $client
+            ->buildOauth($url, 'POST')
+            ->performRequest();
+    }
 }
