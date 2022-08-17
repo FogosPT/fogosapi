@@ -1,0 +1,6 @@
+name: otherFires
+in: query
+description: Checks for fires other than wildfires
+required: false
+schema:
+  type: bool
