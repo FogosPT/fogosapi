@@ -158,6 +158,11 @@ class Incident extends Model
         3, 4, 5, 6,
     ];
 
+    public const NOT_ACTIVE_STATUS_CODES = [
+        7,8,9,10,11,12
+    ];
+
+
     public const STATUS_COLORS = [
         '  DESPACHO DE 1º ALERTA' => 'FF6E02', // sometimes we get this value...
         ' Encerrada' => '6ABF59', // sometimes we get this value...
