@@ -55,7 +55,7 @@ class LegacyController extends Controller
 
         $history = IncidentHistory::where('id', $id)
             ->orderBy('created', 'asc')
-            ->limit(1000)
+            ->limit(2000)
             ->get();
 
         $return = [];
