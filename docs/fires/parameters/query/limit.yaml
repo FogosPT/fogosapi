@@ -1,0 +1,5 @@
+name: limit
+in: query
+description: Number of results
+schema:
+  type: integer
