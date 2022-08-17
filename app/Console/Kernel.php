@@ -46,9 +46,9 @@ class Kernel extends ConsoleKernel
             $schedule->job(new ProcessRCM(false))->hourly(); // update RCM
             $schedule->job(new ProcessRCM(true, true))->daily()->at('18:00');
 
-            $schedule->job(new UpdateICNFData(0))->everyTwoHours();
-            $schedule->job(new UpdateICNFData(1))->everySixHours();
-            $schedule->job(new UpdateICNFData(2))->daily();
+            $schedule->job(new UpdateICNFData(0))->everyFourHours();
+            $schedule->job(new UpdateICNFData(1))->twiceDaily();
+            $schedule->job(new UpdateICNFData(2))->dailyAt('06:00');
             $schedule->job(new UpdateICNFData(3))->cron('0 2 */2 * *'); // every 2 days
             $schedule->job(new UpdateICNFData(4))->cron('0 3 * * 1,5'); // twice a week, monday and thursday
             $schedule->job(new UpdateICNFData(5))->cron('0 3 * * 1,5'); // twice a week, monday and thursday
