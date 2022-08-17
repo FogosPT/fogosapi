@@ -138,9 +138,11 @@ class SaveIncidentHistory extends Job
                 if($this->incident->isFire){
                     $date = date('H:i');
 
-                    $status = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:\r\n 👩‍🚒 {$this->incident->man}\r\n 🚒 {$this->incident->terrain}\r\n 🚁 {$this->incident->aerial}\r\n https://{$domain}/fogo/{$this->incident->id} {$hashTag} @vostpt #FogosPT 🚨ℹ";
+                    $status = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:\r\n 👩‍🚒 {$this->incident->man}\r\n 🚒 {$this->incident->terrain}\r\n 🚁 {$this->incident->aerial}\r\n https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT 🚨ℹ";
 
                     $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
+
+                    TwitterTool::retweetVost($lastTweetId);
 
                     $this->incident->lastTweetId = $lastTweetId;
                     $this->incident->save();
