@@ -303,6 +303,31 @@ class IncidentController extends Controller
         return $response;
     }
 
+    public function burnMoreThan1000(Request $request)
+    {
+        if($request->exists('limit')){
+            $limit = (int)$request->get('limit');
+        } else {
+            $limit = 500;
+        }
+
+        $incidents = Incident::where('isFire', true)
+            ->where('icnf.burnArea.total', '>', 1000)
+            ->paginate($limit);
+
+        $paginator = [
+            'currentPage' => $incidents->currentPage(),
+            'totalPages' => $incidents->lastPage(),
+            'totalItems' => $incidents->total()
+        ];
+
+        return new JsonResponse([
+            'success' => true,
+            'paginator' => $paginator,
+            'data' => IncidentResource::collection($incidents),
+        ]);
+    }
+
     public function addPosit(Request $request, $id)
     {
         $key = $request->header('key');
