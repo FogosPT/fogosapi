@@ -112,6 +112,7 @@ class IncidentController extends Controller
             unset($keys['updated']);
             unset($keys['icnf']);
             unset($keys['coordinates']);
+            unset($keys['kmlVost']);
 
             fputcsv($f, array_keys($keys), ';');
 
@@ -124,6 +125,7 @@ class IncidentController extends Controller
                 unset($_i['updated']);
                 unset($_i['icnf']);
                 unset($_i['coordinates']);
+                unset($_i['kmlVost']);
                 $_i['kml'] = null;
                 $_i['extra'] = null;
                 fputcsv($f, $_i, ';');
@@ -303,6 +305,21 @@ class IncidentController extends Controller
         return $response;
     }
 
+    public function kmlVost(Request $request, $id)
+    {
+        $incident = Incident::where('id', $id)->get()[0];
+        $incidentkml = $incident->kmlVost;
+
+        $response = new StreamedResponse();
+        $response->setCallBack(function () use($incidentkml) {
+            echo $incidentkml;
+        });
+        $disposition = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $incident->id . '.kml');
+        $response->headers->set('Content-Disposition', $disposition);
+
+        return $response;
+    }
+
     public function burnMoreThan1000(Request $request)
     {
         if($request->exists('limit')){
@@ -357,7 +374,7 @@ class IncidentController extends Controller
 
         $incident = Incident::where('id', $id)->get()[0];
 
-        $incident->kml = $request->post('kml');
+        $incident->kmlVost = $request->post('kml');
 
         $incident->save();
 
