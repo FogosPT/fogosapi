@@ -56,7 +56,9 @@ $router->group(['prefix' => 'v2'], function () use ($router) {
         $router->get('search', '\App\Http\Controllers\IncidentController@search');
         $router->get('active/kml', '\App\Http\Controllers\IncidentController@activeKML');
         $router->get('active', '\App\Http\Controllers\IncidentController@active');
+        $router->get('1000ha-burned', '\App\Http\Controllers\IncidentController@burnMoreThan1000');
         $router->get('{id}/kml', '\App\Http\Controllers\IncidentController@kml');
+
         $router->post('{id}/posit', '\App\Http\Controllers\IncidentController@addPosit');
         $router->post('{id}/kml', '\App\Http\Controllers\IncidentController@addKML');
     });
