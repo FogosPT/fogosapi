@@ -43,7 +43,7 @@ class SaveIncidentStatusHistory extends Job
             }
 
             // Não faço ideia porquê, mas isto estava assim antes.. deve ser preciso!
-            if ($this->incident->status === 'Despacho de 1º Alerta' || $this->incident->status === 'Despacho' || $this->incident->status === 'Chegada ao TO') {
+            /*if ($this->incident->status === 'Despacho de 1º Alerta' || $this->incident->status === 'Despacho' || $this->incident->status === 'Chegada ao TO') {
                 if ($last['status'] === 'Conclusão') {
                     return;
                 }
@@ -55,7 +55,7 @@ class SaveIncidentStatusHistory extends Job
                 if ($last['status'] === 'Em Resolução') {
                     return;
                 }
-            }
+            }*/
 
             if($this->incident->isFire){
                 if ($this->incident->status === 'Em Curso') {
