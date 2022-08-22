@@ -6,6 +6,7 @@ use App\Http\Requests\IncidentSearchRequest;
 use App\Models\Incident;
 use App\Resources\IncidentResource;
 use App\Tools\FacebookTool;
+use App\Tools\HashTagTool;
 use App\Tools\ScreenShotTool;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
@@ -335,8 +336,8 @@ class IncidentController extends Controller
 
         $incident->save();
 
-        $url = "fogo/{$this->incident->id}/detalhe";
-        $name = "screenshot-{$this->incident->id}"  . rand(0,255);
+        $url = "fogo/{$incident->id}/detalhe?aasd=" .  rand(0,255);
+        $name = "screenshot-{$incident->id}"  . rand(0,255);
         $path = "/var/www/html/public/screenshots/{$name}.png";
 
         $status = $request->post('status');
@@ -345,9 +346,24 @@ class IncidentController extends Controller
         {
             ScreenShotTool::takeScreenShot($url, $name, 1200, 450);
 
-            TwitterTool::tweet($status, false, $path, false, true);
-        }
 
+            TwitterTool::tweet($status, false, $path, false, true);
+
+            ScreenShotTool::removeScreenShotFile($name);
+        } else {
+            ScreenShotTool::takeScreenShot($url, $name, 1200, 450);
+
+            $domain = env('SOCIAL_LINK_DOMAIN');
+            $hashTag = HashTagTool::getHashTag($incident->concelho);
+
+            $status = "🗺 Nova área de interesse por @VostPT  https://{$domain}/fogo/{$incident->id} {$hashTag} 🗺";
+
+            $lastId = TwitterTool::tweet($status, $incident->lastTweetId, $path, false, true);
+            ScreenShotTool::removeScreenShotFile($name);
+
+            $incident->lastTweetId = $lastId;
+            $incident->save();
+        }
 
         return new JsonResponse([
             'success' => true,
