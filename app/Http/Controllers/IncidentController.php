@@ -351,14 +351,14 @@ class IncidentController extends Controller
 
             ScreenShotTool::removeScreenShotFile($name);
         } else {
-            ScreenShotTool::takeScreenShot($url, $name, 1200, 450);
+            ScreenShotTool::takeScreenShot($url, $name, 1200, 550);
 
             $domain = env('SOCIAL_LINK_DOMAIN');
             $hashTag = HashTagTool::getHashTag($incident->concelho);
 
-            $status = "🗺 Nova área de interesse por @VostPT  https://{$domain}/fogo/{$incident->id} {$hashTag} 🗺";
+            $status = "🗺 Nova área de interesse por @VostPT  https://{$domain}/fogo/{$incident->id}/detalhe {$hashTag} 🗺";
 
-            $lastId = TwitterTool::tweet($status, $incident->lastTweetId, $path, false, true);
+            $lastId = TwitterTool::tweet($status, $incident->lastTweetId, $path, false, false);
             ScreenShotTool::removeScreenShotFile($name);
 
             $incident->lastTweetId = $lastId;
