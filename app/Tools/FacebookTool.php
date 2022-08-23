@@ -2,6 +2,7 @@
 
 namespace App\Tools;
 
+use Http\Client\Exception;
 use Illuminate\Support\Facades\Log;
 
 class FacebookTool
@@ -42,9 +43,12 @@ class FacebookTool
         if (!env('FACEBOOK_ENABLE')) {
             return;
         }
-
-        $client = new \GuzzleHttp\Client();
-        $client->request('POST', self::getUrl($status));
+        try{
+            $client = new \GuzzleHttp\Client();
+            $client->request('POST', self::getUrl($status));
+        } catch (Exception $e){
+            Log::error($e->getMessage());
+        }
     }
 
     public static function publishWithImage($status, $imageUrl)
@@ -53,8 +57,13 @@ class FacebookTool
             return;
         }
 
-        $client = new \GuzzleHttp\Client();
-        $client->request('POST', self::getImageUrl($status, $imageUrl));
+        try{
+            $client = new \GuzzleHttp\Client();
+            $client->request('POST', self::getImageUrl($status, $imageUrl));
+        } catch (Exception $e){
+            Log::error($e->getMessage());
+        }
+
     }
 
     public static function publishEmergencias($status)
@@ -63,7 +72,12 @@ class FacebookTool
             return;
         }
 
-        $client = new \GuzzleHttp\Client();
-        $response = $client->request('POST', self::getEmergenciasUrl($status));
+        try{
+            $client = new \GuzzleHttp\Client();
+            $response = $client->request('POST', self::getEmergenciasUrl($status));
+        } catch (Exception $e){
+            Log::error($e->getMessage());
+        }
+
     }
 }
