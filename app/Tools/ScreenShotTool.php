@@ -20,6 +20,8 @@ class ScreenShotTool
 
     public static function removeScreenShotFile($name)
     {
-        unlink("/var/www/html/public/screenshots/{$name}.png");
+        if(file_exists("/var/www/html/public/screenshots/{$name}.png")){
+            unlink("/var/www/html/public/screenshots/{$name}.png");
+        }
     }
 }
