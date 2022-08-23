@@ -49,6 +49,8 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
         $data = json_decode($res->getBody(), true);
         $incidents = $data['GetHistoryOccurrencesByLocationResult']['ArrayInfo'][0]['Data'];
 
+        Log::debug(json_encode($incidents));
+
         if(empty($incidents)){
             Log::debug('empty incidents retuning');
             return;
