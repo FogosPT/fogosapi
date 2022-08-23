@@ -117,7 +117,7 @@ class TwitterTool
 
         $fields = [];
 
-        if ($imagePath) {
+        if ($imagePath && file_exists($imagePath)) {
             $file = file_get_contents($imagePath);
             $data = base64_encode($file);
 
