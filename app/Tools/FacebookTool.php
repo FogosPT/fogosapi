@@ -2,7 +2,6 @@
 
 namespace App\Tools;
 
-use Http\Client\Exception;
 use Illuminate\Support\Facades\Log;
 
 class FacebookTool
@@ -46,7 +45,7 @@ class FacebookTool
         try{
             $client = new \GuzzleHttp\Client();
             $client->request('POST', self::getUrl($status));
-        } catch (Exception $e){
+        } catch (\Exception $e){
             Log::error($e->getMessage());
         }
     }
@@ -60,7 +59,7 @@ class FacebookTool
         try{
             $client = new \GuzzleHttp\Client();
             $client->request('POST', self::getImageUrl($status, $imageUrl));
-        } catch (Exception $e){
+        } catch (\Exception $e){
             Log::error($e->getMessage());
         }
 
@@ -75,7 +74,7 @@ class FacebookTool
         try{
             $client = new \GuzzleHttp\Client();
             $response = $client->request('POST', self::getEmergenciasUrl($status));
-        } catch (Exception $e){
+        } catch (\Exception $e){
             Log::error($e->getMessage());
         }
 
