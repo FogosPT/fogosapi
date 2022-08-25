@@ -71,6 +71,10 @@ class GetICNFBurnAreaLegacy extends Command
 
 
             foreach ($data as $d){
+                if(!isset($d[14])){
+                    return;
+                }
+                
                 $incident = Incident::where('id', $d[14])->get();
 
                 if(isset($incident[0])){
