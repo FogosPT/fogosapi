@@ -17,25 +17,30 @@ trait IncidentObserver
         parent::boot();
 
         static::created(function ($incident) {
-            dispatch(new SaveIncidentHistory($incident));
-            dispatch(new SaveIncidentStatusHistory($incident));
 
-            if ($incident->isFire) {
-                dispatch(new HandleNewIncidentSocialMedia($incident));
-                dispatch(new ProcessICNFFireData($incident));
-            }
+            if($incident->dateTime->year >= 2022 ){
+                dispatch(new SaveIncidentHistory($incident));
+                dispatch(new SaveIncidentStatusHistory($incident));
 
-            dispatch(new HandleNewIncidentEmergenciasSocialMedia($incident));
+                if ($incident->isFire) {
+                    dispatch(new HandleNewIncidentSocialMedia($incident));
+                    dispatch(new ProcessICNFFireData($incident));
+                }
 
-            if ( $incident->naturezaCode === '2409' ) {
-                DiscordTool::postAero("🚨 Novo acidente aereo em {$incident->location} 🚨");
+                dispatch(new HandleNewIncidentEmergenciasSocialMedia($incident));
+
+                if ( $incident->naturezaCode === '2409' ) {
+                    DiscordTool::postAero("🚨 Novo acidente aereo em {$incident->location} 🚨");
+                }
             }
         });
 
         static::updated(function ($incident) {
-            //Log::info("Incident updated Event Fire observer: ".$incident);
-            dispatch(new SaveIncidentStatusHistory($incident));
-            dispatch(new SaveIncidentHistory($incident));
+            if($incident->dateTime->year >= 2022 ) {
+                //Log::info("Incident updated Event Fire observer: ".$incident);
+                dispatch(new SaveIncidentStatusHistory($incident));
+                dispatch(new SaveIncidentHistory($incident));
+            }
         });
 
         static::deleted(function ($incident) {

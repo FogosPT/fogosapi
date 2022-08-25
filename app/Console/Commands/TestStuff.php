@@ -16,6 +16,7 @@ use App\Jobs\UpdateWeatherData;
 use App\Jobs\UpdateWeatherStations;
 use App\Models\Incident;
 use App\Tools\TwitterTool;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use PhpImap\Imap;
@@ -56,6 +57,10 @@ class TestStuff extends Command
      */
     public function handle()
     {
+
+        $x = Carbon::parse('27-04-2017 04:41', 'Europe/Lisbon');
+
+        print_r($x);
 //
        // dispatch(new HandleANEPCImportantData());
 
