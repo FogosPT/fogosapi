@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use App\Models\Incident;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
+use Mockery\Exception;
 use voku\helper\UTF8;
 
 class GetICNFBurnAreaLegacy extends Command
@@ -146,18 +148,23 @@ class GetICNFBurnAreaLegacy extends Command
                     }
 
                     if ($kmlUrl) {
-                        $options = [
-                            'headers' => [
-                                'User-Agent' => 'Fogos.pt/3.0',
-                            ],
-                            'verify' => false,
-                        ];
+                        try{
+                            $options = [
+                                'headers' => [
+                                    'User-Agent' => 'Fogos.pt/3.0',
+                                ],
+                                'verify' => false,
+                            ];
 
-                        $client = new \GuzzleHttp\Client();
-                        $res = $client->request('GET', $kmlUrl, $options);
-                        $kml = $res->getBody()->getContents();
+                            $client = new \GuzzleHttp\Client();
+                            $res = $client->request('GET', $kmlUrl, $options);
+                            $kml = $res->getBody()->getContents();
 
-                        $incident->kml = utf8_encode($kml);
+                            $incident->kml = utf8_encode($kml);
+                        } catch (\Exception $e){
+                            Log::debug($e->getMessage());
+                        }
+
                     }
 
                     $incident->detailLocation = (string) $d[18];
@@ -387,18 +394,23 @@ class GetICNFBurnAreaLegacy extends Command
         }
 
         if ($kmlUrl) {
-            $options = [
-                'headers' => [
-                    'User-Agent' => 'Fogos.pt/3.0',
-                ],
-                'verify' => false,
-            ];
+            try{
+                $options = [
+                    'headers' => [
+                        'User-Agent' => 'Fogos.pt/3.0',
+                    ],
+                    'verify' => false,
+                ];
 
-            $client = new \GuzzleHttp\Client();
-            $res = $client->request('GET', $kmlUrl, $options);
-            $kml = $res->getBody()->getContents();
+                $client = new \GuzzleHttp\Client();
+                $res = $client->request('GET', $kmlUrl, $options);
+                $kml = $res->getBody()->getContents();
 
-            $point['kml'] = utf8_encode($kml);
+                $point['kml'] = utf8_encode($kml);
+            } catch (\Exception $e) {
+                Log::debug($e->getMessage());
+            }
+
         }
 
         $point['detailLocation'] = (string) $data[18];
