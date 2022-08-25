@@ -52,7 +52,6 @@ class GetICNFBurnAreaLegacy extends Command
             'https://github.com/vostpt/ICNF_DATA/raw/main/icnf_2021_raw.csv'
         );
 
-        $i = 0;
         foreach($urls as $url){
 
             echo 'Getting ' . $url . PHP_EOL;
@@ -69,12 +68,21 @@ class GetICNFBurnAreaLegacy extends Command
 
             unset($data[0]);
 
+            $i = 0;
 
             foreach ($data as $d){
                 if(!isset($d[14])){
                     return;
                 }
-                
+
+                if($i % 1000){
+                    echo PHP_EOL . '      . ' . $i . PHP_EOL;
+                } else {
+                    echo '.';
+                }
+
+                $i++;
+
                 $incident = Incident::where('id', $d[14])->get();
 
                 if(isset($incident[0])){
