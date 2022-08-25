@@ -75,7 +75,7 @@ class GetICNFBurnAreaLegacy extends Command
                     return;
                 }
 
-                if($i % 1000){
+                if($i % 1000 === 0){
                     echo PHP_EOL . '      . ' . $i . PHP_EOL;
                 } else {
                     echo '.';
