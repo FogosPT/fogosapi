@@ -28,7 +28,8 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\TestStuff::class,
         \App\Console\Commands\FixKMLData::class,
         \App\Console\Commands\FixFMA::class,
-        \App\Console\Commands\SaveWarningAndSendNotificationAndSocial::class
+        \App\Console\Commands\SaveWarningAndSendNotificationAndSocial::class,
+        \App\Console\Commands\GetICNFBurnAreaLegacy::class
     ];
 
     /**
