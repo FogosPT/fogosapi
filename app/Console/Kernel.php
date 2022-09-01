@@ -58,7 +58,7 @@ class Kernel extends ConsoleKernel
             $schedule->job(new UpdateICNFData(8))->cron('0 0 1 */2 *'); // every two months
 
 
-            $schedule->job(new UpdateWeatherStations())->monthly();
+            $schedule->job(new UpdateWeatherStations())->daily()->at('03:21');;
             $schedule->job(new UpdateWeatherData())->everyTwoHours();
 
             $schedule->job(new DailySummary())->daily()->at('09:30');
