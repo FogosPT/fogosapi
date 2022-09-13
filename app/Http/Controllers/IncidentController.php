@@ -142,7 +142,7 @@ class IncidentController extends Controller
                         return $query->where('concelho', $concelho);
                     })
                     ->orderBy('created_at', 'desc')
-                    ->limit(1);
+                    ->paginate(1);
 
 
                 $arr = IncidentResource::collection($incident)->resolve();
