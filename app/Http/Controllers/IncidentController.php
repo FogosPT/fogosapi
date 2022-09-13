@@ -131,6 +131,33 @@ class IncidentController extends Controller
                     $_i['extra'] = null;
                     fputcsv($f, $_i, ';');
                 }
+            } else {
+                $incident = Incident::when(!$all, function ($query, $all){
+                        return $query->isFire();
+                    })->when($isFMA, function ($query, $isFMA){
+                        return $query->isFMA();
+                    })->when($isOtherFire, function ($query, $isOtherFire){
+                        return $query->isOtherFire();
+                    })->when($concelho, function ($query, $concelho){
+                        return $query->where('concelho', $concelho);
+                    })
+                    ->orderBy('created_at', 'desc')
+                    ->limit(1);
+
+
+                $arr = IncidentResource::collection($incident)->resolve();
+
+                $keys = $arr[0];
+                unset($keys['_id']);
+                unset($keys['dateTime']);
+                unset($keys['created']);
+                unset($keys['updated']);
+                unset($keys['icnf']);
+                unset($keys['coordinates']);
+                unset($keys['kmlVost']);
+
+                fputcsv($f, array_keys($keys), ';');
+
             }
             // use exit to get rid of unexpected output afterward
             exit();
