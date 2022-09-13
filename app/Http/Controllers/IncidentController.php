@@ -105,32 +105,33 @@ class IncidentController extends Controller
 
             $arr = IncidentResource::collection($incidents)->resolve();
 
-            $keys = $arr[0];
-            unset($keys['_id']);
-            unset($keys['dateTime']);
-            unset($keys['created']);
-            unset($keys['updated']);
-            unset($keys['icnf']);
-            unset($keys['coordinates']);
-            unset($keys['kmlVost']);
+            if(isset($arr[0])){
+                $keys = $arr[0];
+                unset($keys['_id']);
+                unset($keys['dateTime']);
+                unset($keys['created']);
+                unset($keys['updated']);
+                unset($keys['icnf']);
+                unset($keys['coordinates']);
+                unset($keys['kmlVost']);
 
-            fputcsv($f, array_keys($keys), ';');
+                fputcsv($f, array_keys($keys), ';');
 
 
-            foreach ($arr as &$i) {
-                $_i = $i;
-                unset($_i['_id']);
-                unset($_i['dateTime']);
-                unset($_i['created']);
-                unset($_i['updated']);
-                unset($_i['icnf']);
-                unset($_i['coordinates']);
-                unset($_i['kmlVost']);
-                $_i['kml'] = null;
-                $_i['extra'] = null;
-                fputcsv($f, $_i, ';');
+                foreach ($arr as &$i) {
+                    $_i = $i;
+                    unset($_i['_id']);
+                    unset($_i['dateTime']);
+                    unset($_i['created']);
+                    unset($_i['updated']);
+                    unset($_i['icnf']);
+                    unset($_i['coordinates']);
+                    unset($_i['kmlVost']);
+                    $_i['kml'] = null;
+                    $_i['extra'] = null;
+                    fputcsv($f, $_i, ';');
+                }
             }
-
             // use exit to get rid of unexpected output afterward
             exit();
         } else if($geoJson){
