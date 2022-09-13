@@ -132,15 +132,7 @@ class IncidentController extends Controller
                     fputcsv($f, $_i, ';');
                 }
             } else {
-                $incident = Incident::when(!$all, function ($query, $all){
-                        return $query->isFire();
-                    })->when($isFMA, function ($query, $isFMA){
-                        return $query->isFMA();
-                    })->when($isOtherFire, function ($query, $isOtherFire){
-                        return $query->isOtherFire();
-                    })->when($concelho, function ($query, $concelho){
-                        return $query->where('concelho', $concelho);
-                    })
+                $incident = Incident::isFire()
                     ->orderBy('created_at', 'desc')
                     ->paginate(1);
 
