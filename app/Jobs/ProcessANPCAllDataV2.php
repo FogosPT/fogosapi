@@ -158,6 +158,10 @@ class ProcessANPCAllDataV2 extends Job
             $point['important'] = @$data['significativa'];
         }
 
+        if($point['status'] === 'Despacho de 1.º Alerta'){
+            $point['status'] = 'Despacho de 1º Alerta'; // fix para a app
+        }
+
         return $point;
     }
 
