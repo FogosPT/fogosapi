@@ -54,8 +54,8 @@ class DiscordTool
 
     public static function postError($message)
     {
-        $webhookId = env('DISCORD_WEBHOOK_ID_AERO');
-        $webhookToken = env('DISCORD_WEBHOOK_TOKEN_AERO');
+        $webhookId = env('DISCORD_WEBHOOK_ID_ERRORS');
+        $webhookToken = env('DISCORD_WEBHOOK_TOKEN_ERRORS');
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, "https://discordapp.com/api/webhooks/{$webhookId}/{$webhookToken}");
