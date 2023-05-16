@@ -17,6 +17,7 @@ class IncidentResource extends JsonResource
             'hour' => $this->hour,
             'location' => $this->location,
             'aerial' => $this->aerial,
+            'meios_aquaticos' => $this->meios_aquaticos,
             'man' => $this->man,
             'terrain' => $this->terrain,
             'district' => $this->district,
@@ -53,6 +54,7 @@ class IncidentResource extends JsonResource
             'sub_regiao' => $this->sub_regiao,
             'created' => $this->createdObject,
             'updated' => $this->updatedObject,
+
         ];
 
         if($request->get('extend')){
