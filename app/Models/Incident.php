@@ -99,7 +99,8 @@ class Incident extends Model
         'planeFight',
         'anepcDirectUpdate',
         'regiao',
-        'sub_regiao'
+        'sub_regiao',
+        'meios_aquaticos'
     ];
 
     public const NATUREZA_CODE_FIRE = [

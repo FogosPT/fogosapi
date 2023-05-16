@@ -130,6 +130,7 @@ class ProcessANPCAllDataV2 extends Job
             'location' => $distrito.', '.$concelho.', '.$freguesia,
             'aerial' => $data['meios_aereos'] ? $data['meios_aereos'] : 0,
             'terrain' => $data['meios_terrestres'] ? $data['meios_terrestres'] : 0,
+            'meios_aquaticos' => $data['meios_aquaticos'] ? $data['meios_aquaticos'] : 0,
             'man' => $man ? $man : 0,
             'district' => $distrito,
             'concelho' => $concelho,
