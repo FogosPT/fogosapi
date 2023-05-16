@@ -224,7 +224,7 @@ class IncidentController extends Controller
     private function transformToGeoJSON($data)
     {
         $features = [];
-        
+
         foreach($data as $d) {
             $features[] = array(
                 'type' => 'Feature',
