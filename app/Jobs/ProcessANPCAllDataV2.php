@@ -133,7 +133,7 @@ class ProcessANPCAllDataV2 extends Job
             'meios_aquaticos' => $data['meios_aquaticos'] ? $data['meios_aquaticos'] : 0,
             'man' => $man ? $man : 0,
             'district' => $distrito,
-            'concelho' => $concelho,
+            'concelho' => UTF8::ucwords(mb_strtolower($concelho)),
             'dico' => $locationData['DICO'],
             'freguesia' => $freguesia,
             'lat' => $data['latitude'],
