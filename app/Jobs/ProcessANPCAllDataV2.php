@@ -51,7 +51,7 @@ class ProcessANPCAllDataV2 extends Job
             $res = $client->request('GET', $url, $options);
         } catch (ClientException $e) {
             $response = $e->getResponse();
-            $responseBodyAsString = $response->getBody()->getContents();
+            $responseBodyAsString = $response->getBody()->getContents();u
 
             DiscordTool::postError('Error ANEPC API => ' . $e->getCode() . ' =>' . $e->getMessage() . ' => ' . $responseBodyAsString);
         }
@@ -106,7 +106,7 @@ class ProcessANPCAllDataV2 extends Job
         $locationData = $this->getLocationData($data['concelho']);
         $distrito = $locationData['distrito'];
         $concelho = $data['concelho'];
-        $freguesia = $data['freguesia'];
+        $freguesia = UTF8::ucwords(mb_strtolower($data['freguesia']));
         $localidade = $data['local'] . ' ' .  $data['outra_localizacao'];
 
         $man = $data['operacionais'];
