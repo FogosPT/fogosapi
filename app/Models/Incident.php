@@ -168,6 +168,7 @@ class Incident extends Model
 
     public const STATUS_ID = [
         'Despacho de 1.º Alerta' => 4,
+        'Despacho' => 3,
         'Em Resolução' => 7,
         'Conclusão' => 8,
         'Vigilância' => 9,
@@ -180,6 +181,7 @@ class Incident extends Model
         '  DESPACHO DE 1º ALERTA' => 'FF6E02', // sometimes we get this value...
         ' Encerrada' => '6ABF59', // sometimes we get this value...
         'Despacho de 1.º Alerta' => 'FF6E02',
+        'Despacho' => 'FF6E02',
         'Em Resolução' => '6ABF59',
         'Conclusão' => 'BDBDBD',
         'Vigilância' => '6ABF59',
