@@ -8,6 +8,8 @@ use App\Tools\DiscordTool;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use voku\helper\UTF8;
+use GuzzleHttp\Exception\ClientException;
+
 
 class ProcessANPCAllDataV2 extends Job
 {
@@ -44,8 +46,16 @@ class ProcessANPCAllDataV2 extends Job
             $options['proxy'] = env('PROXY_URL');
         }
 
-        $client = new \GuzzleHttp\Client();
-        $res = $client->request('GET', $url, $options);
+        try{
+            $client = new \GuzzleHttp\Client();
+            $res = $client->request('GET', $url, $options);
+        } catch (ClientException $e) {
+            $response = $e->getResponse();
+            $responseBodyAsString = $response->getBody()->getContents();
+
+            DiscordTool::postError('Error ANEPC API => ' . $e->getCode() . ' =>' . $e->getMessage() . ' => ' . $responseBodyAsString);
+        }
+
 
         $incidents = json_decode($res->getBody(), true);
 
