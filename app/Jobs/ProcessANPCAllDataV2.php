@@ -173,7 +173,13 @@ class ProcessANPCAllDataV2 extends Job
 
         $location = $location[0];
 
-        $distritoCode = (int) substr( (string)$location->code,0,1);
+        $distritoCode = (string)$location->code;
+
+        if(strlen($distritoCode) === 3){
+            $distritoCode = (int) substr($distritoCode,0,1);
+        } else {
+            $distritoCode = (int) substr($distritoCode,0,2);
+        }
 
         $distrito = Location::where('level', 1)->where('code', $distritoCode)->get();
 
