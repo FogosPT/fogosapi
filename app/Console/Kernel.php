@@ -7,6 +7,7 @@ use App\Jobs\HandleANEPCImportantData;
 use App\Jobs\HandleANEPCPositEmail;
 use App\Jobs\HourlySummary;
 use App\Jobs\ProcessANPCAllData;
+use App\Jobs\ProcessANPCAllDataV2;
 use App\Jobs\ProcessDataForHistoryTotal;
 use App\Jobs\ProcessMadeiraWarnings;
 use App\Jobs\ProcessPlanes;
@@ -29,7 +30,8 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\FixKMLData::class,
         \App\Console\Commands\FixFMA::class,
         \App\Console\Commands\SaveWarningAndSendNotificationAndSocial::class,
-        \App\Console\Commands\GetICNFBurnAreaLegacy::class
+        \App\Console\Commands\GetICNFBurnAreaLegacy::class,
+        \App\Console\Commands\ImportLocations::class
     ];
 
     /**
@@ -39,7 +41,7 @@ class Kernel extends ConsoleKernel
     {
         if (env('SCHEDULER_ENABLE')) {
             $schedule->job(new HourlySummary())->hourlyAt(0);
-            $schedule->job(new ProcessANPCAllData())->everyTwoMinutes();
+            $schedule->job(new ProcessANPCAllDataV2())->everyTwoMinutes();
             $schedule->job(new ProcessDataForHistoryTotal())->everyTwoMinutes();
             //$schedule->job(new ProcessMadeiraWarnings())->everyTenMinutes();
             //$schedule->job(new ProcessPlanes())->everyFiveMinutes();
@@ -64,8 +66,8 @@ class Kernel extends ConsoleKernel
             $schedule->job(new DailySummary())->daily()->at('09:30');
 
 
-            $schedule->job(new HandleANEPCImportantData())->everyTenMinutes();
-            $schedule->job(new HandleANEPCPositEmail())->everyTenMinutes();
+            //$schedule->job(new HandleANEPCImportantData())->everyTenMinutes();
+            //$schedule->job(new HandleANEPCPositEmail())->everyTenMinutes();
         }
     }
 }

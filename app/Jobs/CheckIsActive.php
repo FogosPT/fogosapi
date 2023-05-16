@@ -21,7 +21,7 @@ class CheckIsActive extends Job
         $this->data = $data;
         $activeIds = [];
         foreach ($this->data as $d) {
-            $activeIds[] = $d['Numero'];
+            $activeIds[] = $d['numero_sado'];
         }
 
         $this->activeIds = $activeIds;
