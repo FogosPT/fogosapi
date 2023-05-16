@@ -49,6 +49,8 @@ class IncidentResource extends JsonResource
             'heliCoord' => $this->heliCoord,
             'planeFight' => $this->planeFight,
             'anepcDirectUpdate' => $this->anepcDirectUpdate,
+            'regiao' => $this->regiao,
+            'sub_regiao' => $this->sub_regiao,
             'created' => $this->createdObject,
             'updated' => $this->updatedObject,
         ];
