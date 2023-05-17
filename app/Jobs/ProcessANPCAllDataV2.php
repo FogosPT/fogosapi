@@ -105,7 +105,7 @@ class ProcessANPCAllDataV2 extends Job
     private function prepareData($data, $create = false)
     {
         $locationData = $this->getLocationData($data['concelho']);
-        $distrito = $locationData['distrito'];
+        $distrito = UTF8::ucwords(mb_strtolower($locationData['distrito']));
         $concelho = $data['concelho'];
         $freguesia = UTF8::ucwords(mb_strtolower($data['freguesia']));
         $localidade =  UTF8::ucwords(mb_strtolower($data['local'] . ' ' .  $data['outra_localizacao']));
