@@ -53,7 +53,7 @@ class ProcessANPCAllDataV2 extends Job
             $response = $e->getResponse();
             $responseBodyAsString = $response->getBody()->getContents();
 
-            DiscordTool::postError('Error ANEPC API => ' . $e->getCode() . ' =>' . $e->getMessage() . ' => ' . $responseBodyAsString);
+            //::postError('Error ANEPC API => ' . $e->getCode() . ' =>' . $e->getMessage() . ' => ' . $responseBodyAsString);
             return;
         }
 
