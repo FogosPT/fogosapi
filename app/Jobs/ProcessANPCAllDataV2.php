@@ -108,7 +108,7 @@ class ProcessANPCAllDataV2 extends Job
         $distrito = $locationData['distrito'];
         $concelho = $data['concelho'];
         $freguesia = UTF8::ucwords(mb_strtolower($data['freguesia']));
-        $localidade = $data['local'] . ' ' .  $data['outra_localizacao'];
+        $localidade =  UTF8::ucwords(mb_strtolower($data['local'] . ' ' .  $data['outra_localizacao']));
 
         $man = $data['operacionais'];
 
