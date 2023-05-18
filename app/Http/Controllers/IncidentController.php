@@ -198,9 +198,9 @@ class IncidentController extends Controller
                     $troll->natureza = 'Utilização indevida';
                     $troll->especieName = 'Utilização indevida';
                     $troll->familiaName = 'Utilização indevida';
-                    $troll->statusCode = 45;
-                    $troll->statusColor = 548648;
-                    $troll->status = 'Em curso';
+                    $troll->statusCode = 5;
+                    $troll->statusColor = "B81E1F";
+                    $troll->status = 'Em Curso';
                     $troll->important = false;
                     $troll->localidade = 'Uso a API do Fogos.pt 🥁';
                     $troll->active = true;
