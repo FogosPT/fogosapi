@@ -176,7 +176,7 @@ class IncidentController extends Controller
                     'https://sgmai.maps.arcgis.com/apps/dashboards/fc641a97229142b8a80f17af034d62a7'
                 ];
 
-                if(!in_array($ua, $allowedUas) || in_array($ref,$allowedRefs)){
+                if(!in_array($ua, $allowedUas) || !in_array($ref,$allowedRefs)){
                     $troll = new Incident();
                     $troll->id = 123123123123;
                     $troll->coords = 1;
