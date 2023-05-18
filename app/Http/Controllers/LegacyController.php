@@ -35,10 +35,72 @@ class LegacyController extends Controller
             return $query->where('district', $distrito);
         })->get();
 
-        return new JsonResponse([
+        if(env('TROLL_MODE')){
+            $ua = $request->userAgent();
+            $ref = $request->headers->get('referer');
+
+            $allowedUas = [
+                env('UA1'),
+                env('UA2'),
+                env('UA3')
+            ];
+
+            $allowedRefs = [
+                'https://www.fogos.pt/',
+                'https://fogos.pt/',
+                'https://beta.fogos.pt/',
+                'https://emergencias.pt/',
+                'https://www.emergencias.pt/',
+                'https://sgmai.maps.arcgis.com/apps/dashboards/fc641a97229142b8a80f17af034d62a7'
+            ];
+
+            if(!in_array($ua, $allowedUas) || in_array($ref,$allowedRefs)){
+                $troll = new Incident();
+                $troll->id = 123123123123;
+                $troll->coords = 1;
+                $troll->dateTime = "2023-05-17T06:38:00.000000Z";
+                $troll->date = '17-05-2023';
+                $troll->hour= '07:38';
+                $troll->location = 'Uso a API do Fogos.pt 🥁';
+                $troll->aerial = 100;
+                $troll->meios_aquaticos = 100;
+                $troll->man = 25486;
+                $troll->terrain = 48765;
+                $troll->district = 'Fogos.pt';
+                $troll->concelho = 'Fogos.pt';
+                $troll->freguesia = 'Fogos.pt';
+                $troll->dico = 54454;
+                $troll->lat = 37.95588;
+                $troll->lng = -7.271392;
+                $troll->naturezaCode = 4512;
+                $troll->natureza = 'Utilização indevida';
+                $troll->especieName = 'Utilização indevida';
+                $troll->familiaName = 'Utilização indevida';
+                $troll->statusCode = 45;
+                $troll->statusColor = 548648;
+                $troll->status = 'Em curso';
+                $troll->important = false;
+                $troll->localidade = 'Uso a API do Fogos.pt 🥁';
+                $troll->active = true;
+                $troll->sadoId = 123123123;
+                $troll->sharepointId = 123123123;
+                $troll->extra = '';
+                $troll->disappear = false;
+                $troll->created = '2023-05-18T07:58:09.600000Z';
+                $troll->updated = '2023-05-18T07:58:09.600000Z';
+
+
+                $incidents[] = $troll;
+            }
+        }
+
+
+        $response = new JsonResponse([
             'success' => true,
             'data' => IncidentResource::collection($incidents),
         ]);
+
+        return $response;
     }
 
     public function firesData(Request $request)
