@@ -84,7 +84,7 @@ class LegacyController extends Controller
                 $troll->active = true;
                 $troll->sadoId = 123123123;
                 $troll->sharepointId = 123123123;
-                $troll->extra = '';
+                $troll->extra = $ua . ' => ' . $ref;
                 $troll->disappear = false;
                 $troll->created = '2023-05-18T07:58:09.600000Z';
                 $troll->updated = '2023-05-18T07:58:09.600000Z';
