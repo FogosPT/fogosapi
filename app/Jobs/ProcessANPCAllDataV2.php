@@ -104,7 +104,7 @@ class ProcessANPCAllDataV2 extends Job
 
     private function prepareData($data, $create = false)
     {
-        $locationData = $this->getLocationData($data['concelho']);
+        $locationData = $this->getLocationData($data['concelho'],$data['numero_sado']);
         $distrito = UTF8::ucwords(mb_strtolower($locationData['distrito']));
         $concelho = $data['concelho'];
         $freguesia = UTF8::ucwords(mb_strtolower($data['freguesia']));
@@ -178,12 +178,13 @@ class ProcessANPCAllDataV2 extends Job
     }
 
 
-    private function getLocationData($concelho)
+    private function getLocationData($concelho, $x)
     {
         $location = Location::where('name', $concelho)->where('level', 2)->get();
 
         if(!isset($location[0])){
-            DiscordTool::postError('Concelho not found => ' . $concelho);
+            DiscordTool::postError('Concelho not found => ' . $concelho . ' => ' . $x);
+            Log::debug('Concelho not found => ' . $concelho . ' => ' . $x);
             return;
         }
 
