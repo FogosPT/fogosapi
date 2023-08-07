@@ -109,6 +109,8 @@ class ProcessANPCAllDataV2 extends Job
                 'DICO' => '00',
                 'distrito' => 'Espanha'
             ];
+            $data['concelho'] = 'Espanha';
+            $data['freguesia'] = 'Espanha';
         } else {
             $locationData = $this->getLocationData($data['concelho'],$data['numero_sado']);
         }
