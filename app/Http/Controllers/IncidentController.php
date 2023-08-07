@@ -191,7 +191,7 @@ class IncidentController extends Controller
                     $troll->district = 'Fogos.pt';
                     $troll->concelho = 'Fogos.pt';
                     $troll->freguesia = 'Fogos.pt';
-                    $troll->dico = 54454;
+                    $troll->dico = 213;
                     $troll->lat = 37.95588;
                     $troll->lng = -7.271392;
                     $troll->naturezaCode = 4512;
@@ -439,6 +439,8 @@ class IncidentController extends Controller
         $incident = Incident::where('id', $id)->get()[0];
 
         $incident->extra = $request->post('posit');
+        $incident->pco = $request->post('pco');
+        $incident->cos = $request->post('cos');
 
         $incident->save();
 
