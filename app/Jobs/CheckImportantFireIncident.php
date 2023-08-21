@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Incident;
+use App\Tools\BlueskyTool;
 use App\Tools\FacebookTool;
 use App\Tools\HashTagTool;
 use App\Tools\NotificationTool;
@@ -62,6 +63,7 @@ class CheckImportantFireIncident extends Job implements ShouldQueue, ShouldBeUni
                     $status = "ℹ🔥 Segundo os critérios da @ProteccaoCivil o incêndio em {$incident->location} é considerado importante. https://{$domain}/fogo/{$incident->id} {$hashTag} #FogosPT 🔥ℹ";
                     $lastTweetId = TwitterTool::tweet($status, $incident->lastTweetId);
                     TelegramTool::publish($status);
+                    BlueskyTool::publish($status);
 
                     $facebookStatus = "ℹ🔥 Segundo os critérios da ANEPC o incêndio em {$incident->location} é considerado importante. https://{$domain}/fogo/{$incident->id} {$hashTag} #FogosPT 🔥ℹ";
                     FacebookTool::publish($facebookStatus);

@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Incident;
+use App\Tools\BlueskyTool;
 use App\Tools\FacebookTool;
 use App\Tools\ScreenShotTool;
 use App\Tools\TelegramTool;
@@ -82,6 +83,7 @@ class HourlySummary extends Job
         ScreenShotTool::takeScreenShot($url, $name, 1200, 450);
 
         TwitterTool::tweet($status, false, $path);
+        BlueskyTool::publish($status);
         FacebookTool::publishWithImage($statusf, $urlImage);
         TelegramTool::publishImage($status, $path);
 
