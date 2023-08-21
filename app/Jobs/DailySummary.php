@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Incident;
+use App\Tools\BlueskyTool;
 use App\Tools\FacebookTool;
 use App\Tools\ScreenShotTool;
 use App\Tools\TelegramTool;
@@ -69,5 +70,6 @@ class DailySummary extends Job
         TwitterTool::retweetVost($id);
         FacebookTool::publish($statusf);
         TelegramTool::publish($status);
+        BlueskyTool::publish($status);
     }
 }

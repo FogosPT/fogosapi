@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Incident;
+use App\Tools\BlueskyTool;
 use App\Tools\FacebookTool;
 use App\Tools\HashTagTool;
 use App\Tools\NotificationTool;
@@ -203,6 +204,7 @@ class ProcessICNFFireData extends Job
 
             //FacebookTool::publish($status);
             TelegramTool::publish($status);
+            BlueskyTool::publish($status);
             ScreenShotTool::removeScreenShotFile($name);
         }
 
@@ -223,6 +225,7 @@ class ProcessICNFFireData extends Job
 
             FacebookTool::publish($status);
             TelegramTool::publishImage($status, $path);
+            BlueskyTool::publish($status);
             ScreenShotTool::removeScreenShotFile($name);
         }
 
@@ -245,6 +248,7 @@ class ProcessICNFFireData extends Job
 
                 //FacebookTool::publish($status);
                 TelegramTool::publish($status);
+                BlueskyTool::publish($status);
                 ScreenShotTool::removeScreenShotFile($name);
             }
 

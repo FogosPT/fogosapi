@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Incident;
+use App\Tools\BlueskyTool;
 use App\Tools\FacebookTool;
 use App\Tools\HashTagTool;
 use App\Tools\NotificationTool;
@@ -50,6 +51,7 @@ class HandleNewIncidentSocialMedia extends Job
 
         FacebookTool::publishWithImage($status,$urlImage);
         TelegramTool::publish($status);
+        BlueskyTool::publish($status);
 
         ScreenShotTool::removeScreenShotFile($name);
 
