@@ -115,6 +115,10 @@ class ProcessANPCAllDataV2 extends Job
             $locationData = $this->getLocationData($data['concelho'],$data['numero_sado']);
         }
 
+        if(strlen($locationData['DICO']) !== 4){
+            $locationData['DICO'] = '0' . $locationData['DICO'];
+        }
+
         $distrito = UTF8::ucwords(mb_strtolower($locationData['distrito']));
         $concelho = $data['concelho'];
         $freguesia = UTF8::ucwords(mb_strtolower($data['freguesia']));
