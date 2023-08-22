@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Warning;
+use App\Tools\BlueskyTool;
 use App\Tools\FacebookTool;
 use App\Tools\NotificationTool;
 use App\Tools\TelegramTool;
@@ -53,6 +54,7 @@ class SaveWarningAndSendNotificationAndSocial extends Command
         $text = "ALERTA: \r\n" . $status;
         TwitterTool::tweet($text);
         TelegramTool::publish($text);
+        BlueskyTool::publish($text);
 
         $message = "ALERTA: %0A" . $status;
         FacebookTool::publish($message);

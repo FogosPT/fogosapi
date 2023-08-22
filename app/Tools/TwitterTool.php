@@ -3,6 +3,7 @@
 namespace App\Tools;
 
 use Illuminate\Support\Facades\Log;
+use Noweh\TwitterApi\Client;
 
 class TwitterTool
 {
@@ -13,13 +14,15 @@ class TwitterTool
     {
         if (!self::$client) {
             $settings = [
-                'oauth_access_token' => env('TWITTER_OAUTH_ACCESS_TOKEN'),
-                'oauth_access_token_secret' => env('TWITTER_OAUTH_ACCESS_TOKEN_SECRET'),
+                'access_token' => env('TWITTER_OAUTH_ACCESS_TOKEN'),
+                'access_token_secret' => env('TWITTER_OAUTH_ACCESS_TOKEN_SECRET'),
                 'consumer_key' => env('TWITTER_CONSUMER_KEY'),
                 'consumer_secret' => env('TWITTER_CONSUMER_SECRET'),
+                'bearer_token' => env('TWITTER_BEARER_TOKEN'),
+                'account_id' => 'fogospt',
             ];
 
-            self::$client = new \TwitterAPIExchange($settings);
+            self::$client = new Client($settings);
         }
 
         return self::$client;
@@ -118,53 +121,39 @@ class TwitterTool
         $fields = [];
 
         if ($imagePath && file_exists($imagePath)) {
-            $file = file_get_contents($imagePath);
-            $data = base64_encode($file);
-
-            $url = 'https://upload.twitter.com/1.1/media/upload.json';
-            $method = 'POST';
-            $params = [
-                'media_data' => $data,
-            ];
-
-            $imageResponse = $client
-                ->setPostfields($params)
-                ->buildOauth($url, $method)
-                ->performRequest();
-
-            $imageResponse = json_decode($imageResponse);
+            $file_data = base64_encode(file_get_contents($imagePath));
+            $media_info = $client->uploadMedia()->upload($file_data);
 
             // Extract media id
-            $id = $imageResponse->media_id_string;
+            $id = $media_info["media_id"];
 
-            $fields['media_ids'] = $id;
+            $fields['media']['media_ids'] = [(string)$id];
         }
-
-        $url = 'https://api.twitter.com/1.1/statuses/update.json';
 
         $tweets = self::splitTweets($text);
 
         foreach ($tweets as $t) {
-            $fields['status'] = $t;
+            $fields['text'] = $t;
 
             if ($lastId) {
-                $fields['in_reply_to_status_id'] = $lastId;
+                $fields['reply']['in_reply_to_tweet_id'] = $lastId;
             }
 
-            $response = $client
-                ->buildOauth($url, 'POST')
-                ->setPostfields($fields)
-                ->performRequest();
+            $response = $client->tweet()->create()->performRequest(
+                $fields
+            );
 
-            $r = json_decode($response);
-
-            if(isset($r->id)){
-                $lastId = $r->id;
+            if(isset($response->data->id)){
+                $lastId = $response->data->id;
             } else {
                 $lastId = null;
             }
-        }
 
+            if(isset($fields['media']['media_ids'])){
+                unset($fields['media']['media_ids']);
+                unset($fields['media']);
+            }
+        }
         return $lastId;
     }
 
