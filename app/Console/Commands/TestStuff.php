@@ -8,14 +8,20 @@ use App\Jobs\HandleANEPCImportantData;
 use App\Jobs\HandleANEPCPositEmail;
 use App\Jobs\HandleNewIncidentSocialMedia;
 use App\Jobs\ProcessANPCAllData;
+use App\Jobs\ProcessANPCAllDataV2;
 use App\Jobs\ProcessICNFFireData;
 use App\Jobs\ProcessICNFPDF;
 use App\Jobs\ProcessICNFPDFData;
+use App\Jobs\ProcessRCM;
 use App\Jobs\UpdateICNFData;
 use App\Jobs\UpdateWeatherData;
+use App\Jobs\UpdateWeatherDataDaily;
 use App\Jobs\UpdateWeatherStations;
 use App\Models\Incident;
+use App\Models\WeatherWarning;
+use App\Tools\BlueskyTool;
 use App\Tools\TwitterTool;
+use App\Tools\TwitterToolV2;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -57,10 +63,154 @@ class TestStuff extends Command
      */
     public function handle()
     {
+        dispatch(new UpdateWeatherDataDaily());
+        /*$warningTypes = [
+            'Tempo Frio' => [
+                'strType' => 'TempoFrio',
+                'emoji' => '❄🌡',
+                'emojiDiscord' => ':snowflake:️:thermometer:',
+            ],
+            'Tempo Quente' => [
+                'strType' => 'TempoQuente',
+                'emoji' => '☀🌡',
+                'emojiDiscord' => ':sunny:️:thermometer:',
+            ],
+            'Precipitação' => [
+                'strType' => 'Chuva',
+                'emoji' => '🌧',
+                'emojiDiscord' => ':cloud_rain:',
+            ],
+            'Nevoeiro' => [
+                'strType' => 'Nevoeiro',
+                'emoji' => '🌫',
+                'emojiDiscord' => ':fog:',
+            ],
+            'Neve' => [
+                'strType' => 'Neve',
+                'emoji' => '❄',
+                'emojiDiscord' => ':snowflake:',
+            ],
+            'Agitação Marítima' => [
+                'strType' => 'AgitaçãoMarítima',
+                'emoji' => '🌊',
+                'emojiDiscord' => ':ocean:',
+            ],
+            'Trovoada' => [
+                'strType' => 'Trovoada',
+                'emoji' => '⛈',
+                'emojiDiscord' => ':thunder_cloud_rain:',
+            ],
+            'Vento' => [
+                'strType' => 'Vento',
+                'emoji' => '🌬️',
+                'emojiDiscord' => ':dash:',
+            ],
+        ];
 
-        $x = Carbon::parse('27-04-2017 04:41', 'Europe/Lisbon');
 
-        print_r($x);
+        $url = env('WARNINGS_API');
+
+        $options = [
+            'headers' => [
+                'User-Agent' => 'Fogos.pt/3.0',
+            ],
+            'verify' => false,
+        ];
+
+        try{
+            $client = new \GuzzleHttp\Client();
+            $res = $client->request('GET', $url, $options);
+
+            $data = json_decode($res->getBody()->getContents());
+        }
+        catch(\GuzzleHttp\Exception\RequestException $e) {
+            Log::error('Error occurred in request.', ['url' => $url, 'statusCode' => $e->getCode(), 'message' => $e->getMessage()]);
+            return;
+        }
+
+
+        foreach($data->continente as $a){
+            $hash = md5($a->nivel . $a->tipo . $a->inicio . $a->fim . json_encode($a->locais));
+
+            $exists = WeatherWarning::where('hash', $hash)->get();
+
+            if(!isset($exists[0])){
+
+                $unwanted_array = array(    'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
+                    'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
+                    'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
+                    'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o',
+                    'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y',
+                    '&#225;'=>'a', '&#233;'=>'e', '&#237;'=>'i', '&#243;'=>'o', '&#250;'=>'u',
+                    '&#193;'=>'A', '&#201;'=>'E', '&#205;'=>'I', '&#211;'=>'O', '&#218;'=>'U',
+                    '&#209;'=>'N', '&#241;'=>'n' );
+
+
+                $type = $a->tipo;
+
+                if ($type === 'Precipitação') {
+                    $imgType = 'Chuva';
+                } else if ($type === 'Agitação Marítima') {
+                    $imgType = 'AgitacaoMaritima';
+                } else if ($type === 'Tempo Quente') {
+                    $imgType = 'TempoQuente';
+                } else {
+                    $imgType = $type;
+                }
+
+                $imgType = strtr(  $imgType , $unwanted_array );
+
+
+
+                $img = "https://bot-api.vost.pt/images/warnings/Twitter_Post_Aviso{$a->nivel}_{$imgType}.png";
+
+
+                $locais = '';
+                foreach ($a->locais as $l){
+                    $locais .= '#' . $l->local . ' ';
+                }
+
+                $init = new Carbon($a->inicio);
+                $end = new Carbon($a->fim);
+                $text = "ℹ️⚠" . $warningTypes[$a->tipo]['emoji'] . " Distritos de {$locais} " . $warningTypes[$a->tipo]['emoji'] . " ⚠️ℹ️ 🕰️ entre as " . $init->format('H:s') . "h e as " . $end->format('H:s'). "h de " . $end->format('dMy') . " #Aviso" . $a->nivel . " devido a #" . $warningTypes[$a->tipo]['strType'];
+
+                echo $text . PHP_EOL;
+            }
+        }
+
+*/
+
+       // $text = 'Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,';
+
+        //TwitterToolV2::tweet($text, false, false,false, true);
+       // BlueskyTool::publish($text);
+
+//        $url = 'https://apiprociv.geomai.mai.gov.pt/api/v1/ocorrencias/abertas';
+//
+//
+//        $options = [
+//            'headers' => [
+//                'User-Agent' => 'Fogos.pt/3.0',
+//                'Authorization' => 'Basic ' . base64_encode(env('ANEPC_API_USERNAME') . ':' .env('ANEPC_API_PASSWORD'))
+//            ],
+//
+//        ];
+//
+//        if(env('PROXY_ENABLE')){
+//            $options['proxy'] = env('PROXY_URL');
+//        }
+//
+//        $client = new \GuzzleHttp\Client();
+//        $res = $client->request('GET', $url, $options);
+//
+//        $data = json_decode($res->getBody(), true);
+//
+//        print_r($data);
+//
+//
+//        dispatch(new ProcessANPCAllDataV2());
+
+        //dispatch(new ProcessRCM(false,false));
 //
        // dispatch(new HandleANEPCImportantData());
 
@@ -77,7 +227,7 @@ class TestStuff extends Command
 
         //$incident = Incident::where('id', "2021080029244")->limit(1)->get()[0];
 
-        dispatch(new UpdateWeatherStations());
+        //dispatch(new UpdateWeatherStations());
         //dispatch(new UpdateWeatherData());
 
         //dispatch(new ProcessICNFFireData($incident));
@@ -134,6 +284,7 @@ class TestStuff extends Command
 //            $browser->close();
 //        }
 
-        TwitterTool::retweetVost("1559872724645941254");
+        //TwitterTool::retweetVost("1559872724645941254");
     }
+
 }

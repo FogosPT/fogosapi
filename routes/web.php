@@ -67,6 +67,7 @@ $router->group(['prefix' => 'v2'], function () use ($router) {
     $router->group(['prefix' => 'weather'], function () use ($router) {
         $router->get('thunders', '\App\Http\Controllers\WeatherController@thunders');
         $router->get('stations', '\App\Http\Controllers\WeatherController@stations');
+        $router->get('daily', '\App\Http\Controllers\WeatherController@daily');
         $router->get('ipma-services', '\App\Http\Controllers\WeatherController@ipmaServicesHTTPS');
     });
 

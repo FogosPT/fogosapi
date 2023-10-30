@@ -14,6 +14,7 @@ use App\Jobs\ProcessPlanes;
 use App\Jobs\ProcessRCM;
 use App\Jobs\UpdateICNFData;
 use App\Jobs\UpdateWeatherData;
+use App\Jobs\UpdateWeatherDataDaily;
 use App\Jobs\UpdateWeatherStations;
 use Illuminate\Console\Scheduling\Schedule;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
@@ -60,8 +61,10 @@ class Kernel extends ConsoleKernel
             $schedule->job(new UpdateICNFData(8))->cron('0 0 1 */2 *'); // every two months
 
 
-            $schedule->job(new UpdateWeatherStations())->daily()->at('03:21');;
+            $schedule->job(new UpdateWeatherStations())->daily()->at('03:21');
             $schedule->job(new UpdateWeatherData())->everyTwoHours();
+
+            $schedule->job(new UpdateWeatherDataDaily())->daily()->at('04:21');
 
             $schedule->job(new DailySummary())->daily()->at('09:30');
 

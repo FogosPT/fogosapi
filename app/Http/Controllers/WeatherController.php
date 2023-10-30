@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\WeatherDataDaily;
 use App\Models\WeatherStation;
+use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
@@ -96,6 +98,23 @@ class WeatherController extends Controller
         } else {
             abort(404);
         }
+    }
+
+    public function daily(Request $request)
+    {
+        if(!$request->exists('date')){
+            abort(410);
+        }
+
+
+        $date = $request->get('date');
+        $date = new Carbon($date);
+
+        $date = Carbon::parse($date->startOfDay());
+
+        $data = WeatherDataDaily::where('date', $date)->with('station')->get();
+
+        return response()->json($data);
     }
 
     public function ipmaServicesHTTPS()
