@@ -361,7 +361,7 @@ class IncidentController extends Controller
         })->when($isFMA, function ($query, $isFMA){
             return $query->isFMA();
         })->when($naturezaCode, function ($query, $naturezaCode){
-            return $query->where('naturezaCode', $naturezaCode);
+            return $query->where('naturezaCode', (string)$naturezaCode);
         })
         ->paginate($limit);
 
