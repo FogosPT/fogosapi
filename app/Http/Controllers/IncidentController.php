@@ -305,6 +305,9 @@ class IncidentController extends Controller
         $before = $request->get('before');
         $after = $request->get('after');
 
+        $naturezaCode = $request->get('naturezaCode');
+
+
         if($request->exists('limit')){
             $limit = (int)$request->get('limit');
         } else {
@@ -357,6 +360,8 @@ class IncidentController extends Controller
             return $query->with(['history', 'statusHistory']);
         })->when($isFMA, function ($query, $isFMA){
             return $query->isFMA();
+        })->when($naturezaCode, function ($query, $naturezaCode){
+            return $query->where('naturezaCode', $naturezaCode);
         })
         ->paginate($limit);
 
