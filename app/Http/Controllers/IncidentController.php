@@ -362,20 +362,65 @@ class IncidentController extends Controller
             return $query->isFMA();
         })->when($naturezaCode, function ($query, $naturezaCode){
             return $query->where('naturezaCode', (string)$naturezaCode);
-        })
-        ->paginate($limit);
+        });
 
-        $paginator = [
-            'currentPage' => $incidents->currentPage(),
-            'totalPages' => $incidents->lastPage(),
-            'totalItems' => $incidents->total()
-        ];
+        $csv2 = $request->get('csv2');
 
-        return new JsonResponse([
-            'success' => true,
-            'paginator' => $paginator,
-            'data' => IncidentResource::collection($incidents),
-        ]);
+        if($csv2){
+            $csv = 'incidents.csv';
+
+            header('Content-Disposition: attachment; filename="' . $csv . '";');
+            header('Content-Type: application/csv; charset=UTF-8');
+
+            // open the "output" stream
+            $f = fopen('php://output', 'w');
+            // Write utf-8 bom to the file
+            fputs($f, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            $incidents = $incidents->get();
+            $arr = IncidentResource::collection($incidents)->resolve();
+
+            if(isset($arr[0])){
+                $keys = $arr[0];
+                unset($keys['_id']);
+                unset($keys['dateTime']);
+                unset($keys['created']);
+                unset($keys['updated']);
+                unset($keys['icnf']);
+                unset($keys['coordinates']);
+                unset($keys['kmlVost']);
+
+                fputcsv($f, array_keys($keys), ';');
+
+                foreach ($arr as &$i) {
+                    $_i = $i;
+                    unset($_i['_id']);
+                    unset($_i['dateTime']);
+                    unset($_i['created']);
+                    unset($_i['updated']);
+                    unset($_i['icnf']);
+                    unset($_i['coordinates']);
+                    unset($_i['kmlVost']);
+                    $_i['kml'] = null;
+                    $_i['extra'] = null;
+                    fputcsv($f, $_i, ';');
+                }
+            }
+        } else {
+            $incidents = $incidents->paginate($limit);
+
+            $paginator = [
+                'currentPage' => $incidents->currentPage(),
+                'totalPages' => $incidents->lastPage(),
+                'totalItems' => $incidents->total()
+            ];
+
+            return new JsonResponse([
+                'success' => true,
+                'paginator' => $paginator,
+                'data' => IncidentResource::collection($incidents),
+            ]);
+        }
     }
 
     public function kml(Request $request, $id)
