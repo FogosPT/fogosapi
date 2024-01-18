@@ -299,7 +299,7 @@ class IncidentController extends Controller
         return $allfeatures;
     }
 
-    public function search(IncidentSearchRequest $request): JsonResponse
+    public function search(IncidentSearchRequest $request)
     {
         $day = $request->get('day');
         $before = $request->get('before');
