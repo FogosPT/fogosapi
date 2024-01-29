@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\RCM;
 use App\Tools\RCMTool;
+use Illuminate\Http\Request;
 use Laravel\Lumen\Routing\Controller;
 use App\Models\RCMForJS;
-use Nyholm\Psr7\Request;
 use voku\helper\UTF8;
 
 class RCMController extends Controller
