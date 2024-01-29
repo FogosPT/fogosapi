@@ -69,7 +69,7 @@ class RCMController extends Controller
             ->limit(1)
             ->get();
 
-        if (isset($risk[0])) {
+        if (!isset($risk[0])) {
             abort(404);
         }
 
