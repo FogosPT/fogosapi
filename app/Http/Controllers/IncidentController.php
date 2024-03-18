@@ -38,6 +38,9 @@ class IncidentController extends Controller
         $csv = $request->get('csv');
         $csv2 = $request->get('csv2');
 
+        $subRegion = $request->get('subRegion');
+
+
         $incidents = Incident::isActive()
                             ->when(!$all, function ($query, $all){
                                 return $query->isFire();
@@ -47,6 +50,8 @@ class IncidentController extends Controller
                                 return $query->isOtherFire();
                             })->when($concelho, function ($query, $concelho){
                                 return $query->where('concelho', $concelho);
+                            })->when($subRegion, function ($query, $subRegion){
+                                return $query->where('sub_regiao', $subRegion);
                             })
                             ->orderBy('created_at', 'desc')
                             ->paginate($limit);
@@ -334,6 +339,8 @@ class IncidentController extends Controller
         $extend = $request->get('extend');
         $concelho = $request->get('concelho');
 
+        $subRegion = $request->get('subRegion');
+
 
         $incidents = Incident::when($day, function($query, $day){
             return $query->whereBetween(
@@ -362,6 +369,8 @@ class IncidentController extends Controller
             return $query->isFMA();
         })->when($naturezaCode, function ($query, $naturezaCode){
             return $query->where('naturezaCode', (string)$naturezaCode);
+        })->when($subRegion, function ($query, $subRegion){
+            return $query->where('sub_regiao', (string)$subRegion);
         });
 
         $csv2 = $request->get('csv2');
