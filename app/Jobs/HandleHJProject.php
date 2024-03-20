@@ -38,8 +38,9 @@ class HandleHJProject extends Job
 ✍🏻 Nº SADO DA OCORRÊNCIA: {$this->incident->sadoId}";
 
         $data = [
-            'chat_id' => $this->telegramChannel,
+            'chat_id' => env('HL_PROJECT_TELEGRAM_CHANNEL'),
             'text' => $status,
+            'message_thread_id' => $this->telegramChannel
         ];
 
         file_get_contents("https://api.telegram.org/bot{$apiToken}/sendMessage?".http_build_query($data));
