@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Jobs\HandleHJProject;
 use App\Jobs\HandleNewIncidentEmergenciasSocialMedia;
 use App\Jobs\HandleNewIncidentSocialMedia;
 use App\Jobs\ProcessICNFFireData;
@@ -32,6 +33,18 @@ trait IncidentObserver
                 if ( $incident->naturezaCode === '2409' ) {
                     DiscordTool::postAero("🚨 Novo acidente aereo em {$incident->location} 🚨");
                 }
+            }
+
+            $hlDico1 = explode(',', env('HL_PROJECT_TELEGRAM_CHANNEL_1_DICOS'));
+            $hlDico2 = explode(',', env('HL_PROJECT_TELEGRAM_CHANNEL_2_DICOS'));
+            $hlDico3 = explode(',', env('HL_PROJECT_TELEGRAM_CHANNEL_3_DICOS'));
+
+            if(in_array($incident->dico, $hlDico1)){
+                dispatch(new HandleHJProject($incident, env('HL_PROJECT_TELEGRAM_CHANNEL_1')));
+            } elseif (in_array($incident->dico, $hlDico2)){
+                dispatch(new HandleHJProject($incident, env('HL_PROJECT_TELEGRAM_CHANNEL_2')));
+            } elseif (in_array($incident->dico, $hlDico3)){
+                dispatch(new HandleHJProject($incident, env('HL_PROJECT_TELEGRAM_CHANNEL_3')));
             }
         });
 
