@@ -54,31 +54,12 @@ class UpdateICNFData extends Job
             [
                 'before' => Carbon::now()->subDays(90),
                 'after' => Carbon::now()->subDays(180),
-            ],
-            [
-                'before' => Carbon::now()->subDays(180),
-                'after' => Carbon::now()->subDays(360),
-            ],
-            [
-                'before' => Carbon::now()->subDays(360),
-                'after' => Carbon::now()->subDays(540),
-            ],
-            [
-                'before' => Carbon::now()->subDays(540),
-                'after' => Carbon::now()->subDays(720),
-            ],
-            [
-                'before' => Carbon::now()->subDays(720),
-                'after' => Carbon::now()->subDays(900),
-            ],
-            [
-                'before' => Carbon::now()->subDays(900),
-                'after' => Carbon::now()->subDays(1080),
-            ],
+            ]
         ];
 
         $incidents = Incident::where('created', '>=', $intervals[$this->interval]['after'])
             ->where('created', '<=', $intervals[$this->interval]['before'])
+            ->whereq('isFire', true)
             ->get();
 
         foreach ($incidents as $incident) {

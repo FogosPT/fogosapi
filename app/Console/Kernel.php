@@ -57,8 +57,6 @@ class Kernel extends ConsoleKernel
             $schedule->job(new UpdateICNFData(4))->cron('0 3 * * 1,5'); // twice a week, monday and thursday
             $schedule->job(new UpdateICNFData(5))->cron('0 3 * * 1,5'); // twice a week, monday and thursday
             $schedule->job(new UpdateICNFData(6))->cron('0 3 * * 3'); // once a week, wednesday
-            $schedule->job(new UpdateICNFData(7))->monthly();
-            $schedule->job(new UpdateICNFData(8))->cron('0 0 1 */2 *'); // every two months
 
 
             $schedule->job(new UpdateWeatherStations())->daily()->at('03:21');
