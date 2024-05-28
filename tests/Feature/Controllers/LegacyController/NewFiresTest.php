@@ -3,7 +3,7 @@
 namespace Tests\Feature\Controllers\LegacyController;
 
 use Database\Factories\IncidentFactory;
-use Laravel\Lumen\Testing\DatabaseMigrations;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 
 class NewFiresTest extends TestCase
