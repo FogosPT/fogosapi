@@ -6,7 +6,6 @@ use App\Jobs\DailySummary;
 use App\Jobs\HandleANEPCImportantData;
 use App\Jobs\HandleANEPCPositEmail;
 use App\Jobs\HourlySummary;
-use App\Jobs\ProcessANPCAllData;
 use App\Jobs\ProcessANPCAllDataV2;
 use App\Jobs\ProcessDataForHistoryTotal;
 use App\Jobs\ProcessMadeiraWarnings;
@@ -32,7 +31,7 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\FixFMA::class,
         \App\Console\Commands\SaveWarningAndSendNotificationAndSocial::class,
         \App\Console\Commands\GetICNFBurnAreaLegacy::class,
-        \App\Console\Commands\ImportLocations::class
+        \App\Console\Commands\ImportLocations::class,
     ];
 
     /**
@@ -58,14 +57,12 @@ class Kernel extends ConsoleKernel
             $schedule->job(new UpdateICNFData(5))->cron('0 3 * * 1,5'); // twice a week, monday and thursday
             $schedule->job(new UpdateICNFData(6))->cron('0 3 * * 3'); // once a week, wednesday
 
-
             $schedule->job(new UpdateWeatherStations())->daily()->at('03:21');
             $schedule->job(new UpdateWeatherData())->everyTwoHours();
 
             $schedule->job(new UpdateWeatherDataDaily())->daily()->at('04:21');
 
             $schedule->job(new DailySummary())->daily()->at('09:30');
-
 
             //$schedule->job(new HandleANEPCImportantData())->everyTenMinutes();
             //$schedule->job(new HandleANEPCPositEmail())->everyTenMinutes();

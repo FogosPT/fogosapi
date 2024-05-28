@@ -10,7 +10,6 @@ use App\Tools\NotificationTool;
 use App\Tools\ScreenShotTool;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
-use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 
 class ProcessICNFFireData extends Job
@@ -39,14 +38,14 @@ class ProcessICNFFireData extends Job
             'verify' => false,
         ];
 
-        try{
+        try {
             $client = new \GuzzleHttp\Client();
             $res = $client->request('GET', $url, $options);
 
             $data = $res->getBody()->getContents();
-        }
-        catch(\GuzzleHttp\Exception\RequestException $e) {
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
             Log::error('Error occurred in request.', ['url' => $url, 'statusCode' => $e->getCode(), 'message' => $e->getMessage()]);
+
             return;
         }
 
@@ -54,7 +53,7 @@ class ProcessICNFFireData extends Job
 
         $data = $xml->CODIGO;
 
-        if (!$data) {
+        if (! $data) {
             return;
         }
 
@@ -71,9 +70,8 @@ class ProcessICNFFireData extends Job
                 'total' => (float) $data->AREATOTAL->__toString(),
             ];
 
-
-            if (!isset($this->incident->icnf['burnArea'])) {
-                if($totalBurned !== 0){
+            if (! isset($this->incident->icnf['burnArea'])) {
+                if ($totalBurned !== 0) {
                     $notifyBurn = true;
                 }
             }
@@ -87,62 +85,62 @@ class ProcessICNFFireData extends Job
             $icnfData['reacendimentos'] = (bool) $data->REACENDIMENTOS->__toString();
         }
 
-        if (isset($data->QUEIMADA) && boolval((int)$data->QUEIMADA->__toString())) {
-            $icnfData['queimada'] = boolval((int)$data->QUEIMADA->__toString());
+        if (isset($data->QUEIMADA) && boolval((int) $data->QUEIMADA->__toString())) {
+            $icnfData['queimada'] = boolval((int) $data->QUEIMADA->__toString());
         }
 
-        if (isset($data->FALSOALARME) && boolval((int)$data->FALSOALARME->__toString())) {
-            $icnfData['falsoalarme'] = boolval((int)$data->FALSOALARME->__toString());
+        if (isset($data->FALSOALARME) && boolval((int) $data->FALSOALARME->__toString())) {
+            $icnfData['falsoalarme'] = boolval((int) $data->FALSOALARME->__toString());
         }
 
-        if (isset($data->FOGACHO) && boolval((int)$data->FOGACHO->__toString())) {
-            $icnfData['fogacho'] = boolval((int)$data->FOGACHO->__toString());
+        if (isset($data->FOGACHO) && boolval((int) $data->FOGACHO->__toString())) {
+            $icnfData['fogacho'] = boolval((int) $data->FOGACHO->__toString());
         }
 
-        if (isset($data->INCENDIO) && boolval((int)$data->INCENDIO->__toString())) {
-            $icnfData['incendio'] = boolval((int)$data->INCENDIO->__toString());
+        if (isset($data->INCENDIO) && boolval((int) $data->INCENDIO->__toString())) {
+            $icnfData['incendio'] = boolval((int) $data->INCENDIO->__toString());
         }
 
-        if (isset($data->AGRICOLA) && boolval((int)$data->AGRICOLA->__toString())) {
-            $icnfData['agricola'] = boolval((int)$data->AGRICOLA->__toString());
+        if (isset($data->AGRICOLA) && boolval((int) $data->AGRICOLA->__toString())) {
+            $icnfData['agricola'] = boolval((int) $data->AGRICOLA->__toString());
         }
 
-        if (isset($data->QUEIMA) && boolval((int)$data->QUEIMA->__toString())) {
-            $icnfData['queima'] = boolval((int)$data->QUEIMA->__toString());
+        if (isset($data->QUEIMA) && boolval((int) $data->QUEIMA->__toString())) {
+            $icnfData['queima'] = boolval((int) $data->QUEIMA->__toString());
         }
 
         $notifyFonte = false;
-        if (isset($data->FONTEALERTA) && !empty((string) $data->FONTEALERTA->__toString())) {
+        if (isset($data->FONTEALERTA) && ! empty((string) $data->FONTEALERTA->__toString())) {
             $icnfData['fontealerta'] = (string) $data->FONTEALERTA;
 
-            if (!isset($this->incident->icnf['fontealerta']) || (isset($this->incident->icnf['fontealerta']) && $this->incident->icnf['fontealerta'] !== (string) $data->FONTEALERTA->__toString())) {
+            if (! isset($this->incident->icnf['fontealerta']) || (isset($this->incident->icnf['fontealerta']) && $this->incident->icnf['fontealerta'] !== (string) $data->FONTEALERTA->__toString())) {
                 $notifyFonte = true;
             }
         }
 
         $notifyCausa = false;
-        if (isset($data->CAUSA) && !empty((string) $data->CAUSA->__toString())) {
+        if (isset($data->CAUSA) && ! empty((string) $data->CAUSA->__toString())) {
             $icnfData['causa'] = (string) $data->CAUSA;
 
-            if (!isset($this->incident->icnf['causa']) || (isset($this->incident->icnf['causa']) && $this->incident->icnf['causa'] !== (string) $data->CAUSA->__toString())) {
+            if (! isset($this->incident->icnf['causa']) || (isset($this->incident->icnf['causa']) && $this->incident->icnf['causa'] !== (string) $data->CAUSA->__toString())) {
                 $notifyCausa = true;
             }
         }
 
-        if (isset($data->TIPOCAUSA) && !empty((string) $data->TIPOCAUSA)) {
+        if (isset($data->TIPOCAUSA) && ! empty((string) $data->TIPOCAUSA)) {
             $icnfData['tipocausa'] = (string) $data->TIPOCAUSA;
         }
 
-        if (isset($data->CAUSAFAMILIA) && !empty((string) $data->CAUSAFAMILIA)) {
+        if (isset($data->CAUSAFAMILIA) && ! empty((string) $data->CAUSAFAMILIA)) {
             $icnfData['causafamilia'] = (string) $data->CAUSAFAMILIA;
         }
 
         $kmlUrl = false;
-        if (isset($data->AREASFICHEIROS_GNR) && !empty((string) $data->AREASFICHEIROS_GNR->__toString())) {
+        if (isset($data->AREASFICHEIROS_GNR) && ! empty((string) $data->AREASFICHEIROS_GNR->__toString())) {
             $kmlUrl = (string) $data->AREASFICHEIROS_GNR;
         }
 
-        if (isset($data->AREASFICHEIROS_GTF) && !empty((string) $data->AREASFICHEIROS_GTF->__toString())) {
+        if (isset($data->AREASFICHEIROS_GTF) && ! empty((string) $data->AREASFICHEIROS_GTF->__toString())) {
             $kmlUrl = (string) $data->AREASFICHEIROS_GTF;
         }
 
@@ -152,10 +150,9 @@ class ProcessICNFFireData extends Job
             $res = $client->request('GET', $kmlUrl, $options);
             $kml = $res->getBody()->getContents();
 
-
-            if (!isset($this->incident->kml)) {
+            if (! isset($this->incident->kml)) {
                 $notifyKML = true;
-            } else if (isset($this->incident->kml) && empty($this->incident->kml)) {
+            } elseif (isset($this->incident->kml) && empty($this->incident->kml)) {
                 $notifyKML = true;
             }
 
@@ -192,7 +189,7 @@ class ProcessICNFFireData extends Job
             NotificationTool::send($notification, $this->incident->location, $this->incident->id);
 
             $url = "fogo/{$this->incident->id}/detalhe";
-            $name = "screenshot-{$this->incident->id}"  . rand(0,255);
+            $name = "screenshot-{$this->incident->id}".rand(0, 255);
             $path = "/var/www/html/public/screenshots/{$name}.png";
 
             ScreenShotTool::takeScreenShot($url, $name);
@@ -213,7 +210,7 @@ class ProcessICNFFireData extends Job
             $status = "ℹ🗺 Area ardida disponível https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🗺ℹ";
 
             $url = "fogo/{$this->incident->id}/detalhe";
-            $name = "screenshot-{$this->incident->id}" . rand(0,255);
+            $name = "screenshot-{$this->incident->id}".rand(0, 255);
             $path = "/var/www/html/public/screenshots/{$name}.png";
 
             ScreenShotTool::takeScreenShot($url, $name);
@@ -229,14 +226,14 @@ class ProcessICNFFireData extends Job
             ScreenShotTool::removeScreenShotFile($name);
         }
 
-        if($notifyBurn){
+        if ($notifyBurn) {
             $this->updateIncident();
 
-            if($totalBurned > 0.5){
+            if ($totalBurned > 0.5) {
                 $status = "ℹ Total de área ardida: {$totalBurned} ha https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  ℹ";
 
                 $url = "fogo/{$this->incident->id}/detalhe";
-                $name = "screenshot-{$this->incident->id}"  . rand(0,255);
+                $name = "screenshot-{$this->incident->id}".rand(0, 255);
                 $path = "/var/www/html/public/screenshots/{$name}.png";
 
                 ScreenShotTool::takeScreenShot($url, $name);

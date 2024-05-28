@@ -6,7 +6,6 @@ use App\Models\Incident;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Mockery\Exception;
 use voku\helper\UTF8;
 
 class GetICNFBurnAreaLegacy extends Command
@@ -44,39 +43,38 @@ class GetICNFBurnAreaLegacy extends Command
     {
         ini_set('memory_limit', '-1');
 
-        $urls = array(
+        $urls = [
             'https://github.com/vostpt/ICNF_DATA/raw/main/icnf_2017_raw.csv',
             'https://github.com/vostpt/ICNF_DATA/raw/main/icnf_2018_raw.csv',
             'https://github.com/vostpt/ICNF_DATA/raw/main/icnf_2019_raw.csv',
             'https://github.com/vostpt/ICNF_DATA/raw/main/icnf_2020_raw.csv',
-            'https://github.com/vostpt/ICNF_DATA/raw/main/icnf_2021_raw.csv'
-        );
+            'https://github.com/vostpt/ICNF_DATA/raw/main/icnf_2021_raw.csv',
+        ];
 
-        foreach($urls as $url){
+        foreach ($urls as $url) {
 
-            echo 'Getting ' . $url . PHP_EOL;
+            echo 'Getting '.$url.PHP_EOL;
 
             $csv = file_get_contents($url);
-            $rows = explode("\n",$csv);
-            $data = array();
-            foreach($rows as $row) {
-                $data[] = explode(",",$row);
+            $rows = explode("\n", $csv);
+            $data = [];
+            foreach ($rows as $row) {
+                $data[] = explode(',', $row);
             }
 
-            echo '   Total: ' . count($data) . PHP_EOL;
-
+            echo '   Total: '.count($data).PHP_EOL;
 
             unset($data[0]);
 
             $i = 0;
 
-            foreach ($data as $d){
-                if(!isset($d[14])){
+            foreach ($data as $d) {
+                if (! isset($d[14])) {
                     return;
                 }
 
-                if($i % 1000 === 0){
-                    echo PHP_EOL . '      . ' . $i . PHP_EOL;
+                if ($i % 1000 === 0) {
+                    echo PHP_EOL.'      . '.$i.PHP_EOL;
                 } else {
                     echo '.';
                 }
@@ -85,7 +83,7 @@ class GetICNFBurnAreaLegacy extends Command
 
                 $incident = Incident::where('id', $d[14])->get();
 
-                if(isset($incident[0])){
+                if (isset($incident[0])) {
                     $incident = $incident[0];
 
                     $icnfData = [];
@@ -109,58 +107,58 @@ class GetICNFBurnAreaLegacy extends Command
                         $icnfData['reacendimentos'] = (bool) $d[8];
                     }
 
-                    if (isset($d[9]) && boolval((int)$d[9])) {
-                        $icnfData['queimada'] = boolval((int)$d[9]);
+                    if (isset($d[9]) && boolval((int) $d[9])) {
+                        $icnfData['queimada'] = boolval((int) $d[9]);
                     }
 
-                    if (isset($d[10]) && boolval((int)$d[10])) {
-                        $icnfData['falsoalarme'] = boolval((int)$d[10]);
+                    if (isset($d[10]) && boolval((int) $d[10])) {
+                        $icnfData['falsoalarme'] = boolval((int) $d[10]);
                     }
 
-                    if (isset($d[11]) && boolval((int)$d[11])) {
-                        $icnfData['fogacho'] = boolval((int)$d[11]);
+                    if (isset($d[11]) && boolval((int) $d[11])) {
+                        $icnfData['fogacho'] = boolval((int) $d[11]);
                     }
 
-                    if (isset($d[12]) && boolval((int)$d[12])) {
-                        $icnfData['incendio'] = boolval((int)$d[12]);
+                    if (isset($d[12]) && boolval((int) $d[12])) {
+                        $icnfData['incendio'] = boolval((int) $d[12]);
                     }
 
-                    if (isset($d[13]) && boolval((int)$d[13])) {
-                        $icnfData['agricola'] = boolval((int)$d[13]);
+                    if (isset($d[13]) && boolval((int) $d[13])) {
+                        $icnfData['agricola'] = boolval((int) $d[13]);
                     }
 
-                    if (isset($d[41]) && boolval((int)$d[41])) {
-                        $icnfData['queima'] = boolval((int)$d[41]);
+                    if (isset($d[41]) && boolval((int) $d[41])) {
+                        $icnfData['queima'] = boolval((int) $d[41]);
                     }
 
-                    if (isset($d[21]) && !empty((string)$d[21])) {
+                    if (isset($d[21]) && ! empty((string) $d[21])) {
                         $icnfData['fontealerta'] = (string) $d[21];
                     }
 
-                    if (isset($d[31]) && !empty((string) $d[31])) {
+                    if (isset($d[31]) && ! empty((string) $d[31])) {
                         $icnfData['causa'] = (string) $d[31];
                     }
 
-                    if (isset($d[32]) && !empty((string) $d[32])) {
+                    if (isset($d[32]) && ! empty((string) $d[32])) {
                         $icnfData['tipocausa'] = (string) $d[32];
                     }
 
-                    if (isset($d[44]) && !empty((string) $d[44])) {
+                    if (isset($d[44]) && ! empty((string) $d[44])) {
                         $icnfData['causafamilia'] = (string) $d[44];
                     }
 
                     $kmlUrl = false;
 
-                    if (isset($d[66]) && !empty((string) $d[66])) {
+                    if (isset($d[66]) && ! empty((string) $d[66])) {
                         $kmlUrl = (string) $d[66];
                     }
 
-                    if (isset($d[67]) && !empty((string) $d[67])) {
+                    if (isset($d[67]) && ! empty((string) $d[67])) {
                         $kmlUrl = (string) $d[67];
                     }
 
                     if ($kmlUrl) {
-                        try{
+                        try {
                             $options = [
                                 'headers' => [
                                     'User-Agent' => 'Fogos.pt/3.0',
@@ -173,7 +171,7 @@ class GetICNFBurnAreaLegacy extends Command
                             $kml = $res->getBody()->getContents();
 
                             $incident->kml = utf8_encode($kml);
-                        } catch (\Exception $e){
+                        } catch (\Exception $e) {
                             Log::debug($e->getMessage());
                         }
 
@@ -183,8 +181,7 @@ class GetICNFBurnAreaLegacy extends Command
 
                     $incident->icnf = $icnfData;
                     $incident->save();
-                }
-                else {
+                } else {
                     $point = $this->prepareData($d, true);
                     $incident = new Incident($point);
                     $incident->sentCheckImportant = false;
@@ -192,91 +189,89 @@ class GetICNFBurnAreaLegacy extends Command
                 }
             }
 
-
         }
-/*
-        Array
-        (
-            [0] =>
-                [1] => DISTRITO
-    [2] => TIPO
-    [3] => ANO
-    [4] => AREAPOV
-    [5] => AREAMATO
-    [6] => AREAAGRIC
-    [7] => AREATOTAL
-    [8] => REACENDIMENTOS
-    [9] => QUEIMADA
-    [10] => FALSOALARME
-    [11] => FOGACHO
-    [12] => INCENDIO
-    [13] => AGRICOLA
-    [14] => NCCO
-    [15] => NOMECCO
-    [16] => DATAALERTA
-    [17] => HORAALERTA
-    [18] => LOCAL
-    [19] => CONCELHO
-    [20] => FREGUESIA
-    [21] => FONTEALERTA
-    [22] => INE
-    [23] => X
-    [24] => Y
-    [25] => DIA
-    [26] => MES
-    [27] => HORA
-    [28] => OPERADOR
-    [29] => PERIMETRO
-    [30] => APS
-    [31] => CAUSA
-    [32] => TIPOCAUSA
-    [33] => DHINICIO
-    [34] => DHFIM
-    [35] => DURACAO
-    [36] => HAHORA
-    [37] => DATAEXTINCAO
-    [38] => HORAEXTINCAO
-    [39] => DATA1INTERVENCAO
-    [40] => HORA1INTERVENCAO
-    [41] => QUEIMA
-    [42] => LAT
-    [43] => LON
-    [44] => CAUSAFAMILIA
-    [45] => TEMPERATURA
-    [46] => HUMIDADERELATIVA
-    [47] => VENTOINTENSIDADE
-    [48] => VENTOINTENSIDADE_VETOR
-    [49] => VENTODIRECAO_VETOR
-    [50] => PRECEPITACAO
-    [51] => FFMC
-    [52] => DMC
-    [53] => DC
-    [54] => ISI
-    [55] => BUI
-    [56] => FWI
-    [57] => DSR
-    [58] => THC
-    [59] => MODFARSITE
-    [60] => ALTITUDEMEDIA
-    [61] => DECLIVEMEDIO
-    [62] => HORASEXPOSICAOMEDIA
-    [63] => DENDIDADERV
-    [64] => COSN5VARIEDADE
-    [65] => AREAMANCHAMODFARSITE
-    [66] => AREASFICHEIROS_GNR
-    [67] => AREASFICHEIROS_GTF
-    [68] => FICHEIROIMAGEM_GNR
-    [69] => AREASFICHEIROSHP_GTF
-    [70] => AREASFICHEIROSHPXML_GTF
-    [71] => AREASFICHEIRODBF_GTF
-    [72] => AREASFICHEIROPRJ_GTF
-    [73] => AREASFICHEIROSBN_GTF
-    [74] => AREASFICHEIROSBX_GTF
-    [75] => AREASFICHEIROSHX_GTF
-    [76] => AREASFICHEIROZIP_SAA
-)
-*/
-
+        /*
+                Array
+                (
+                    [0] =>
+                        [1] => DISTRITO
+            [2] => TIPO
+            [3] => ANO
+            [4] => AREAPOV
+            [5] => AREAMATO
+            [6] => AREAAGRIC
+            [7] => AREATOTAL
+            [8] => REACENDIMENTOS
+            [9] => QUEIMADA
+            [10] => FALSOALARME
+            [11] => FOGACHO
+            [12] => INCENDIO
+            [13] => AGRICOLA
+            [14] => NCCO
+            [15] => NOMECCO
+            [16] => DATAALERTA
+            [17] => HORAALERTA
+            [18] => LOCAL
+            [19] => CONCELHO
+            [20] => FREGUESIA
+            [21] => FONTEALERTA
+            [22] => INE
+            [23] => X
+            [24] => Y
+            [25] => DIA
+            [26] => MES
+            [27] => HORA
+            [28] => OPERADOR
+            [29] => PERIMETRO
+            [30] => APS
+            [31] => CAUSA
+            [32] => TIPOCAUSA
+            [33] => DHINICIO
+            [34] => DHFIM
+            [35] => DURACAO
+            [36] => HAHORA
+            [37] => DATAEXTINCAO
+            [38] => HORAEXTINCAO
+            [39] => DATA1INTERVENCAO
+            [40] => HORA1INTERVENCAO
+            [41] => QUEIMA
+            [42] => LAT
+            [43] => LON
+            [44] => CAUSAFAMILIA
+            [45] => TEMPERATURA
+            [46] => HUMIDADERELATIVA
+            [47] => VENTOINTENSIDADE
+            [48] => VENTOINTENSIDADE_VETOR
+            [49] => VENTODIRECAO_VETOR
+            [50] => PRECEPITACAO
+            [51] => FFMC
+            [52] => DMC
+            [53] => DC
+            [54] => ISI
+            [55] => BUI
+            [56] => FWI
+            [57] => DSR
+            [58] => THC
+            [59] => MODFARSITE
+            [60] => ALTITUDEMEDIA
+            [61] => DECLIVEMEDIO
+            [62] => HORASEXPOSICAOMEDIA
+            [63] => DENDIDADERV
+            [64] => COSN5VARIEDADE
+            [65] => AREAMANCHAMODFARSITE
+            [66] => AREASFICHEIROS_GNR
+            [67] => AREASFICHEIROS_GTF
+            [68] => FICHEIROIMAGEM_GNR
+            [69] => AREASFICHEIROSHP_GTF
+            [70] => AREASFICHEIROSHPXML_GTF
+            [71] => AREASFICHEIRODBF_GTF
+            [72] => AREASFICHEIROPRJ_GTF
+            [73] => AREASFICHEIROSBN_GTF
+            [74] => AREASFICHEIROSBX_GTF
+            [75] => AREASFICHEIROSHX_GTF
+            [76] => AREASFICHEIROZIP_SAA
+        )
+        */
 
     }
 
@@ -293,7 +288,7 @@ class GetICNFBurnAreaLegacy extends Command
         $isFire = true;
         $isTransportFire = false;
         $isUrbanFire = false;
-        $isOtherFire =false;
+        $isOtherFire = false;
         $isOtherIncident = false;
 
         $isFMA = false;
@@ -301,7 +296,7 @@ class GetICNFBurnAreaLegacy extends Command
         $point = [
             'id' => $data[14],
             'coords' => true,
-            'dateTime' => Carbon::parse($data[37] . ' ' . $data[38], 'Europe/Lisbon'),
+            'dateTime' => Carbon::parse($data[37].' '.$data[38], 'Europe/Lisbon'),
             'date' => $data[37],
             'hour' => $data[38],
             'location' => $distrito.', '.$concelho.', '.$freguesia,
@@ -323,10 +318,10 @@ class GetICNFBurnAreaLegacy extends Command
             'isTransporteFire' => $isTransportFire,
             'isOtherFire' => $isOtherFire,
             'isOtherIncident' => $isOtherIncident,
-            'isFMA' => $isFMA
+            'isFMA' => $isFMA,
         ];
 
-        if($create){
+        if ($create) {
             $data['important'] = false;
             $data['heliFight'] = 0;
             $data['heliCoord'] = 0;
@@ -355,58 +350,58 @@ class GetICNFBurnAreaLegacy extends Command
             $icnfData['reacendimentos'] = (bool) $data[8];
         }
 
-        if (isset($data[9]) && boolval((int)$data[9])) {
-            $icnfData['queimada'] = boolval((int)$data[9]);
+        if (isset($data[9]) && boolval((int) $data[9])) {
+            $icnfData['queimada'] = boolval((int) $data[9]);
         }
 
-        if (isset($data[10]) && boolval((int)$data[10])) {
-            $icnfData['falsoalarme'] = boolval((int)$data[10]);
+        if (isset($data[10]) && boolval((int) $data[10])) {
+            $icnfData['falsoalarme'] = boolval((int) $data[10]);
         }
 
-        if (isset($data[11]) && boolval((int)$data[11])) {
-            $icnfData['fogacho'] = boolval((int)$data[11]);
+        if (isset($data[11]) && boolval((int) $data[11])) {
+            $icnfData['fogacho'] = boolval((int) $data[11]);
         }
 
-        if (isset($data[12]) && boolval((int)$data[12])) {
-            $icnfData['incendio'] = boolval((int)$data[12]);
+        if (isset($data[12]) && boolval((int) $data[12])) {
+            $icnfData['incendio'] = boolval((int) $data[12]);
         }
 
-        if (isset($data[13]) && boolval((int)$data[13])) {
-            $icnfData['agricola'] = boolval((int)$data[13]);
+        if (isset($data[13]) && boolval((int) $data[13])) {
+            $icnfData['agricola'] = boolval((int) $data[13]);
         }
 
-        if (isset($data[41]) && boolval((int)$data[41])) {
-            $icnfData['queima'] = boolval((int)$data[41]);
+        if (isset($data[41]) && boolval((int) $data[41])) {
+            $icnfData['queima'] = boolval((int) $data[41]);
         }
 
-        if (isset($data[21]) && !empty((string)$data[21])) {
+        if (isset($data[21]) && ! empty((string) $data[21])) {
             $icnfData['fontealerta'] = (string) $data[21];
         }
 
-        if (isset($data[31]) && !empty((string) $data[31])) {
+        if (isset($data[31]) && ! empty((string) $data[31])) {
             $icnfData['causa'] = (string) $data[31];
         }
 
-        if (isset($data[32]) && !empty((string) $data[32])) {
+        if (isset($data[32]) && ! empty((string) $data[32])) {
             $icnfData['tipocausa'] = (string) $data[32];
         }
 
-        if (isset($data[44]) && !empty((string) $data[44])) {
+        if (isset($data[44]) && ! empty((string) $data[44])) {
             $icnfData['causafamilia'] = (string) $data[44];
         }
 
         $kmlUrl = false;
 
-        if (isset($data[66]) && !empty((string) $data[66])) {
+        if (isset($data[66]) && ! empty((string) $data[66])) {
             $kmlUrl = (string) $data[66];
         }
 
-        if (isset($data[67]) && !empty((string) $data[67])) {
+        if (isset($data[67]) && ! empty((string) $data[67])) {
             $kmlUrl = (string) $data[67];
         }
 
         if ($kmlUrl) {
-            try{
+            try {
                 $options = [
                     'headers' => [
                         'User-Agent' => 'Fogos.pt/3.0',
@@ -428,8 +423,6 @@ class GetICNFBurnAreaLegacy extends Command
         $point['detailLocation'] = (string) $data[18];
 
         $point['icnf'] = $icnfData;
-
-
 
         return $point;
     }

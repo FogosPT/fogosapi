@@ -6,10 +6,10 @@ class ScreenShotTool
 {
     public static function takeScreenShot($url, $name, $width = false, $height = false)
     {
-        if (!$width) {
+        if (! $width) {
             $width = env('SCREENSHOT_WIDTH');
         }
-        if (!$height) {
+        if (! $height) {
             $height = env('SCREENSHOT_HEIGHT');
         }
 
@@ -20,7 +20,7 @@ class ScreenShotTool
 
     public static function removeScreenShotFile($name)
     {
-        if(file_exists("/var/www/html/public/screenshots/{$name}.png")){
+        if (file_exists("/var/www/html/public/screenshots/{$name}.png")) {
             unlink("/var/www/html/public/screenshots/{$name}.png");
         }
     }

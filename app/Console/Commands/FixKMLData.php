@@ -47,8 +47,8 @@ class FixKMLData extends Command
             'verify' => false,
         ];
 
-        foreach($incidents as $incident){
-            if(filter_var($incident->kml, FILTER_VALIDATE_URL)){
+        foreach ($incidents as $incident) {
+            if (filter_var($incident->kml, FILTER_VALIDATE_URL)) {
                 $client = new \GuzzleHttp\Client();
                 $res = $client->request('GET', $incident->kml, $options);
                 $kml = $res->getBody()->getContents();

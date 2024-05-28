@@ -57,13 +57,13 @@ class SaveIncidentStatusHistory extends Job
                 }
             }*/
 
-            if($this->incident->isFire){
+            if ($this->incident->isFire) {
                 if ($this->incident->status === 'Em Curso') {
-                    if ($last['status'] === 'Conclusão' || $last['status'] === 'Em Resolução' || $last['status'] === 'Vigilância'){
+                    if ($last['status'] === 'Conclusão' || $last['status'] === 'Em Resolução' || $last['status'] === 'Vigilância') {
                         $hashTag = HashTagTool::getHashTag($this->incident->concelho);
 
                         $url = "fogo/{$this->incident->id}/detalhe";
-                        $name = "screenshot-{$this->incident->id}"  . rand(0,255);
+                        $name = "screenshot-{$this->incident->id}".rand(0, 255);
                         $path = "/var/www/html/public/screenshots/{$name}.png";
 
                         ScreenShotTool::takeScreenShot($url, $name);
@@ -89,7 +89,7 @@ class SaveIncidentStatusHistory extends Job
                         $hashTag = HashTagTool::getHashTag($this->incident->concelho);
 
                         $url = "fogo/{$this->incident->id}/detalhe";
-                        $name = "screenshot-{$this->incident->id}"  . rand(0,255);
+                        $name = "screenshot-{$this->incident->id}".rand(0, 255);
                         $path = "/var/www/html/public/screenshots/{$name}.png";
 
                         ScreenShotTool::takeScreenShot($url, $name);

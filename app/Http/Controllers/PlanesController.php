@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
 use App\Models\Planes;
@@ -19,7 +18,7 @@ class PlanesController extends Controller
 
         return new JsonResponse([
             'success' => true,
-            'data' =>$plane,
+            'data' => $plane,
         ]);
     }
 }

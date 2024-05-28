@@ -55,7 +55,7 @@ class HourlySummary extends Job
             $statusf = "{$date} - {$total} {$incendio} em curso. Meios Mobilizados:%0A👩‍ {$man}%0A🚒 {$cars}%0A🚁 {$areal} %0A";
         }
 
-        if($incidentsNotActive->count() === 0){
+        if ($incidentsNotActive->count() === 0) {
             $status .= ' https://fogos.pt #FogosPT #Status';
             $statusf .= ' https://fogos.pt #FogosPT #Status';
         } else {
@@ -76,7 +76,7 @@ class HourlySummary extends Job
         }
 
         $url = 'estatisticas?phantom=1';
-        $name = 'stats' . rand(0,255);
+        $name = 'stats'.rand(0, 255);
         $path = "/var/www/html/public/screenshots/{$name}.png";
         $urlImage = "https://api-dev.fogos.pt/screenshots/{$name}.png";
 

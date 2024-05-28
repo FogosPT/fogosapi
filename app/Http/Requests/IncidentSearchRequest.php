@@ -8,8 +8,6 @@ class IncidentSearchRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     protected function authorize(): bool
     {
@@ -18,8 +16,6 @@ class IncidentSearchRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array
      */
     protected function rules(): array
     {
@@ -29,7 +25,7 @@ class IncidentSearchRequest extends FormRequest
             'day' => 'date_format:Y-m-d',
             'before' => 'date_format:Y-m-d',
             'after' => 'date_format:Y-m-d',
-            'extend' => 'boolean'
+            'extend' => 'boolean',
         ];
     }
 }

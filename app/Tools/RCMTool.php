@@ -1,8 +1,6 @@
 <?php
 
-
 namespace App\Tools;
-
 
 class RCMTool
 {
@@ -296,7 +294,7 @@ class RCMTool
     {
         $geoJson = self::getGeoJson();
 
-        foreach($geoJson->features as $feature){
+        foreach ($geoJson->features as $feature) {
             $dico = $feature->properties->DICO;
             $rcm = $dicos[$dico];
             $feature->properties->data = $rcm['data'];

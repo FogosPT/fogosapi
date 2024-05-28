@@ -19,7 +19,7 @@ trait IncidentObserver
 
         static::created(function ($incident) {
 
-            if($incident->dateTime->year >= 2022 ){
+            if ($incident->dateTime->year >= 2022) {
                 dispatch(new SaveIncidentHistory($incident));
                 dispatch(new SaveIncidentStatusHistory($incident));
 
@@ -30,7 +30,7 @@ trait IncidentObserver
 
                 dispatch(new HandleNewIncidentEmergenciasSocialMedia($incident));
 
-                if ( $incident->naturezaCode === '2409' ) {
+                if ($incident->naturezaCode === '2409') {
                     DiscordTool::postAero("🚨 Novo acidente aereo em {$incident->location} 🚨");
                 }
             }
@@ -39,17 +39,17 @@ trait IncidentObserver
             $hlDico2 = explode(',', env('HL_PROJECT_TELEGRAM_CHANNEL_2_DICOS'));
             $hlDico3 = explode(',', env('HL_PROJECT_TELEGRAM_CHANNEL_3_DICOS'));
 
-            if(in_array($incident->dico, $hlDico1)){
+            if (in_array($incident->dico, $hlDico1)) {
                 dispatch(new HandleHJProject($incident, env('HL_PROJECT_TELEGRAM_CHANNEL_1')));
-            } elseif (in_array($incident->dico, $hlDico2)){
+            } elseif (in_array($incident->dico, $hlDico2)) {
                 dispatch(new HandleHJProject($incident, env('HL_PROJECT_TELEGRAM_CHANNEL_2')));
-            } elseif (in_array($incident->dico, $hlDico3)){
+            } elseif (in_array($incident->dico, $hlDico3)) {
                 dispatch(new HandleHJProject($incident, env('HL_PROJECT_TELEGRAM_CHANNEL_3')));
             }
         });
 
         static::updated(function ($incident) {
-            if($incident->dateTime->year >= 2022 ) {
+            if ($incident->dateTime->year >= 2022) {
                 //Log::info("Incident updated Event Fire observer: ".$incident);
                 dispatch(new SaveIncidentStatusHistory($incident));
                 dispatch(new SaveIncidentHistory($incident));

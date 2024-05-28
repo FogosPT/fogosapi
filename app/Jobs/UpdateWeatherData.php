@@ -25,7 +25,7 @@ class UpdateWeatherData extends Job
      */
     public function handle()
     {
-        $url = "https://api.ipma.pt/open-data/observation/meteorology/stations/observations.json";
+        $url = 'https://api.ipma.pt/open-data/observation/meteorology/stations/observations.json';
 
         $options = [
             'headers' => [
@@ -34,29 +34,29 @@ class UpdateWeatherData extends Job
             'verify' => false,
         ];
 
-        try{
+        try {
             $client = new \GuzzleHttp\Client();
             $res = $client->request('GET', $url, $options);
 
             $data = $res->getBody()->getContents();
-        }
-        catch(\GuzzleHttp\Exception\RequestException $e) {
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
             Log::error('Error occurred in request.', ['url' => $url, 'statusCode' => $e->getCode(), 'message' => $e->getMessage()]);
+
             return;
         }
 
         $data = json_decode($data);
 
-        foreach($data as $date => $stations){
+        foreach ($data as $date => $stations) {
             $ddate = Carbon::parse($date);
-            foreach($stations as $stationId => $d){
+            foreach ($stations as $stationId => $d) {
 
-                if($d){
+                if ($d) {
                     $weatherData = WeatherData::where('stationId', $stationId)
                         ->where('date', $ddate)
                         ->get();
 
-                    if(!isset($weatherData[0])){
+                    if (! isset($weatherData[0])) {
                         $weatherData = new WeatherData();
 
                         $weatherData->intensidadeVentoKM = $d->intensidadeVentoKM;

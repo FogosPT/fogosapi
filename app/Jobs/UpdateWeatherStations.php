@@ -24,7 +24,7 @@ class UpdateWeatherStations extends Job
      */
     public function handle()
     {
-        $url = "https://api.ipma.pt/open-data/observation/meteorology/stations/stations.json";
+        $url = 'https://api.ipma.pt/open-data/observation/meteorology/stations/stations.json';
 
         $options = [
             'headers' => [
@@ -33,38 +33,38 @@ class UpdateWeatherStations extends Job
             'verify' => false,
         ];
 
-        try{
+        try {
             $client = new \GuzzleHttp\Client();
             $res = $client->request('GET', $url, $options);
 
             $data = $res->getBody()->getContents();
-        }
-        catch(\GuzzleHttp\Exception\RequestException $e) {
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
             Log::error('Error occurred in request.', ['url' => $url, 'statusCode' => $e->getCode(), 'message' => $e->getMessage()]);
+
             return;
         }
 
         $data = json_decode($data);
 
-        foreach($data as $d){
-            $id = (int)$d->properties->idEstacao;
+        foreach ($data as $d) {
+            $id = (int) $d->properties->idEstacao;
 
             $station = WeatherStation::where('id', $id)->get();
 
-            if(isset($station[0])){
+            if (isset($station[0])) {
                 $station = $station[0];
             } else {
                 $station = new WeatherStation();
-                $station->id = (int)$id;
+                $station->id = (int) $id;
             }
 
-            $station->type = "point";
+            $station->type = 'point';
             $station->location = $d->properties->localEstacao;
             $station->coordinates = $d->geometry->coordinates;
 
-            if($station->coordinates[1] < 34){
+            if ($station->coordinates[1] < 34) {
                 $station->place = 'Madeira';
-            } elseif ($station->coordinates[0] < -20 && $station->coordinates[1] > 34){
+            } elseif ($station->coordinates[0] < -20 && $station->coordinates[1] > 34) {
                 $station->place = 'Açores';
             } else {
                 $station->place = 'Portugal';

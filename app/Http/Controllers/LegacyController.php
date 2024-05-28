@@ -29,20 +29,20 @@ class LegacyController extends Controller
         $concelho = $request->get('concelho');
         $distrito = $request->get('distrito');
 
-        $incidents = Incident::isActive()->isFire()->when($concelho, function($query, $concelho){
+        $incidents = Incident::isActive()->isFire()->when($concelho, function ($query, $concelho) {
             return $query->where('concelho', $concelho);
-        })->when($distrito, function($query, $distrito){
+        })->when($distrito, function ($query, $distrito) {
             return $query->where('district', $distrito);
         })->get();
 
-        if(env('TROLL_MODE')){
+        if (env('TROLL_MODE')) {
             $ua = $request->userAgent();
             $ref = $request->headers->get('referer');
 
             $allowedUas = [
                 env('UA1'),
                 env('UA2'),
-                env('UA3')
+                env('UA3'),
             ];
 
             $allowedRefs = [
@@ -51,16 +51,16 @@ class LegacyController extends Controller
                 'https://beta.fogos.pt/',
                 'https://emergencias.pt/',
                 'https://www.emergencias.pt/',
-                'https://sgmai.maps.arcgis.com/apps/dashboards/fc641a97229142b8a80f17af034d62a7'
+                'https://sgmai.maps.arcgis.com/apps/dashboards/fc641a97229142b8a80f17af034d62a7',
             ];
 
-            if(!in_array($ua, $allowedUas) || !in_array($ref,$allowedRefs)){
+            if (! in_array($ua, $allowedUas) || ! in_array($ref, $allowedRefs)) {
                 $troll = new Incident();
                 $troll->id = 123123123123;
                 $troll->coords = 1;
-                $troll->dateTime = "2023-05-17T06:38:00.000000Z";
+                $troll->dateTime = '2023-05-17T06:38:00.000000Z';
                 $troll->date = '17-05-2023';
-                $troll->hour= '07:38';
+                $troll->hour = '07:38';
                 $troll->location = 'Uso a API do Fogos.pt 🥁';
                 $troll->aerial = 100;
                 $troll->meios_aquaticos = 100;
@@ -77,23 +77,21 @@ class LegacyController extends Controller
                 $troll->especieName = 'Utilização indevida';
                 $troll->familiaName = 'Utilização indevida';
                 $troll->statusCode = 5;
-                $troll->statusColor = "B81E1F";
+                $troll->statusColor = 'B81E1F';
                 $troll->status = 'Em Curso';
                 $troll->important = false;
                 $troll->localidade = 'Uso a API do Fogos.pt 🥁';
                 $troll->active = true;
                 $troll->sadoId = 123123123;
                 $troll->sharepointId = 123123123;
-                $troll->extra = $ua . ' => ' . $ref;
+                $troll->extra = $ua.' => '.$ref;
                 $troll->disappear = false;
                 $troll->created = '2023-05-18T07:58:09.600000Z';
                 $troll->updated = '2023-05-18T07:58:09.600000Z';
 
-
                 $incidents[] = $troll;
             }
         }
-
 
         $response = new JsonResponse([
             'success' => true,
@@ -179,7 +177,7 @@ class LegacyController extends Controller
         abort(404);
     }
 
-    public function warnings() : JsonResponse
+    public function warnings(): JsonResponse
     {
         $warnings = Warning::orderBy('created', 'desc')
             ->limit(50)
@@ -233,7 +231,7 @@ class LegacyController extends Controller
         $timestampLast = strtotime(date('Y-m-d 00:00'));
 
         $return = [];
-        for ($i = 0; $i <= 8; ++$i) {
+        for ($i = 0; $i <= 8; $i++) {
             $start = strtotime("-{$i} days", $timestampLast);
             $date_start = Carbon::parse($start)->startOfDay();
             $date_end = Carbon::parse($start)->endOfDay();
@@ -241,7 +239,7 @@ class LegacyController extends Controller
             $incidents = Incident::where('isFire', true)->where([['dateTime', '>=', $date_start], ['dateTime', '<=', $date_end]]);
 
             $_r = [
-                'label' => $date_start->format('Y-m-d', ),
+                'label' => $date_start->format('Y-m-d'),
                 'total' => $incidents->count(),
             ];
             $return[] = $_r;
@@ -287,7 +285,6 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
-
     public function firesDanger(Request $request)
     {
         $id = $request->get('id');
@@ -299,7 +296,6 @@ class LegacyController extends Controller
                 ->limit(1)
                 ->orderBy('created', 'desc')
                 ->get();
-
 
             if (isset($rcm[0])) {
                 $rcm = $rcm[0];
@@ -338,7 +334,7 @@ class LegacyController extends Controller
                 'label' => $incident['date'].' '.$incident['hour'],
                 'status' => 'Início',
                 'statusCode' => 99,
-                'created' =>  strtotime($incident['dateTime']),
+                'created' => strtotime($incident['dateTime']),
             ];
 
             $data = HistoryStatusResource::collection($statusHistory)->toArray($request);
@@ -347,7 +343,7 @@ class LegacyController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $data
+                'data' => $data,
             ]);
         }
         abort(404);
@@ -418,10 +414,10 @@ class LegacyController extends Controller
         $total = $incidents->count();
         $distritos = [];
         foreach ($incidents as $r) {
-            if (!isset($distritos[$r['district']])) {
+            if (! isset($distritos[$r['district']])) {
                 $distritos[$r['district']] = 1;
             } else {
-                ++$distritos[$r['district']];
+                $distritos[$r['district']]++;
             }
         }
 
@@ -443,7 +439,7 @@ class LegacyController extends Controller
         $total = 0;
 
         foreach ($incidents as $r) {
-            $total += (float)$r['icnf']['burnArea']['total'];
+            $total += (float) $r['icnf']['burnArea']['total'];
         }
 
         return $total;
@@ -456,18 +452,17 @@ class LegacyController extends Controller
             ->where([['dateTime', '>=', $start], ['dateTime', '<=', $end]])
             ->get();
 
-
         $motives = [];
 
         foreach ($incidents as $r) {
             $key = false;
-            if(isset($r['icnf']['tipocausa']) && isset($r['icnf']['causafamilia'])){
-                $key = $r['icnf']['tipocausa'] . ' ' . $r['icnf']['causafamilia'];
+            if (isset($r['icnf']['tipocausa']) && isset($r['icnf']['causafamilia'])) {
+                $key = $r['icnf']['tipocausa'].' '.$r['icnf']['causafamilia'];
             }
 
-            if($key && isset($motives[$key])){
+            if ($key && isset($motives[$key])) {
                 $motives[$key]++;
-            } elseif ($key){
+            } elseif ($key) {
                 $motives[$key] = 1;
             }
         }
@@ -573,7 +568,7 @@ class LegacyController extends Controller
     {
         $timestampLast = Carbon::today();
         $timestamp = Carbon::today()->startOfMonth();
-        $data = $this->getForMotive($timestamp,$timestampLast);
+        $data = $this->getForMotive($timestamp, $timestampLast);
 
         $response = [
             'success' => true,
@@ -656,14 +651,14 @@ class LegacyController extends Controller
         } else {
             $distritos = [];
             foreach ($active as $r) {
-                if (!isset($distritos[$r['district']])) {
+                if (! isset($distritos[$r['district']])) {
                     $distritos[$r['district']] = [
                         'm' => $r['aerial'],
                         't' => 1,
                     ];
                 } else {
                     $distritos[$r['district']]['m'] += $r['aerial'];
-                    ++$distritos[$r['district']]['t'];
+                    $distritos[$r['district']]['t']++;
                 }
             }
             $status = "Distrito - Meios aéreos / incêndios ativos:\r\n";

@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Models\Incident;
-use Illuminate\Support\Facades\Log;
 use PhpImap\Mailbox;
 use voku\helper\UTF8;
 
@@ -36,19 +35,20 @@ class HandleANEPCPositEmail extends Job
 
         try {
             $mailsIds = $mailbox->searchMailbox('UNSEEN');
-        } catch(PhpImap\Exceptions\ConnectionException $ex) {
-            echo "IMAP connection failed: " . implode(",", $ex->getErrors('all'));
+        } catch (PhpImap\Exceptions\ConnectionException $ex) {
+            echo 'IMAP connection failed: '.implode(',', $ex->getErrors('all'));
+
             return;
         }
 
-        if(!$mailsIds) {
+        if (! $mailsIds) {
             return;
         }
 
-        foreach($mailsIds as $mailId){
+        foreach ($mailsIds as $mailId) {
             $mail = $mailbox->getMail($mailId);
 
-            if($mail->fromAddress === env('MAIL_ANEPC_FROM')){
+            if ($mail->fromAddress === env('MAIL_ANEPC_FROM')) {
                 $content = $mail->textHtml;
 
                 $dom = new \DOMDocument();
@@ -59,27 +59,27 @@ class HandleANEPCPositEmail extends Job
 
                 $rows = $tables->item(0)->getElementsByTagName('tr');
 
-                $fires = array();
+                $fires = [];
 
                 foreach ($rows as $row) {
                     $cols = $row->getElementsByTagName('td');
 
                     $j = 0;
                     $fire = [];
-                    foreach($cols as $col){
+                    foreach ($cols as $col) {
 
-                        switch ($j){
+                        switch ($j) {
                             case 0:
                                 $fire['id'] = $col->nodeValue;
                                 break;
                             case 11:
-                                $fire['heliFight'] = (int)$col->nodeValue;
+                                $fire['heliFight'] = (int) $col->nodeValue;
                                 break;
                             case 12:
-                                $fire['planeFight'] = (int)$col->nodeValue;
+                                $fire['planeFight'] = (int) $col->nodeValue;
                                 break;
                             case 13:
-                                $fire['heliCoord'] = (int)$col->nodeValue;
+                                $fire['heliCoord'] = (int) $col->nodeValue;
                                 break;
                             case 15:
                                 $fire['cos'] = UTF8::fix_utf8($col->nodeValue);
@@ -95,7 +95,7 @@ class HandleANEPCPositEmail extends Job
                 }
             }
 
-            foreach($fires as $fire){
+            foreach ($fires as $fire) {
                 $incident = Incident::where('id', $fire['id'])->get()[0];
 
                 $incident->pco = $fire['pco'];

@@ -47,6 +47,6 @@ class UpdateExtraProperty extends Command
         $incident->extra = $status;
         $incident->save();
 
-        NotificationTool::send($status,$incident->location,$incident->id);
+        NotificationTool::send($status, $incident->location, $incident->id);
     }
 }

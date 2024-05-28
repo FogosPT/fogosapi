@@ -7,10 +7,10 @@ use App\Tools\DiscordTool;
 use App\Tools\FacebookTool;
 use App\Tools\NotificationTool;
 use App\Tools\TwitterTool;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class ProcessMadeiraWarnings extends Job implements ShouldQueue, ShouldBeUnique
+class ProcessMadeiraWarnings extends Job implements ShouldBeUnique, ShouldQueue
 {
     /**
      * Create a new job instance.
@@ -42,7 +42,7 @@ class ProcessMadeiraWarnings extends Job implements ShouldQueue, ShouldBeUnique
 
             $exists = WarningMadeira::where('id', $id)->get();
 
-            if (!isset($exists[0])) {
+            if (! isset($exists[0])) {
                 if (preg_match('/fogo|incêndio|incendio/i', $d['title']) || preg_match('/fogo|incêndio|incendio/i', $d['description'])) {
                     $d['id'] = $id;
 

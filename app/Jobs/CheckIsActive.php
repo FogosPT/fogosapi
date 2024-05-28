@@ -9,12 +9,13 @@ use App\Models\Incident;
 class CheckIsActive extends Job
 {
     public $data;
+
     public $activeIds;
 
     /**
      * Create a new job instance.
      *
-     * @param mixed $data
+     * @param  mixed  $data
      */
     public function __construct($data)
     {

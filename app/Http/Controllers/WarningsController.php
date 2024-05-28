@@ -3,19 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Warning;
-use App\Models\WeatherStation;
 use App\Tools\FacebookTool;
 use App\Tools\NotificationTool;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\RequestException;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Redis;
-use Laravel\Lumen\Routing\Controller;
 use Illuminate\Http\Request;
-
+use Laravel\Lumen\Routing\Controller;
 
 class WarningsController extends Controller
 {
@@ -23,7 +16,7 @@ class WarningsController extends Controller
     {
         $key = $request->header('key');
 
-        if(env('API_WRITE_KEY') !== $key){
+        if (env('API_WRITE_KEY') !== $key) {
             abort(401);
         }
 
@@ -35,11 +28,11 @@ class WarningsController extends Controller
 
         NotificationTool::sendWarningNotification($status);
 
-        $text = "ALERTA: \r\n" . $status;
+        $text = "ALERTA: \r\n".$status;
         TwitterTool::tweet($text);
         TelegramTool::publish($text);
 
-        $message = "ALERTA: %0A" . $status;
+        $message = 'ALERTA: %0A'.$status;
         FacebookTool::publish($message);
     }
 }

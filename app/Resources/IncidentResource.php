@@ -57,7 +57,7 @@ class IncidentResource extends JsonResource
 
         ];
 
-        if($request->get('extend')){
+        if ($request->get('extend')) {
             $ob['history'] = $this->history;
             $ob['statusHistory'] = $this->statusHistory;
         }

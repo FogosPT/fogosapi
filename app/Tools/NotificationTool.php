@@ -3,14 +3,13 @@
 namespace App\Tools;
 
 use App\Models\Incident;
-use App\Models\IncidentStatusHistory;
 use Illuminate\Support\Facades\Log;
 
 class NotificationTool
 {
     private static function sendRequest($topic, $status, $location, $id)
     {
-        if (!env('NOTIFICATIONS_ENABLE')) {
+        if (! env('NOTIFICATIONS_ENABLE')) {
             return;
         }
 
@@ -31,18 +30,18 @@ class NotificationTool
                 ],
                 'data' => [
                     'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                    'fireId' => $id
+                    'fireId' => $id,
                 ],
                 'android' => [
-                    'priority' => 'high'
+                    'priority' => 'high',
                 ],
                 'apns' => [
                     [
                         'headers' => [
-                            'apns-priority' => "5"
-                        ]
-                    ]
-                ]
+                            'apns-priority' => '5',
+                        ],
+                    ],
+                ],
             ],
         ];
 
@@ -53,7 +52,7 @@ class NotificationTool
     private static function sendCustomTitleRequest($topic, $status, $title, $forceEnable = false)
     {
         Log::debug();
-        if (!env('NOTIFICATIONS_ENABLE')) {
+        if (! env('NOTIFICATIONS_ENABLE')) {
             return;
         }
 
@@ -73,15 +72,15 @@ class NotificationTool
                     'icon' => 'https://fogos.pt/img/logo.svg',
                 ],
                 'android' => [
-                    'priority' => 'high'
+                    'priority' => 'high',
                 ],
                 'apns' => [
                     [
                         'headers' => [
-                            'apns-priority' => "5"
-                        ]
-                    ]
-                ]
+                            'apns-priority' => '5',
+                        ],
+                    ],
+                ],
             ],
 
         ];
@@ -133,7 +132,7 @@ class NotificationTool
 
     public static function send($status, $location, $id, $topic = false)
     {
-        if (!$topic) {
+        if (! $topic) {
             $topic = self::buildTopic($id, true);
         }
 
@@ -168,11 +167,10 @@ class NotificationTool
                 ],
                 'data' => [
                     'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                    'fireId' => $incidentId
-                ]
+                    'fireId' => $incidentId,
+                ],
             ],
         ];
-
 
         $client = new \GuzzleHttp\Client();
         $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
@@ -199,7 +197,6 @@ class NotificationTool
                 ],
             ],
         ];
-
 
         $client = new \GuzzleHttp\Client();
         $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
@@ -291,7 +288,7 @@ class NotificationTool
     {
         $topic = "'mobile-android-planes' in topics || 'mobile-ios-planes' in topics";
         $title = 'Fogos.pt - Meio Aéreo';
-        self::sendCustomTitleRequest($topic, $status, $title,true);
+        self::sendCustomTitleRequest($topic, $status, $title, true);
     }
 
     public static function sendWarningNotification($status)

@@ -65,7 +65,6 @@ return [
             'level' => 'debug',
         ],
 
-
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/lumen.log'),

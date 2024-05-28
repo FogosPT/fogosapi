@@ -25,9 +25,8 @@ class Authenticate
     /**
      * Handle an incoming request.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param null|string              $guard
-     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  null|string  $guard
      * @return mixed
      */
     public function handle($request, Closure $next, $guard = null)

@@ -7,7 +7,6 @@ use App\Jobs\DailySummary;
 use App\Jobs\HandleANEPCImportantData;
 use App\Jobs\HandleANEPCPositEmail;
 use App\Jobs\HandleNewIncidentSocialMedia;
-use App\Jobs\ProcessANPCAllData;
 use App\Jobs\ProcessANPCAllDataV2;
 use App\Jobs\ProcessICNFFireData;
 use App\Jobs\ProcessICNFPDF;
@@ -23,14 +22,11 @@ use App\Tools\BlueskyTool;
 use App\Tools\TwitterTool;
 use App\Tools\TwitterToolV2;
 use Carbon\Carbon;
+use HeadlessChromium\Browser;
+use HeadlessChromium\Communication\Connection;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use PhpImap\Imap;
-use PhpImap\Mailbox;
 use Spatie\Browsershot\Browsershot;
-use HeadlessChromium\Communication\Connection;
-use HeadlessChromium\Browser;
-use voku\helper\UTF8;
 
 class TestStuff extends Command
 {
@@ -180,43 +176,43 @@ class TestStuff extends Command
 
 */
 
-       // $text = 'Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,';
+        // $text = 'Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,Test API, Test API,';
 
         //TwitterToolV2::tweet($text, false, false,false, true);
-       // BlueskyTool::publish($text);
+        // BlueskyTool::publish($text);
 
-//        $url = 'https://apiprociv.geomai.mai.gov.pt/api/v1/ocorrencias/abertas';
-//
-//
-//        $options = [
-//            'headers' => [
-//                'User-Agent' => 'Fogos.pt/3.0',
-//                'Authorization' => 'Basic ' . base64_encode(env('ANEPC_API_USERNAME') . ':' .env('ANEPC_API_PASSWORD'))
-//            ],
-//
-//        ];
-//
-//        if(env('PROXY_ENABLE')){
-//            $options['proxy'] = env('PROXY_URL');
-//        }
-//
-//        $client = new \GuzzleHttp\Client();
-//        $res = $client->request('GET', $url, $options);
-//
-//        $data = json_decode($res->getBody(), true);
-//
-//        print_r($data);
-//
-//
-//        dispatch(new ProcessANPCAllDataV2());
+        //        $url = 'https://apiprociv.geomai.mai.gov.pt/api/v1/ocorrencias/abertas';
+        //
+        //
+        //        $options = [
+        //            'headers' => [
+        //                'User-Agent' => 'Fogos.pt/3.0',
+        //                'Authorization' => 'Basic ' . base64_encode(env('ANEPC_API_USERNAME') . ':' .env('ANEPC_API_PASSWORD'))
+        //            ],
+        //
+        //        ];
+        //
+        //        if(env('PROXY_ENABLE')){
+        //            $options['proxy'] = env('PROXY_URL');
+        //        }
+        //
+        //        $client = new \GuzzleHttp\Client();
+        //        $res = $client->request('GET', $url, $options);
+        //
+        //        $data = json_decode($res->getBody(), true);
+        //
+        //        print_r($data);
+        //
+        //
+        //        dispatch(new ProcessANPCAllDataV2());
 
         //dispatch(new ProcessRCM(false,false));
-//
-       // dispatch(new HandleANEPCImportantData());
+        //
+        // dispatch(new HandleANEPCImportantData());
 
         //dispatch( new HandleANEPCPositEmail());
 
-// Create PhpImap\Mailbox instance for all further actions
+        // Create PhpImap\Mailbox instance for all further actions
 
         //dispatch(new UpdateICNFData(1));
         //dispatch(new DailySummary());
@@ -249,42 +245,41 @@ class TestStuff extends Command
 
         //exec('node /var/www/html/screenshot-script.js --url https://fogos.pt/ --width 1000 --height 1300 --name screenshot-twitter ');
 
-//        Browsershot::url('https://fogos.pt')
-//            ->useCookies(['CookieConsent' => "{stamp:'m+a2sHQeOOuoPJRBktiiVf5mOGWDtiqvOKiLgCLNxxLwBBxXgfbaWQ=='%2Cnecessary:true%2Cpreferences:true%2Cstatistics:true%2Cmarketing:true%2Cver:1}"])
-//            //->setDelay(10000)
-//            ->ignoreHttpsErrors()
-//            ->windowSize(env('SCREENSHOT_WIDTH'), env('SCREENSHOT_HEIGHT'))
-//            ->setRemoteInstance($ip)
-//            //->waitUntilNetworkIdle()
-//            ->save('/var/www/html/asd4.jpg');
+        //        Browsershot::url('https://fogos.pt')
+        //            ->useCookies(['CookieConsent' => "{stamp:'m+a2sHQeOOuoPJRBktiiVf5mOGWDtiqvOKiLgCLNxxLwBBxXgfbaWQ=='%2Cnecessary:true%2Cpreferences:true%2Cstatistics:true%2Cmarketing:true%2Cver:1}"])
+        //            //->setDelay(10000)
+        //            ->ignoreHttpsErrors()
+        //            ->windowSize(env('SCREENSHOT_WIDTH'), env('SCREENSHOT_HEIGHT'))
+        //            ->setRemoteInstance($ip)
+        //            //->waitUntilNetworkIdle()
+        //            ->save('/var/www/html/asd4.jpg');
 
         // chrome devtools uri
-//        $webSocketUri = 'ws://'.$ip.':9222/devtools/browser/xxx';
-//
-//// create connection given a web socket uri
-//        $connection = new Connection($webSocketUri);
-//        $connection->connect();
-//
-//// create browser
-//        $browser = new Browser($connection);
-//
-//
-//
-//        try {
-//            // creates a new page and navigate to an url
-//            $page = $browser->createPage();
-//            $page->navigate('https://fogos.pt')->waitForNavigation();
-//
-//
-//            // screenshot - Say "Cheese"! 😄
-//            $page->screenshot()->saveToFile('/var/www/html/asd.png');
-//
-//        } finally {
-//            // bye
-//            $browser->close();
-//        }
+        //        $webSocketUri = 'ws://'.$ip.':9222/devtools/browser/xxx';
+        //
+        //// create connection given a web socket uri
+        //        $connection = new Connection($webSocketUri);
+        //        $connection->connect();
+        //
+        //// create browser
+        //        $browser = new Browser($connection);
+        //
+        //
+        //
+        //        try {
+        //            // creates a new page and navigate to an url
+        //            $page = $browser->createPage();
+        //            $page->navigate('https://fogos.pt')->waitForNavigation();
+        //
+        //
+        //            // screenshot - Say "Cheese"! 😄
+        //            $page->screenshot()->saveToFile('/var/www/html/asd.png');
+        //
+        //        } finally {
+        //            // bye
+        //            $browser->close();
+        //        }
 
         //TwitterTool::retweetVost("1559872724645941254");
     }
-
 }

@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\RCM;
+use App\Models\RCMForJS;
 use App\Tools\RCMTool;
 use Illuminate\Http\Request;
 use Laravel\Lumen\Routing\Controller;
-use App\Models\RCMForJS;
 use voku\helper\UTF8;
 
 class RCMController extends Controller
@@ -69,7 +69,7 @@ class RCMController extends Controller
             ->limit(1)
             ->get();
 
-        if (!isset($risk[0])) {
+        if (! isset($risk[0])) {
             abort(404);
         }
 

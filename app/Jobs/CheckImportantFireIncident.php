@@ -9,11 +9,10 @@ use App\Tools\HashTagTool;
 use App\Tools\NotificationTool;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class CheckImportantFireIncident extends Job implements ShouldQueue, ShouldBeUnique
+class CheckImportantFireIncident extends Job implements ShouldBeUnique, ShouldQueue
 {
     /**
      * Create a new job instance.
@@ -37,17 +36,14 @@ class CheckImportantFireIncident extends Job implements ShouldQueue, ShouldBeUni
             ->where('sentCheckImportant', false)
             ->get();
 
-
-
         foreach ($incidents as $incident) {
-            if(isset($incidents->sentCheckImportant) && $incidents->sentCheckImportant){
+            if (isset($incidents->sentCheckImportant) && $incidents->sentCheckImportant) {
                 return;
             }
 
             $totalAssets = $incident->aerial + $incident->terrain;
 
-
-            if ($totalAssets > (int)env('IMPORTANT_INCIDENT_TOTAL_ASSETS')) {
+            if ($totalAssets > (int) env('IMPORTANT_INCIDENT_TOTAL_ASSETS')) {
                 $timestampLast = time();
                 $timestampLast = strtotime('-3 hours', $timestampLast);
 

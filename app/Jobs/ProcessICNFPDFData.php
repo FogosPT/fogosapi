@@ -10,7 +10,7 @@ use GuzzleHttp\Exception\ClientException;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class ProcessICNFPDFData extends Job implements ShouldQueue, ShouldBeUnique
+class ProcessICNFPDFData extends Job implements ShouldBeUnique, ShouldQueue
 {
     public $incident;
 
@@ -48,11 +48,11 @@ class ProcessICNFPDFData extends Job implements ShouldQueue, ShouldBeUnique
         $i = 0;
         foreach ($result[1] as $r) {
             if ($i === 0 || $i === 1) {
-                ++$i;
+                $i++;
 
                 continue;
             }
-            ++$i;
+            $i++;
 
             $rr = explode("',", $r);
 
@@ -96,14 +96,14 @@ class ProcessICNFPDFData extends Job implements ShouldQueue, ShouldBeUnique
     {
         if (isset($this->incident[0])) {
             $kmlExists = false;
-            if (isset($this->incident[0]->kml) && !empty($this->incident[0]->kml)) {
+            if (isset($this->incident[0]->kml) && ! empty($this->incident[0]->kml)) {
                 $kmlExists = true;
             }
 
             $this->incident[0]->kml = $kml;
             $this->incident[0]->save();
 
-            if (!$kmlExists) {
+            if (! $kmlExists) {
                 $hashtag = HashTagTool::getHashTag($this->incident[0]->concelho);
 
                 $domain = env('SOCIAL_LINK_DOMAIN');
