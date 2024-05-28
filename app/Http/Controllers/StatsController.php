@@ -6,7 +6,7 @@ use App\Models\Incident;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Laravel\Lumen\Routing\Controller;
+use App\Http\Controllers\Controller;
 
 class StatsController extends Controller
 {

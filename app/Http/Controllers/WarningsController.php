@@ -8,7 +8,7 @@ use App\Tools\NotificationTool;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
 use Illuminate\Http\Request;
-use Laravel\Lumen\Routing\Controller;
+use App\Http\Controllers\Controller;
 
 class WarningsController extends Controller
 {
