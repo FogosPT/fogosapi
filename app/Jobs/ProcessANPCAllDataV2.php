@@ -6,10 +6,9 @@ use App\Models\Incident;
 use App\Models\Location;
 use App\Tools\DiscordTool;
 use Carbon\Carbon;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Support\Facades\Log;
 use voku\helper\UTF8;
-use GuzzleHttp\Exception\ClientException;
-
 
 class ProcessANPCAllDataV2 extends Job
 {
@@ -32,21 +31,19 @@ class ProcessANPCAllDataV2 extends Job
     {
         $url = env('ANEPC_API_URL');
 
-
-
         $options = [
             'headers' => [
                 'User-Agent' => 'Fogos.pt/3.0',
-                'Authorization' => 'Basic ' . base64_encode(env('ANEPC_API_USERNAME') . ':' .env('ANEPC_API_PASSWORD'))
+                'Authorization' => 'Basic '.base64_encode(env('ANEPC_API_USERNAME').':'.env('ANEPC_API_PASSWORD')),
             ],
 
         ];
 
-        if(env('PROXY_ENABLE')){
+        if (env('PROXY_ENABLE')) {
             $options['proxy'] = env('PROXY_URL');
         }
 
-        try{
+        try {
             $client = new \GuzzleHttp\Client();
             $res = $client->request('GET', $url, $options);
         } catch (ClientException $e) {
@@ -57,17 +54,17 @@ class ProcessANPCAllDataV2 extends Job
             return;
         }
 
-
         $incidents = json_decode($res->getBody(), true);
 
-        if(empty($incidents)){
+        if (empty($incidents)) {
             Log::debug('empty incidents retuning');
+
             return;
         }
 
         $this->handleIncidents($incidents);
 
-        if($res->getStatusCode() === 200){
+        if ($res->getStatusCode() === 200) {
             dispatch(new CheckIsActive($incidents));
 
         }
@@ -104,25 +101,25 @@ class ProcessANPCAllDataV2 extends Job
 
     private function prepareData($data, $create = false)
     {
-        if($data['outra_localizacao'] === 'Espanha'){
+        if ($data['outra_localizacao'] === 'Espanha') {
             $locationData = [
                 'DICO' => '00',
-                'distrito' => 'Espanha'
+                'distrito' => 'Espanha',
             ];
             $data['concelho'] = 'Espanha';
             $data['freguesia'] = 'Espanha';
         } else {
-            $locationData = $this->getLocationData($data['concelho'],$data['numero_sado']);
+            $locationData = $this->getLocationData($data['concelho'], $data['numero_sado']);
         }
 
-        if(strlen($locationData['DICO']) !== 4){
-            $locationData['DICO'] = '0' . $locationData['DICO'];
+        if (strlen($locationData['DICO']) !== 4) {
+            $locationData['DICO'] = '0'.$locationData['DICO'];
         }
 
         $distrito = UTF8::ucwords(mb_strtolower($locationData['distrito']));
         $concelho = $data['concelho'];
         $freguesia = UTF8::ucwords(mb_strtolower($data['freguesia']));
-        $localidade =  UTF8::ucwords(mb_strtolower($data['local'] . ' ' .  $data['outra_localizacao']));
+        $localidade = UTF8::ucwords(mb_strtolower($data['local'].' '.$data['outra_localizacao']));
 
         $man = $data['operacionais'];
 
@@ -132,7 +129,7 @@ class ProcessANPCAllDataV2 extends Job
         $isTransportFire = in_array($data['codigo_natureza'], Incident::NATUREZA_CODE_TRANSPORT_FIRE);
         $isUrbanFire = in_array($data['codigo_natureza'], Incident::NATUREZA_CODE_URBAN_FIRE);
         $isOtherFire = in_array($data['codigo_natureza'], Incident::NATUREZA_CODE_OTHER_FIRE);
-        $isOtherIncident = !$isFire && !$isTransportFire && !$isUrbanFire && !$isOtherFire;
+        $isOtherIncident = ! $isFire && ! $isTransportFire && ! $isUrbanFire && ! $isOtherFire;
 
         $isFMA = in_array($data['codigo_natureza'], Incident::NATUREZA_CODE_FMA);
 
@@ -171,10 +168,10 @@ class ProcessANPCAllDataV2 extends Job
             'isOtherIncident' => $isOtherIncident,
             'isFMA' => $isFMA,
             'regiao' => $data['regiao'],
-            'sub_regiao' => $data['sub_regiao']
+            'sub_regiao' => $data['sub_regiao'],
         ];
 
-        if($create){
+        if ($create) {
             $point['important'] = false;
             $point['heliFight'] = 0;
             $point['heliCoord'] = 0;
@@ -184,44 +181,45 @@ class ProcessANPCAllDataV2 extends Job
             $point['important'] = @$data['significativa'];
         }
 
-        if($point['status'] === 'Despacho de 1.º Alerta'){
+        if ($point['status'] === 'Despacho de 1.º Alerta') {
             $point['status'] = 'Despacho de 1º Alerta'; // fix para a app
         }
 
         return $point;
     }
 
-
     private function getLocationData($concelho, $x)
     {
         $location = Location::where('name', $concelho)->where('level', 2)->get();
 
-        if(!isset($location[0])){
-            DiscordTool::postError('Concelho not found => ' . $concelho . ' => ' . $x);
-            Log::debug('Concelho not found => ' . $concelho . ' => ' . $x);
+        if (! isset($location[0])) {
+            DiscordTool::postError('Concelho not found => '.$concelho.' => '.$x);
+            Log::debug('Concelho not found => '.$concelho.' => '.$x);
+
             return;
         }
 
         $location = $location[0];
 
-        $distritoCode = (string)$location->code;
+        $distritoCode = (string) $location->code;
 
-        if(strlen($distritoCode) === 3){
-            $distritoCode = (int) substr($distritoCode,0,1);
+        if (strlen($distritoCode) === 3) {
+            $distritoCode = (int) substr($distritoCode, 0, 1);
         } else {
-            $distritoCode = (int) substr($distritoCode,0,2);
+            $distritoCode = (int) substr($distritoCode, 0, 2);
         }
 
         $distrito = Location::where('level', 1)->where('code', $distritoCode)->get();
 
-        if(!isset($distrito[0])){
-            DiscordTool::postError('Distrito code not found => ' . $distritoCode);
+        if (! isset($distrito[0])) {
+            DiscordTool::postError('Distrito code not found => '.$distritoCode);
+
             return;
         }
 
         $l = [
             'DICO' => $location->code,
-            'distrito' => $distrito[0]->name
+            'distrito' => $distrito[0]->name,
         ];
 
         return $l;

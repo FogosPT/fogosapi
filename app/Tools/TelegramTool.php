@@ -6,7 +6,7 @@ class TelegramTool
 {
     public static function publish($status)
     {
-        if (!env('TELEGRAM_ENABLE')) {
+        if (! env('TELEGRAM_ENABLE')) {
             return;
         }
 
@@ -22,7 +22,7 @@ class TelegramTool
 
     public static function publishImage($status, $imagePath)
     {
-        if (!env('TELEGRAM_ENABLE')) {
+        if (! env('TELEGRAM_ENABLE')) {
             return;
         }
 

@@ -7,10 +7,13 @@ use Jenssegers\Mongodb\Eloquent\Model;
 class WeatherDataDaily extends Model
 {
     protected $connection = 'mongodb';
+
     protected $collection = 'weatherDataDaily';
+
     protected $primaryKey = '_id';
 
     public const CREATED_AT = 'created';
+
     public const UPDATED_AT = 'updated';
 
     protected $dates = ['date', 'created', 'updated'];
@@ -44,7 +47,7 @@ class WeatherDataDaily extends Model
         'prec_quant',
         'hum_max',
         'date',
-        'stationId'
+        'stationId',
     ];
 
     public function station()

@@ -54,7 +54,7 @@ class UpdateICNFData extends Job
             [
                 'before' => Carbon::now()->subDays(90),
                 'after' => Carbon::now()->subDays(180),
-            ]
+            ],
         ];
 
         $incidents = Incident::where('created', '>=', $intervals[$this->interval]['after'])

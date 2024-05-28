@@ -33,7 +33,7 @@ class HandleNewIncidentSocialMedia extends Job
         $hashTag = HashTagTool::getHashTag($this->incident->concelho);
 
         $url = "fogo/{$this->incident->id}/detalhe";
-        $name = "screenshot-{$this->incident->id}"  . rand(0,255);
+        $name = "screenshot-{$this->incident->id}".rand(0, 255);
         $path = "/var/www/html/public/screenshots/{$name}.png";
 
         ScreenShotTool::takeScreenShot($url, $name);
@@ -49,7 +49,7 @@ class HandleNewIncidentSocialMedia extends Job
 
         $urlImage = "https://api-dev.fogos.pt/screenshots/{$name}.png";
 
-        FacebookTool::publishWithImage($status,$urlImage);
+        FacebookTool::publishWithImage($status, $urlImage);
         TelegramTool::publish($status);
         BlueskyTool::publish($status);
 

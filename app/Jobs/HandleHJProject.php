@@ -3,14 +3,13 @@
 namespace App\Jobs;
 
 use App\Models\Incident;
-use Illuminate\Support\Facades\Log;
-use PhpImap\Mailbox;
-use voku\helper\UTF8;
 
 class HandleHJProject extends Job
 {
     public $incident;
+
     public $telegramChannel;
+
     /**
      * Create a new job instance.
      *
@@ -40,7 +39,7 @@ class HandleHJProject extends Job
         $data = [
             'chat_id' => env('HL_PROJECT_TELEGRAM_CHANNEL'),
             'text' => $status,
-            'message_thread_id' => $this->telegramChannel
+            'message_thread_id' => $this->telegramChannel,
         ];
 
         file_get_contents("https://api.telegram.org/bot{$apiToken}/sendMessage?".http_build_query($data));

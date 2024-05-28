@@ -4,7 +4,6 @@ namespace App\Tools;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use phpDocumentor\Reflection\Types\Self_;
 
 class BlueskyTool
 {
@@ -14,15 +13,16 @@ class BlueskyTool
 
         $data = [
             'identifier' => 'fogospt.bsky.social',
-            'password' => env('BSKY_APP_PASSWORD')
+            'password' => env('BSKY_APP_PASSWORD'),
         ];
 
         $response = $client->request('POST', 'https://bsky.social/xrpc/com.atproto.server.createSession', ['json' => $data]);
 
-        $result = json_decode($response->getBody(),true);
+        $result = json_decode($response->getBody(), true);
 
         return $result;
     }
+
     public static function publish($status)
     {
         $session = self::getToken();
@@ -35,21 +35,21 @@ class BlueskyTool
             'record' => [
                 '$type' => 'app.bsky.feed.post',
                 'text' => $status,
-                'createdAt' => Carbon::now()
-            ]
+                'createdAt' => Carbon::now(),
+            ],
         ];
 
         $headers = [
             'json' => $data,
             'headers' => [
-                'Authorization' => "Bearer " . $session['accessJwt']
-            ]
+                'Authorization' => 'Bearer '.$session['accessJwt'],
+            ],
         ];
 
-        try{
+        try {
             $client = new \GuzzleHttp\Client();
             $client->request('POST', 'https://bsky.social/xrpc/com.atproto.repo.createRecord', $headers);
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
     }

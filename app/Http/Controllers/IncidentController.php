@@ -5,16 +5,13 @@ namespace App\Http\Controllers;
 use App\Http\Requests\IncidentSearchRequest;
 use App\Models\Incident;
 use App\Resources\IncidentResource;
-use App\Tools\FacebookTool;
 use App\Tools\HashTagTool;
 use App\Tools\ScreenShotTool;
-use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Laravel\Lumen\Routing\Controller;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -27,48 +24,46 @@ class IncidentController extends Controller
         $isOtherFire = $request->get('otherfire');
         $concelho = $request->get('concelho');
 
-        if($request->exists('limit')){
-            $limit = (int)$request->get('limit');
+        if ($request->exists('limit')) {
+            $limit = (int) $request->get('limit');
         } else {
             $limit = 300;
         }
 
-        $geoJson = filter_var($request->get('geojson'), FILTER_VALIDATE_BOOLEAN);;
+        $geoJson = filter_var($request->get('geojson'), FILTER_VALIDATE_BOOLEAN);
 
         $csv = $request->get('csv');
         $csv2 = $request->get('csv2');
 
         $subRegion = $request->get('subRegion');
 
-
         $incidents = Incident::isActive()
-                            ->when(!$all, function ($query, $all){
-                                return $query->isFire();
-                            })->when($isFMA, function ($query, $isFMA){
-                                return $query->isFMA();
-                            })->when($isOtherFire, function ($query, $isOtherFire){
-                                return $query->isOtherFire();
-                            })->when($concelho, function ($query, $concelho){
-                                return $query->where('concelho', $concelho);
-                            })->when($subRegion, function ($query, $subRegion){
-                                return $query->where('sub_regiao', $subRegion);
-                            })
-                            ->orderBy('created_at', 'desc')
-                            ->paginate($limit);
+            ->when(! $all, function ($query, $all) {
+                return $query->isFire();
+            })->when($isFMA, function ($query, $isFMA) {
+                return $query->isFMA();
+            })->when($isOtherFire, function ($query, $isOtherFire) {
+                return $query->isOtherFire();
+            })->when($concelho, function ($query, $concelho) {
+                return $query->where('concelho', $concelho);
+            })->when($subRegion, function ($query, $subRegion) {
+                return $query->where('sub_regiao', $subRegion);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate($limit);
 
-        if($csv) {
+        if ($csv) {
             $csv = 'incendios.csv';
 
-            header('Content-Disposition: attachment; filename="' . $csv . '";');
+            header('Content-Disposition: attachment; filename="'.$csv.'";');
             header('Content-Type: application/csv; charset=UTF-8');
 
             // open the "output" stream
             $f = fopen('php://output', 'w');
             // Write utf-8 bom to the file
-            fputs($f, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fwrite($f, chr(0xEF).chr(0xBB).chr(0xBF));
 
             fputcsv($f, array_keys($incidents[0]->toArray()), ';');
-
 
             foreach ($incidents as $i) {
                 $_i = $i->toArray();
@@ -77,31 +72,30 @@ class IncidentController extends Controller
                 fputcsv($f, $_i, ';');
             }
 
-
             // use exit to get rid of unexpected output afterward
             exit();
-        } else if($csv2){
+        } elseif ($csv2) {
             $csv = 'incendios.csv';
 
-            header('Content-Disposition: attachment; filename="' . $csv . '";');
+            header('Content-Disposition: attachment; filename="'.$csv.'";');
             header('Content-Type: application/csv; charset=UTF-8');
 
             // open the "output" stream
             $f = fopen('php://output', 'w');
             // Write utf-8 bom to the file
-            fputs($f, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fwrite($f, chr(0xEF).chr(0xBB).chr(0xBF));
 
-            if(empty($incidents)){
+            if (empty($incidents)) {
                 Log::debug(json_encode($incidents));
 
                 $incidents = Incident::isActive()
-                    ->when(!$all, function ($query, $all){
+                    ->when(! $all, function ($query, $all) {
                         return $query->isFire();
-                    })->when($isFMA, function ($query, $isFMA){
+                    })->when($isFMA, function ($query, $isFMA) {
                         return $query->isFMA();
-                    })->when($isOtherFire, function ($query, $isOtherFire){
+                    })->when($isOtherFire, function ($query, $isOtherFire) {
                         return $query->isOtherFire();
-                    })->when($concelho, function ($query, $concelho){
+                    })->when($concelho, function ($query, $concelho) {
                         return $query->where('concelho', $concelho);
                     })
                     ->orderBy('created_at', 'desc')
@@ -110,7 +104,7 @@ class IncidentController extends Controller
 
             $arr = IncidentResource::collection($incidents)->resolve();
 
-            if(isset($arr[0])){
+            if (isset($arr[0])) {
                 $keys = $arr[0];
                 unset($keys['_id']);
                 unset($keys['dateTime']);
@@ -121,7 +115,6 @@ class IncidentController extends Controller
                 unset($keys['kmlVost']);
 
                 fputcsv($f, array_keys($keys), ';');
-
 
                 foreach ($arr as &$i) {
                     $_i = $i;
@@ -141,7 +134,6 @@ class IncidentController extends Controller
                     ->orderBy('created_at', 'desc')
                     ->paginate(1);
 
-
                 $arr = IncidentResource::collection($incident)->resolve();
 
                 $keys = $arr[0];
@@ -158,18 +150,18 @@ class IncidentController extends Controller
             }
             // use exit to get rid of unexpected output afterward
             exit();
-        } else if($geoJson){
+        } elseif ($geoJson) {
             return new JsonResponse($this->transformToGeoJSON(IncidentResource::collection($incidents)));
         } else {
 
-            if(env('TROLL_MODE')){
+            if (env('TROLL_MODE')) {
                 $ua = $request->userAgent();
                 $ref = $request->headers->get('referer');
 
                 $allowedUas = [
                     env('UA1'),
                     env('UA2'),
-                    env('UA3')
+                    env('UA3'),
                 ];
 
                 $allowedRefs = [
@@ -178,16 +170,16 @@ class IncidentController extends Controller
                     'https://beta.fogos.pt/',
                     'https://emergencias.pt/',
                     'https://www.emergencias.pt/',
-                    'https://sgmai.maps.arcgis.com/apps/dashboards/fc641a97229142b8a80f17af034d62a7'
+                    'https://sgmai.maps.arcgis.com/apps/dashboards/fc641a97229142b8a80f17af034d62a7',
                 ];
 
-                if(!in_array($ua, $allowedUas) || !in_array($ref,$allowedRefs)){
+                if (! in_array($ua, $allowedUas) || ! in_array($ref, $allowedRefs)) {
                     $troll = new Incident();
                     $troll->id = 123123123123;
                     $troll->coords = 1;
-                    $troll->dateTime = "2023-05-17T06:38:00.000000Z";
+                    $troll->dateTime = '2023-05-17T06:38:00.000000Z';
                     $troll->date = '17-05-2023';
-                    $troll->hour= '07:38';
+                    $troll->hour = '07:38';
                     $troll->location = 'Uso a API do Fogos.pt 🥁';
                     $troll->aerial = 100;
                     $troll->meios_aquaticos = 100;
@@ -204,23 +196,21 @@ class IncidentController extends Controller
                     $troll->especieName = 'Utilização indevida';
                     $troll->familiaName = 'Utilização indevida';
                     $troll->statusCode = 5;
-                    $troll->statusColor = "B81E1F";
+                    $troll->statusColor = 'B81E1F';
                     $troll->status = 'Em Curso';
                     $troll->important = false;
                     $troll->localidade = 'Uso a API do Fogos.pt 🥁';
                     $troll->active = true;
                     $troll->sadoId = 123123123;
                     $troll->sharepointId = 123123123;
-                    $troll->extra = $ua . ' => ' . $ref;
+                    $troll->extra = $ua.' => '.$ref;
                     $troll->disappear = false;
                     $troll->created = '2023-05-18T07:58:09.600000Z';
                     $troll->updated = '2023-05-18T07:58:09.600000Z';
 
-
                     $incidents[] = $troll;
                 }
             }
-
 
             return new JsonResponse([
                 'success' => true,
@@ -236,8 +226,8 @@ class IncidentController extends Controller
         $isOtherFire = $request->get('otherfire');
         $concelho = $request->get('concelho');
 
-        if($request->exists('limit')){
-            $limit = (int)$request->get('limit');
+        if ($request->exists('limit')) {
+            $limit = (int) $request->get('limit');
         } else {
             $limit = 300;
         }
@@ -245,25 +235,25 @@ class IncidentController extends Controller
         $geoJson = $request->get('geojson');
 
         $incidents = Incident::isActive()
-            ->when(!$all, function ($query, $all){
+            ->when(! $all, function ($query, $all) {
                 return $query->isFire();
-            })->when($isFMA, function ($query, $isFMA){
+            })->when($isFMA, function ($query, $isFMA) {
                 return $query->isFMA();
-            })->when($isOtherFire, function ($query, $isOtherFire){
+            })->when($isOtherFire, function ($query, $isOtherFire) {
                 return $query->isOtherFire();
-            })->when($concelho, function ($query, $concelho){
+            })->when($concelho, function ($query, $concelho) {
                 return $query->where('concelho', $concelho);
             })
             ->orderBy('created_at', 'desc')
             ->paginate($limit);
 
-        $r=new \XMLWriter();
+        $r = new \XMLWriter();
         $r->openMemory();
-        $r->startDocument('1.0','UTF-8');
+        $r->startDocument('1.0', 'UTF-8');
         $r->startElement('kml');
         $r->startElement('document');
         $r->startElement('Placemark');
-        foreach($incidents as $i){
+        foreach ($incidents as $i) {
             $r->startElement('name');
             $r->text($i['location']);
             $r->endElement();
@@ -282,24 +272,23 @@ class IncidentController extends Controller
         $r->endElement(); // kml
         $newxml = $r->outputMemory(true);
 
-
         echo $newxml;
-        die();
+        exit();
     }
 
     private function transformToGeoJSON($data)
     {
         $features = [];
 
-        foreach($data as $d) {
-            $features[] = array(
+        foreach ($data as $d) {
+            $features[] = [
                 'type' => 'Feature',
-                'geometry' => array('type' => 'Point', 'coordinates' => array((float)$d['lng'],(float)$d['lat'])),
+                'geometry' => ['type' => 'Point', 'coordinates' => [(float) $d['lng'], (float) $d['lat']]],
                 'properties' => $d,
-            );
-        };
+            ];
+        }
 
-        $allfeatures = array('type' => 'FeatureCollection', 'features' => $features);
+        $allfeatures = ['type' => 'FeatureCollection', 'features' => $features];
 
         return $allfeatures;
     }
@@ -312,25 +301,24 @@ class IncidentController extends Controller
 
         $naturezaCode = $request->get('naturezaCode');
 
-
-        if($request->exists('limit')){
-            $limit = (int)$request->get('limit');
+        if ($request->exists('limit')) {
+            $limit = (int) $request->get('limit');
         } else {
             $limit = 50;
         }
 
-        if($day && ($before || $after)){
+        if ($day && ($before || $after)) {
             abort(422);
         }
 
         $timeRange = false;
-        if($after){
+        if ($after) {
             $after = new Carbon($after);
             $before = new Carbon($before);
             $timeRange = [$after, $before];
         }
 
-        if($day){
+        if ($day) {
             $day = new Carbon($day);
         }
 
@@ -341,55 +329,54 @@ class IncidentController extends Controller
 
         $subRegion = $request->get('subRegion');
 
-
-        $incidents = Incident::when($day, function($query, $day){
+        $incidents = Incident::when($day, function ($query, $day) {
             return $query->whereBetween(
                 'dateTime',
 
                 [
                     Carbon::parse($day->startOfDay()),
-                    Carbon::parse($day->endOfDay())
+                    Carbon::parse($day->endOfDay()),
                 ]
             );
-        })->when($timeRange, function($query,$timeRange){
+        })->when($timeRange, function ($query, $timeRange) {
             return $query->whereBetween(
                 'dateTime',
                 [
                     Carbon::parse($timeRange[0]->startOfDay()),
-                    Carbon::parse($timeRange[1]->endOfDay())
+                    Carbon::parse($timeRange[1]->endOfDay()),
                 ]
             );
-        })->when($concelho, function($query, $concelho){
+        })->when($concelho, function ($query, $concelho) {
             return $query->where('concelho', $concelho);
-        })->when(!$all, function ($query, $all){
+        })->when(! $all, function ($query, $all) {
             return $query->isFire();
-        })->when($extend, function ($query, $extend){
+        })->when($extend, function ($query, $extend) {
             return $query->with(['history', 'statusHistory']);
-        })->when($isFMA, function ($query, $isFMA){
+        })->when($isFMA, function ($query, $isFMA) {
             return $query->isFMA();
-        })->when($naturezaCode, function ($query, $naturezaCode){
-            return $query->where('naturezaCode', (string)$naturezaCode);
-        })->when($subRegion, function ($query, $subRegion){
-            return $query->where('sub_regiao', (string)$subRegion);
+        })->when($naturezaCode, function ($query, $naturezaCode) {
+            return $query->where('naturezaCode', (string) $naturezaCode);
+        })->when($subRegion, function ($query, $subRegion) {
+            return $query->where('sub_regiao', (string) $subRegion);
         });
 
         $csv2 = $request->get('csv2');
 
-        if($csv2){
+        if ($csv2) {
             $csv = 'incidents.csv';
 
-            header('Content-Disposition: attachment; filename="' . $csv . '";');
+            header('Content-Disposition: attachment; filename="'.$csv.'";');
             header('Content-Type: application/csv; charset=UTF-8');
 
             // open the "output" stream
             $f = fopen('php://output', 'w');
             // Write utf-8 bom to the file
-            fputs($f, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fwrite($f, chr(0xEF).chr(0xBB).chr(0xBF));
 
             $incidents = $incidents->get();
             $arr = IncidentResource::collection($incidents)->resolve();
 
-            if(isset($arr[0])){
+            if (isset($arr[0])) {
                 $keys = $arr[0];
                 unset($keys['_id']);
                 unset($keys['dateTime']);
@@ -421,7 +408,7 @@ class IncidentController extends Controller
             $paginator = [
                 'currentPage' => $incidents->currentPage(),
                 'totalPages' => $incidents->lastPage(),
-                'totalItems' => $incidents->total()
+                'totalItems' => $incidents->total(),
             ];
 
             return new JsonResponse([
@@ -438,10 +425,10 @@ class IncidentController extends Controller
         $incidentkml = $incident->kml;
 
         $response = new StreamedResponse();
-        $response->setCallBack(function () use($incidentkml) {
+        $response->setCallBack(function () use ($incidentkml) {
             echo $incidentkml;
         });
-        $disposition = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $incident->id . '.kml');
+        $disposition = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $incident->id.'.kml');
         $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
@@ -453,10 +440,10 @@ class IncidentController extends Controller
         $incidentkml = $incident->kmlVost;
 
         $response = new StreamedResponse();
-        $response->setCallBack(function () use($incidentkml) {
+        $response->setCallBack(function () use ($incidentkml) {
             echo $incidentkml;
         });
-        $disposition = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $incident->id . '.kml');
+        $disposition = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $incident->id.'.kml');
         $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
@@ -464,8 +451,8 @@ class IncidentController extends Controller
 
     public function burnMoreThan1000(Request $request)
     {
-        if($request->exists('limit')){
-            $limit = (int)$request->get('limit');
+        if ($request->exists('limit')) {
+            $limit = (int) $request->get('limit');
         } else {
             $limit = 500;
         }
@@ -477,7 +464,7 @@ class IncidentController extends Controller
         $paginator = [
             'currentPage' => $incidents->currentPage(),
             'totalPages' => $incidents->lastPage(),
-            'totalItems' => $incidents->total()
+            'totalItems' => $incidents->total(),
         ];
 
         return new JsonResponse([
@@ -491,7 +478,7 @@ class IncidentController extends Controller
     {
         $key = $request->header('key');
 
-        if(env('API_WRITE_KEY') !== $key){
+        if (env('API_WRITE_KEY') !== $key) {
             abort(401);
         }
 
@@ -512,7 +499,7 @@ class IncidentController extends Controller
     {
         $key = $request->header('key');
 
-        if(env('API_WRITE_KEY') !== $key){
+        if (env('API_WRITE_KEY') !== $key) {
             abort(401);
         }
 
@@ -522,16 +509,14 @@ class IncidentController extends Controller
 
         $incident->save();
 
-        $url = "fogo/{$incident->id}/detalhe?aasd=" .  rand(0,255);
-        $name = "screenshot-{$incident->id}"  . rand(0,255);
+        $url = "fogo/{$incident->id}/detalhe?aasd=".rand(0, 255);
+        $name = "screenshot-{$incident->id}".rand(0, 255);
         $path = "/var/www/html/public/screenshots/{$name}.png";
 
         $status = $request->post('status');
 
-        if($status)
-        {
+        if ($status) {
             ScreenShotTool::takeScreenShot($url, $name, 1200, 450);
-
 
             TwitterTool::tweet($status, false, $path, false, true);
 

@@ -40,7 +40,7 @@ class FixFMA extends Command
     {
         $incidents = Incident::where('isFMA', 'exists', false)->get();
 
-        foreach($incidents as $incident){
+        foreach ($incidents as $incident) {
             $isFMA = in_array($incident['naturezaCode'], Incident::NATUREZA_CODE_FMA);
 
             $incident->isFMA = $isFMA;

@@ -11,12 +11,13 @@ use Spatie\PdfToText\Pdf;
 class ProcessICNFPDF extends Job implements ShouldQueue
 {
     public $incident;
+
     public $url;
 
     /**
      * Create a new job instance.
      *
-     * @param mixed $url
+     * @param  mixed  $url
      */
     public function __construct(Incident $incident, $url)
     {
@@ -69,12 +70,12 @@ class ProcessICNFPDF extends Job implements ShouldQueue
             }
 
             $this->incident->save();
-            ++$i;
+            $i++;
         }
 
         $domain = env('SOCIAL_LINK_DOMAIN');
 
-        if (!$cbvExists) {
+        if (! $cbvExists) {
             $hashtag = HashTagTool::getHashTag($this->incident->concelho);
             $status = "ℹ Incêndio na área de actuação própria do {$this->incident->cbv} https://{$domain}/fogo/{$this->incident->id} {$hashtag} ℹ";
             $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
@@ -82,7 +83,7 @@ class ProcessICNFPDF extends Job implements ShouldQueue
             $this->incident->save();
         }
 
-        if (!$alertFromExists) {
+        if (! $alertFromExists) {
             $hashtag = HashTagTool::getHashTag($this->incident->concelho);
             $status = "ℹ Alerta dado por {$this->incident->alertFrom} https://{$domain}/fogo/{$this->incident->id} {$hashtag} ℹ";
             $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);

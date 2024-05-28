@@ -11,10 +11,13 @@ class Incident extends Model
     use IncidentObserver;
 
     protected $connection = 'mongodb';
+
     protected $collection = 'data';
+
     protected $primaryKey = '_id';
 
     public const CREATED_AT = 'created';
+
     public const UPDATED_AT = 'updated';
 
     protected $dates = ['dateTime', 'created', 'updated'];
@@ -48,7 +51,7 @@ class Incident extends Model
         'heliFight' => 'integer',
         'heliCoord' => 'integer',
         'planeFight' => 'integer',
-        'anepcDirectUpdate' => 'boolean'
+        'anepcDirectUpdate' => 'boolean',
     ];
 
     protected $fillable = [
@@ -100,7 +103,7 @@ class Incident extends Model
         'anepcDirectUpdate',
         'regiao',
         'sub_regiao',
-        'meios_aquaticos'
+        'meios_aquaticos',
     ];
 
     public const NATUREZA_CODE_FIRE = [
@@ -141,7 +144,7 @@ class Incident extends Model
         '2203',
         '3111',
         '3109',
-        '3107'
+        '3107',
     ];
 
     public const NATUREZA_CODE_FMA = [
@@ -164,7 +167,7 @@ class Incident extends Model
     ];
 
     public const NOT_ACTIVE_STATUS_CODES = [
-        7,8,9,10,11,12
+        7, 8, 9, 10, 11, 12,
     ];
 
     public const STATUS_ID = [
@@ -174,9 +177,8 @@ class Incident extends Model
         'Conclusão' => 8,
         'Vigilância' => 9,
         'Em Curso' => 5,
-        'Chegada ao TO' => 6
+        'Chegada ao TO' => 6,
     ];
-
 
     public const STATUS_COLORS = [
         '  DESPACHO DE 1º ALERTA' => 'FF6E02', // sometimes we get this value...

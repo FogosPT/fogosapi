@@ -17187,8 +17187,7 @@ class ImportLocations extends Command
   }
 ]');
 
-
-        foreach ($locations as $l){
+        foreach ($locations as $l) {
             $location = new Location();
             $location->level = $l->level;
             $location->name = $l->name;

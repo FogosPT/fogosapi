@@ -39,27 +39,27 @@ class FacebookTool
 
     public static function publish($status)
     {
-        if (!env('FACEBOOK_ENABLE')) {
+        if (! env('FACEBOOK_ENABLE')) {
             return;
         }
-        try{
+        try {
             $client = new \GuzzleHttp\Client();
             $client->request('POST', self::getUrl($status));
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
     }
 
     public static function publishWithImage($status, $imageUrl)
     {
-        if (!env('FACEBOOK_ENABLE')) {
+        if (! env('FACEBOOK_ENABLE')) {
             return;
         }
 
-        try{
+        try {
             $client = new \GuzzleHttp\Client();
             $client->request('POST', self::getImageUrl($status, $imageUrl));
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
 
@@ -67,14 +67,14 @@ class FacebookTool
 
     public static function publishEmergencias($status)
     {
-        if (!env('FACEBOOK_ENABLE')) {
+        if (! env('FACEBOOK_ENABLE')) {
             return;
         }
 
-        try{
+        try {
             $client = new \GuzzleHttp\Client();
             $response = $client->request('POST', self::getEmergenciasUrl($status));
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
 

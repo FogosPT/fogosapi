@@ -131,11 +131,11 @@ class SaveIncidentHistory extends Job
                 NotificationTool::send($status, $this->incident->location, $this->incident->id);
             }
 
-            if ($this->incident->man >= env('BIG_INCIDENT_MAN') && !$this->incident['notifyBig']) {
+            if ($this->incident->man >= env('BIG_INCIDENT_MAN') && ! $this->incident['notifyBig']) {
                 $this->incident->notifyBig = true;
                 $this->incident->save();
 
-                if($this->incident->isFire){
+                if ($this->incident->isFire) {
                     $date = date('H:i');
 
                     $status = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:\r\n 👩‍🚒 {$this->incident->man}\r\n 🚒 {$this->incident->terrain}\r\n 🚁 {$this->incident->aerial}\r\n https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT 🚨ℹ";

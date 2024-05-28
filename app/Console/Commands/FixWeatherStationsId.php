@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Incident;
 use App\Models\WeatherStation;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -40,7 +39,7 @@ class FixWeatherStationsId extends Command
      */
     public function handle()
     {
-        $url = "https://api.ipma.pt/open-data/observation/meteorology/stations/stations.json";
+        $url = 'https://api.ipma.pt/open-data/observation/meteorology/stations/stations.json';
 
         $options = [
             'headers' => [
@@ -49,32 +48,32 @@ class FixWeatherStationsId extends Command
             'verify' => false,
         ];
 
-        try{
+        try {
             $client = new \GuzzleHttp\Client();
             $res = $client->request('GET', $url, $options);
 
             $data = $res->getBody()->getContents();
-        }
-        catch(\GuzzleHttp\Exception\RequestException $e) {
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
             Log::error('Error occurred in request.', ['url' => $url, 'statusCode' => $e->getCode(), 'message' => $e->getMessage()]);
+
             return;
         }
 
         $data = json_decode($data);
 
-        foreach($data as $d){
+        foreach ($data as $d) {
             $id = $d->properties->idEstacao;
 
             $station = WeatherStation::where('id', $id)->get();
 
-            if(isset($station[0])){
+            if (isset($station[0])) {
                 $station = $station[0];
             } else {
                 $station = new WeatherStation();
-                $station->id = (int)$id;
+                $station->id = (int) $id;
             }
 
-            $station->type = "point";
+            $station->type = 'point';
             $station->location = $d->properties->localEstacao;
             $station->coordinates = $d->geometry->coordinates;
 

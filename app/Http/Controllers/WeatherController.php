@@ -9,22 +9,20 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Redis;
-use Laravel\Lumen\Routing\Controller;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Redis;
 
 class WeatherController extends Controller
 {
     public static function getMeteoByLatAndLng($lat, $lng)
     {
         if (env('APP_ENV') === 'production') {
-            $exists = Redis::get('weather:' . $lat . ':' . $lng);
+            $exists = Redis::get('weather:'.$lat.':'.$lng);
             if ($exists) {
                 return json_decode($exists, true);
             } else {
                 $client = self::getClient();
-                $weatherUrl = self::$weatherUrl . 'lat=' . $lat . '&lon=' . $lng . '&APPID=' . env('OPENWEATHER_API') . '&units=metric&lang=pt';
+                $weatherUrl = self::$weatherUrl.'lat='.$lat.'&lon='.$lng.'&APPID='.env('OPENWEATHER_API').'&units=metric&lang=pt';
 
                 try {
                     $response = $client->request('GET', $weatherUrl);
@@ -38,7 +36,8 @@ class WeatherController extends Controller
                 $body = $response->getBody();
                 $result = json_decode($body->getContents(), true);
 
-                Redis::set('weather:' . $lat . ':' . $lng, json_encode($result), 'EX', 10800);
+                Redis::set('weather:'.$lat.':'.$lng, json_encode($result), 'EX', 10800);
+
                 return $result;
             }
         }
@@ -85,9 +84,9 @@ class WeatherController extends Controller
         $id = $request->get('id');
         $place = $request->get('place');
 
-        if($id){
-            $station = WeatherStation::where('id', (int)$id)->get();
-        } elseif($place){
+        if ($id) {
+            $station = WeatherStation::where('id', (int) $id)->get();
+        } elseif ($place) {
             $station = WeatherStation::where('place', $place)->get();
         } else {
             $station = WeatherStation::all();
@@ -102,10 +101,9 @@ class WeatherController extends Controller
 
     public function daily(Request $request)
     {
-        if(!$request->exists('date')){
+        if (! $request->exists('date')) {
             abort(410);
         }
-
 
         $date = $request->get('date');
         $date = new Carbon($date);
@@ -135,8 +133,8 @@ class WeatherController extends Controller
         $result = $body->getContents();
 
         $data = str_replace('http://', 'https://', $result);
-        header("Content-Type: application/xml; charset=utf-8");
+        header('Content-Type: application/xml; charset=utf-8');
         echo $data;
-        die();
+        exit();
     }
 }

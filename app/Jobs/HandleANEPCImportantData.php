@@ -30,19 +30,19 @@ class HandleANEPCImportantData extends Job
         $options = [
             'headers' => [
                 'User-Agent' => 'Fogos.pt/3.0',
-                'Accept' => 'application/json; odata=verbose'
+                'Accept' => 'application/json; odata=verbose',
             ],
             'verify' => false,
         ];
 
-        try{
+        try {
             $client = new \GuzzleHttp\Client();
             $res = $client->request('GET', $url, $options);
 
             $data = $res->getBody()->getContents();
-        }
-        catch(\GuzzleHttp\Exception\RequestException $e) {
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
             Log::error('Error occurred in request.', ['url' => $url, 'statusCode' => $e->getCode(), 'message' => $e->getMessage()]);
+
             return;
         }
 
@@ -57,16 +57,16 @@ class HandleANEPCImportantData extends Job
         $rows = $tables->item(0)->getElementsByTagName('tr');
 
         $i = 0;
-        $fires = array();
+        $fires = [];
 
         foreach ($rows as $row) {
-            if($i !== 0){
+            if ($i !== 0) {
                 $cols = $row->getElementsByTagName('td');
 
                 $j = 0;
                 $fire = [];
-                foreach($cols as $col){
-                    switch ($j){
+                foreach ($cols as $col) {
+                    switch ($j) {
                         case 0:
                             $fire['id'] = $col->nodeValue;
                             break;
@@ -86,7 +86,7 @@ class HandleANEPCImportantData extends Job
             $i++;
         }
 
-        foreach($fires as $fire){
+        foreach ($fires as $fire) {
             $incident = Incident::where('id', $fire['id'])->get()[0];
 
             $incident->pco = $fire['pco'];

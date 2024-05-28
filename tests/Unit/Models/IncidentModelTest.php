@@ -73,6 +73,7 @@ class IncidentModelTest extends TestCase
 
     /**
      * @test
+     *
      * @dataProvider propertiesCastsProvider
      */
     public function it_casts_properties_to_correct_type(string $propertyName, string $cast): void

@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Models\Incident;
 use App\Tools\BlueskyTool;
 use App\Tools\FacebookTool;
-use App\Tools\ScreenShotTool;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
 use Carbon\Carbon;
@@ -31,7 +30,6 @@ class DailySummary extends Job
             ->where([['dateTime', '>=', $start], ['dateTime', '<=', $end]])
             ->get();
 
-
         $totalBurnArea = 0;
         $total = 0;
         $maxMan = 0;
@@ -40,23 +38,23 @@ class DailySummary extends Job
 
         foreach ($incidents as $r) {
             $total += 1;
-            if(isset($r['icnf']) && isset($r['icnf']['burnArea']) && isset($r['icnf']['burnArea']['total'])){
-                $totalBurnArea += (float)$r['icnf']['burnArea']['total'];
+            if (isset($r['icnf']) && isset($r['icnf']['burnArea']) && isset($r['icnf']['burnArea']['total'])) {
+                $totalBurnArea += (float) $r['icnf']['burnArea']['total'];
 
             }
 
             $history = $r->history()->get()->toArray();
-            if(!empty($history)){
-                if(!empty(array_column($history, 'man'))){
-                    $maxMan += max(array_column($history, 'man')) ;
+            if (! empty($history)) {
+                if (! empty(array_column($history, 'man'))) {
+                    $maxMan += max(array_column($history, 'man'));
                 }
 
-                if(!empty(array_column($history, 'terrain'))){
-                    $maxCars += max(array_column($history, 'terrain')) ;
+                if (! empty(array_column($history, 'terrain'))) {
+                    $maxCars += max(array_column($history, 'terrain'));
                 }
 
-                if(!empty(array_column($history, 'aerial'))){
-                    $maxPlanes += max(array_column($history, 'aerial')) ;
+                if (! empty(array_column($history, 'aerial'))) {
+                    $maxPlanes += max(array_column($history, 'aerial'));
                 }
             }
         }

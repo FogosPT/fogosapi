@@ -51,12 +51,12 @@ class SaveWarningAndSendNotificationAndSocial extends Command
 
         NotificationTool::sendWarningNotification($status);
 
-        $text = "ALERTA: \r\n" . $status;
+        $text = "ALERTA: \r\n".$status;
         TwitterTool::tweet($text);
         TelegramTool::publish($text);
         BlueskyTool::publish($text);
 
-        $message = "ALERTA: %0A" . $status;
+        $message = 'ALERTA: %0A'.$status;
         FacebookTool::publish($message);
     }
 }

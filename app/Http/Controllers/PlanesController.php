@@ -1,11 +1,9 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
 use App\Models\Planes;
 use Illuminate\Http\JsonResponse;
-use Laravel\Lumen\Routing\Controller;
 
 class PlanesController extends Controller
 {
@@ -19,7 +17,7 @@ class PlanesController extends Controller
 
         return new JsonResponse([
             'success' => true,
-            'data' =>$plane,
+            'data' => $plane,
         ]);
     }
 }

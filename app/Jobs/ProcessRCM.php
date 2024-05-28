@@ -5,24 +5,22 @@ namespace App\Jobs;
 use App\Models\RCM;
 use App\Models\RCMForJS;
 use App\Tools\FacebookTool;
-use App\Tools\ScreenShotTool;
-use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
-    use Illuminate\Support\Facades\Log;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use voku\helper\UTF8;
 
-class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
+class ProcessRCM extends Job implements ShouldBeUnique, ShouldQueue
 {
     private $publishSocial = false;
+
     private $tomorrow = false;
 
     /**
      * Create a new job instance.
      *
-     * @param mixed $publishSocial
-     * @param mixed $tomorrow
+     * @param  mixed  $publishSocial
+     * @param  mixed  $tomorrow
      */
     public function __construct($publishSocial = false, $tomorrow = false)
     {
@@ -364,9 +362,9 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
         $all = [];
 
         foreach ($cities['features'] as $c) {
-            ++$i;
+            $i++;
             $data = [
-                'concelho' => UTF8::ucwords(mb_strtolower( UTF8::fix_simple_utf8($c['properties']['Concelho']), 'UTF-8')),
+                'concelho' => UTF8::ucwords(mb_strtolower(UTF8::fix_simple_utf8($c['properties']['Concelho']), 'UTF-8')),
                 'date' => $riscoHoje['dataPrev'],
                 'hoje' => RCM::RCM_TO_HUMAN[$riscoHoje['local'][$c['properties']['DICO']]['data']['rcm']],
                 'amanha' => RCM::RCM_TO_HUMAN[$riscoAmanha['local'][$c['properties']['DICO']]['data']['rcm']],
@@ -410,7 +408,7 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
             }
         }
 
-        if (!count($moderado)) {
+        if (! count($moderado)) {
             $status = date('d-m-Y')." - Sem registo de concelhos com risco de incêndio Moderado {$when2}";
             TwitterTool::tweet($status);
             FacebookTool::publish($status);
@@ -431,7 +429,7 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
             FacebookTool::publish($statusFacebook);
         }
 
-        if (!count($elevado)) {
+        if (! count($elevado)) {
             $status = date('d-m-Y')." - Sem registo de concelhos com risco de incêndio Elevado {$when2}";
             TwitterTool::tweet($status);
             FacebookTool::publish($status);
@@ -452,7 +450,7 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
             FacebookTool::publish($statusFacebook);
         }
 
-        if (!count($muitoElevado)) {
+        if (! count($muitoElevado)) {
             $status = date('d-m-Y')." - Sem registo de concelhos com risco de incêndio Muito Elevado {$when2}";
             TwitterTool::tweet($status);
             FacebookTool::publish($status);
@@ -472,7 +470,7 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
             FacebookTool::publish($statusFacebook);
         }
 
-        if (!count($maximo)) {
+        if (! count($maximo)) {
             $status = date('d-m-Y')." - Sem registo de concelhos com risco de incêndio Máximo {$when2}";
             TwitterTool::tweet($status);
             FacebookTool::publish($status);

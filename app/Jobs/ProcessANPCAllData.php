@@ -4,12 +4,12 @@ namespace App\Jobs;
 
 use App\Models\Incident;
 use Carbon\Carbon;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 use voku\helper\UTF8;
 
-class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
+class ProcessANPCAllData extends Job implements ShouldBeUnique, ShouldQueue
 {
     /**
      * Create a new job instance.
@@ -51,14 +51,15 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
 
         Log::channel('anepc')->debug(json_encode($incidents));
 
-        if(empty($incidents)){
+        if (empty($incidents)) {
             Log::debug('empty incidents retuning');
+
             return;
         }
 
         $this->handleIncidents($incidents);
 
-        if($res->getStatusCode() === 200){
+        if ($res->getStatusCode() === 200) {
             dispatch(new CheckIsActive($incidents));
 
         }
@@ -110,7 +111,7 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
         $isTransportFire = in_array($data['Natureza']['Codigo'], Incident::NATUREZA_CODE_TRANSPORT_FIRE);
         $isUrbanFire = in_array($data['Natureza']['Codigo'], Incident::NATUREZA_CODE_URBAN_FIRE);
         $isOtherFire = in_array($data['Natureza']['Codigo'], Incident::NATUREZA_CODE_OTHER_FIRE);
-        $isOtherIncident = !$isFire && !$isTransportFire && !$isUrbanFire && !$isOtherFire;
+        $isOtherIncident = ! $isFire && ! $isTransportFire && ! $isUrbanFire && ! $isOtherFire;
 
         $isFMA = in_array($data['Natureza']['Codigo'], Incident::NATUREZA_CODE_FMA);
 
@@ -148,10 +149,10 @@ class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
             'isTransporteFire' => $isTransportFire,
             'isOtherFire' => $isOtherFire,
             'isOtherIncident' => $isOtherIncident,
-            'isFMA' => $isFMA
+            'isFMA' => $isFMA,
         ];
 
-        if($create){
+        if ($create) {
             $data['important'] = false;
             $data['heliFight'] = 0;
             $data['heliCoord'] = 0;

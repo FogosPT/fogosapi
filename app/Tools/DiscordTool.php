@@ -6,7 +6,7 @@ class DiscordTool
 {
     public static function post($message)
     {
-        if (!env('DISCORD_ENABLE')) {
+        if (! env('DISCORD_ENABLE')) {
             return;
         }
 
@@ -30,7 +30,7 @@ class DiscordTool
 
     public static function postAero($message)
     {
-        if (!env('DISCORD_ENABLE')) {
+        if (! env('DISCORD_ENABLE')) {
             return;
         }
 

@@ -2,17 +2,17 @@
 
 namespace App\Tools;
 
-use Illuminate\Support\Facades\Log;
 use Noweh\TwitterApi\Client;
 
 class TwitterTool
 {
     private static $client = false;
+
     private static $clientVOST = false;
 
     public static function getClient()
     {
-        if (!self::$client) {
+        if (! self::$client) {
             $settings = [
                 'access_token' => env('TWITTER_OAUTH_ACCESS_TOKEN'),
                 'access_token_secret' => env('TWITTER_OAUTH_ACCESS_TOKEN_SECRET'),
@@ -30,7 +30,7 @@ class TwitterTool
 
     public static function getVOSTClient()
     {
-        if (!self::$clientVOST) {
+        if (! self::$clientVOST) {
             $settings = [
                 'oauth_access_token' => env('TWITTER_OAUTH_ACCESS_TOKEN_VOST'),
                 'oauth_access_token_secret' => env('TWITTER_OAUTH_ACCESS_TOKEN_SECRET_VOST'),
@@ -46,7 +46,7 @@ class TwitterTool
 
     public static function getClientEmergencias()
     {
-        if (!self::$client) {
+        if (! self::$client) {
             $settings = [
                 'oauth_access_token' => env('TWITTER_OAUTH_ACCESS_TOKEN_EMERGENCIAS'),
                 'oauth_access_token_secret' => env('TWITTER_OAUTH_ACCESS_TOKEN_SECRET_EMERGENCIAS'),
@@ -80,7 +80,7 @@ class TwitterTool
         $sentences_array = [];
         $ended_word = 0;
 
-        for ($sentence = 0; $sentence < $max_sentences; ++$sentence) {
+        for ($sentence = 0; $sentence < $max_sentences; $sentence++) {
             $short_string = '';
 
             foreach ($words_array as $word_number => $current_word) {
@@ -96,7 +96,7 @@ class TwitterTool
             $sentences_array[] = $short_string;
             $words_array = array_slice($words_array, $ended_word);
 
-            if (!$words_array) {
+            if (! $words_array) {
                 break;
             }
         }
@@ -106,13 +106,13 @@ class TwitterTool
 
     public static function tweet($text, $lastId = false, $imagePath = false, $emergencias = false, $vost = false)
     {
-        if (!env('TWITTER_ENABLE')) {
+        if (! env('TWITTER_ENABLE')) {
             return false;
         }
 
-        if($vost){
+        if ($vost) {
             $client = self::getVOSTClient();
-        } else if($emergencias){
+        } elseif ($emergencias) {
             $client = self::getClientEmergencias();
         } else {
             $client = self::getClient();
@@ -125,9 +125,9 @@ class TwitterTool
             $media_info = $client->uploadMedia()->upload($file_data);
 
             // Extract media id
-            $id = $media_info["media_id"];
+            $id = $media_info['media_id'];
 
-            $fields['media']['media_ids'] = [(string)$id];
+            $fields['media']['media_ids'] = [(string) $id];
         }
 
         $tweets = self::splitTweets($text);
@@ -143,17 +143,18 @@ class TwitterTool
                 $fields
             );
 
-            if(isset($response->data->id)){
+            if (isset($response->data->id)) {
                 $lastId = $response->data->id;
             } else {
                 $lastId = null;
             }
 
-            if(isset($fields['media']['media_ids'])){
+            if (isset($fields['media']['media_ids'])) {
                 unset($fields['media']['media_ids']);
                 unset($fields['media']);
             }
         }
+
         return $lastId;
     }
 
@@ -161,7 +162,7 @@ class TwitterTool
     {
         $client = self::getVOSTClient();
 
-        $url = 'https://api.twitter.com/1.1/statuses/retweet/' . $id . '.json';
+        $url = 'https://api.twitter.com/1.1/statuses/retweet/'.$id.'.json';
 
         $response = $client
             ->buildOauth($url, 'POST')

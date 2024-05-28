@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Redis;
-use Laravel\Lumen\Routing\Controller;
 
 class OtherController extends Controller
 {
