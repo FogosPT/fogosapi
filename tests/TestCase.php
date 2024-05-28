@@ -2,8 +2,8 @@
 
 namespace Tests;
 
-use Laravel\Lumen\Application;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Laravel\Lumen\Application;
 
 abstract class TestCase extends BaseTestCase
 {

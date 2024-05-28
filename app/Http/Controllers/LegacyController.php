@@ -18,7 +18,6 @@ use App\Resources\V1\WarningResource;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use voku\helper\UTF8;
 
 /** @deprecated */

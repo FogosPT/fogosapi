@@ -6,7 +6,6 @@ use App\Models\RCM;
 use App\Models\RCMForJS;
 use App\Tools\RCMTool;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use voku\helper\UTF8;
 
 class RCMController extends Controller
