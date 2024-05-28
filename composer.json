@@ -16,25 +16,30 @@
         "ext-mongodb": "*",
         "anik/form-request": "^4.2",
         "flipbox/lumen-generator": "^8.2",
-        "guzzlehttp/guzzle": "^7.0",
-        "illuminate/redis": "^8.40",
+        "guzzlehttp/guzzle": "^7.0.1",
         "j7mbo/twitter-api-php": "^1.0",
         "jenssegers/mongodb": "^3.8",
-        "laravel/lumen-framework": "^8.0",
         "noweh/twitter-api-v2-php": "^3.4",
         "php-imap/php-imap": "^5.0",
         "predis/predis": "^1.1",
         "sentry/sentry-laravel": "^2.7",
         "smalot/pdfparser": "^1.0",
         "spatie/pdf-to-text": "^1.4",
-        "voku/portable-utf8": "^5.4"
+        "voku/portable-utf8": "^5.4",
+        "laravel/framework": "^8.75",
+        "fruitcake/laravel-cors": "^2.0",
+        "laravel/sanctum": "^2.11",
+        "laravel/tinker": "^2.5"
     },
     "require-dev": {
         "roave/security-advisories": "dev-latest",
         "fakerphp/faker": "^1.9.1",
         "friendsofphp/php-cs-fixer": "^3.0",
-        "mockery/mockery": "^1.3.1",
-        "phpunit/phpunit": "^9.3"
+        "mockery/mockery": "^1.4.4",
+        "phpunit/phpunit": "^9.5.10",
+        "facade/ignition": "^2.5",
+        "laravel/sail": "^1.0.1",
+        "nunomaduro/collision": "^5.10"
     },
     "autoload": {
         "psr-4": {
