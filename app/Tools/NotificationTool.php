@@ -199,6 +199,7 @@ class NotificationTool
             ],
         ];
 
+        Log::debug(json_encode($headers));
 
         $client = new \GuzzleHttp\Client();
         $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
@@ -301,7 +302,7 @@ class NotificationTool
         self::sendWarning($status, $topic);
     }
 
-    public static function senAllNotification($status)
+    public static function sendAllNotification($status)
     {
         $topic = "all";
 
