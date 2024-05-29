@@ -85,6 +85,7 @@ $router->group(['prefix' => 'v2'], function () use ($router) {
 
     $router->group(['prefix' => 'warnings'], function () use ($router) {
         $router->post('add', '\App\Http\Controllers\WarningsController@add');
+        $router->post('add/agif', '\App\Http\Controllers\WarningsController@addAgif');
     });
 
     $router->group(['prefix' => 'stats'], function () use ($router) {

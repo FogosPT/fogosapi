@@ -52,7 +52,6 @@ class NotificationTool
 
     private static function sendCustomTitleRequest($topic, $status, $title, $forceEnable = false)
     {
-        Log::debug();
         if (!env('NOTIFICATIONS_ENABLE')) {
             return;
         }
@@ -205,6 +204,7 @@ class NotificationTool
         $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
     }
 
+
     public static function sendNewCosNotification(Incident $incident)
     {
         $status = 'Novo Comandante de Operações de socorro: '.$incident->cos;
@@ -297,6 +297,13 @@ class NotificationTool
     public static function sendWarningNotification($status)
     {
         $topic = "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in topics || 'web-warnings' in topics";
+
+        self::sendWarning($status, $topic);
+    }
+
+    public static function senAllNotification($status)
+    {
+        $topic = "all";
 
         self::sendWarning($status, $topic);
     }
