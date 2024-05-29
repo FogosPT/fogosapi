@@ -59,7 +59,7 @@ class WarningsController extends Controller
         $warning->text = $status;
         $warning->save();
 
-        NotificationTool::sendWarningNotification($status);
+        NotificationTool::sendAllNotification($status);
 
         TwitterTool::tweet($status);
         TelegramTool::publish($status);
