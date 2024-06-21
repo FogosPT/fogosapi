@@ -4,50 +4,128 @@ namespace App\Tools;
 
 use App\Models\Incident;
 use App\Models\IncidentStatusHistory;
+use GuzzleHttp\Exception\RequestException;
+use Http\Client\Exception;
 use Illuminate\Support\Facades\Log;
+use Google\Auth\ApplicationDefaultCredentials;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Client;
+use phpDocumentor\Reflection\Types\Self_;
+
 
 class NotificationTool
 {
+    private static $endpoint = '/v1/projects/admob-app-id-6663345165/messages:send';
+
+    private static function getAuth()
+    {
+        // specify the path to your application credentials
+        putenv('GOOGLE_APPLICATION_CREDENTIALS=/var/www/html/credentials.json');
+
+        // define the scopes for your API call
+        $scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
+
+        // create middleware
+        $middleware = ApplicationDefaultCredentials::getCredentials($scopes);
+
+        $auth = $middleware->fetchAuthToken();
+
+        return $auth;
+    }
+
+    public static function test()
+    {
+        $client = new Client([
+            'base_uri' => 'https://fcm.googleapis.com',
+        ]);
+
+        $status = 'Test';
+
+        
+        $headers = [
+            'allow_redirects' => true,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . self::getClient()['access_token']
+            ],
+            'json' => [
+                'message' => [
+                    //'condition' => "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in topics || 'web-warnings' in topics",
+                    'topic' => "all",
+                    'notification' => [
+                        'title' => "Fogos.pt - Aviso",
+                        'body' => $status,
+                    ],
+                    'android' => [
+                        'priority' => 'high'
+                    ],
+                    'apns' => [
+                        'headers' => [
+                            'apns-priority' => "5"
+                        ]
+                    ]
+                ],
+            ],
+        ];
+
+        try{
+            $response = $client->post(self::$endpoint,$headers );
+        } catch (RequestException $e){
+            var_dump($e->getMessage());
+            var_dump($e->getResponse()->getBody()->getContents());
+        }
+    }
+
+
     private static function sendRequest($topic, $status, $location, $id)
     {
         if (!env('NOTIFICATIONS_ENABLE')) {
             return;
         }
 
+        $client = new Client([
+            'base_uri' => 'https://fcm.googleapis.com',
+        ]);
+
         $headers = [
             'allow_redirects' => true,
             'headers' => [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
-                'Authorization' => 'key='.env('FIREBASE_KEY'),
+                'Authorization' => 'Bearer ' . self::getAuth()['access_token']
             ],
             'json' => [
-                'condition' => $topic,
-                'notification' => [
-                    'title' => "Fogos.pt - {$location}",
-                    'body' => $status,
-                    'sound' => 'default',
-                    'icon' => 'https://fogos.pt/img/logo.svg',
-                ],
-                'data' => [
-                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                    'fireId' => $id
-                ],
-                'android' => [
-                    'priority' => 'high'
-                ],
-                'apns' => [
-                    [
+                'message' => [
+                    //'condition' => "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in topics || 'web-warnings' in topics",
+                    'condition' => $topic,
+                    'notification' => [
+                        'title' => "Fogos.pt - {$location}",
+                        'body' => $status,
+                    ],
+                    'android' => [
+                        'priority' => 'high'
+                    ],
+                    'apns' => [
                         'headers' => [
                             'apns-priority' => "5"
                         ]
-                    ]
-                ]
+                    ],
+                    'data' => [
+                        'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                        'fireId' => $id
+                    ],
+                ],
             ],
         ];
 
-        $client = new \GuzzleHttp\Client();
-        $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
+        try{
+            $response = $client->post(self::$endpoint,$headers );
+        } catch (RequestException $e){
+            Log::debug($e->getMessage());
+            Log::debug($e->getResponse()->getBody()->getContents());
+        }
+
     }
 
     private static function sendCustomTitleRequest($topic, $status, $title, $forceEnable = false)
@@ -56,37 +134,44 @@ class NotificationTool
             return;
         }
 
+        $client = new Client([
+            'base_uri' => 'https://fcm.googleapis.com',
+        ]);
+
         $headers = [
             'allow_redirects' => true,
             'headers' => [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
-                'Authorization' => 'key='.env('FIREBASE_KEY'),
+                'Authorization' => 'Bearer ' . self::getAuth()['access_token']
             ],
             'json' => [
-                'condition' => $topic,
-                'notification' => [
-                    'title' => "Fogos.pt - {$title}",
-                    'body' => $status,
-                    'sound' => 'default',
-                    'icon' => 'https://fogos.pt/img/logo.svg',
-                ],
-                'android' => [
-                    'priority' => 'high'
-                ],
-                'apns' => [
-                    [
+                'message' => [
+                    //'condition' => "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in topics || 'web-warnings' in topics",
+                    'condition' => $topic,
+                    'notification' => [
+                        'title' => "Fogos.pt - {$title}",
+                        'body' => $status,
+                    ],
+                    'android' => [
+                        'priority' => 'high'
+                    ],
+                    'apns' => [
                         'headers' => [
                             'apns-priority' => "5"
                         ]
-                    ]
-                ]
+                    ],
+                ],
             ],
-
         ];
 
-        $client = new \GuzzleHttp\Client();
-        $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
+        try{
+            $response = $client->post(self::$endpoint,$headers );
+        } catch (RequestException $e){
+            Log::debug($e->getMessage());
+            Log::debug($e->getResponse()->getBody()->getContents());
+        }
+
     }
 
     private static function buildLegacyTopic($id)
@@ -150,31 +235,49 @@ class NotificationTool
 
         $title = 'Ocorrência Importante';
 
+
+        $client = new Client([
+            'base_uri' => 'https://fcm.googleapis.com',
+        ]);
+
         $headers = [
             'allow_redirects' => true,
             'headers' => [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
-                'Authorization' => 'key='.env('FIREBASE_KEY'),
+                'Authorization' => 'Bearer ' . self::getAuth()['access_token']
             ],
             'json' => [
-                'condition' => $topic,
-                'notification' => [
-                    'title' => "Fogos.pt - {$title}",
-                    'body' => $status,
-                    'sound' => 'default',
-                    'icon' => 'https://fogos.pt/img/logo.svg',
+                'message' => [
+                    //'condition' => "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in topics || 'web-warnings' in topics",
+                    'condition' => $topic,
+                    'notification' => [
+                        'title' => "Fogos.pt - {$title}",
+                        'body' => $status,
+                    ],
+                    'android' => [
+                        'priority' => 'high'
+                    ],
+                    'apns' => [
+                        'headers' => [
+                            'apns-priority' => "5"
+                        ]
+                    ],
+                    'data' => [
+                        'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                        'fireId' => $incidentId
+                    ]
                 ],
-                'data' => [
-                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                    'fireId' => $incidentId
-                ]
             ],
         ];
 
+        try{
+            $response = $client->post(self::$endpoint,$headers );
+        } catch (RequestException $e){
+            Log::debug($e->getMessage());
+            Log::debug($e->getResponse()->getBody()->getContents());
+        }
 
-        $client = new \GuzzleHttp\Client();
-        $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
     }
 
     public static function sendWarning($status, $topic)
