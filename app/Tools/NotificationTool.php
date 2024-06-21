@@ -3,14 +3,10 @@
 namespace App\Tools;
 
 use App\Models\Incident;
-use App\Models\IncidentStatusHistory;
 use GuzzleHttp\Exception\RequestException;
-use Http\Client\Exception;
 use Illuminate\Support\Facades\Log;
 use Google\Auth\ApplicationDefaultCredentials;
-use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Client;
-use phpDocumentor\Reflection\Types\Self_;
 
 
 class NotificationTool
@@ -41,7 +37,6 @@ class NotificationTool
 
         $status = 'Test';
 
-        
         $headers = [
             'allow_redirects' => true,
             'headers' => [
