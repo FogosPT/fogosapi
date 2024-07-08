@@ -96,6 +96,8 @@ class ProcessANPCAllDataV2 extends Job
                 DiscordTool::postError('A API não atualiza ha 10 minutos');
                 $last['notify'] = true;
             }
+
+            $x[] = $last;
         }
 
         file_put_contents('history.json', json_encode($x));
