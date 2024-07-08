@@ -66,7 +66,7 @@ class ProcessICNFNewFireData extends Job
                 $distrito = UTF8::ucwords(mb_strtolower($d->DISTRITO->__toString()));
                 $concelho = UTF8::ucwords(mb_strtolower($d->CONCELHO->__toString()));
                 $freguesia = UTF8::ucwords(mb_strtolower($d->FREGUESIA->__toString()));
-                $localidade = UTF8::ucwords(mb_strtolower($d->LOCAL->__toString()));
+                $localidade = UTF8::ucwords(mb_strtolower($d->LOCAL->__toString())) . ' -> Número de meios -99. Sem informação disponivel de momento.';
 
                 $point = [
                     'id' => $id,
@@ -75,10 +75,10 @@ class ProcessICNFNewFireData extends Job
                     'date' => $date->format('d-m-Y'),
                     'hour' => $date->format('H:i'),
                     'location' => $distrito.', '.$concelho.', '.$freguesia,
-                    'aerial' => 0,
-                    'terrain' => 0,
-                    'meios_aquaticos' => 0,
-                    'man' => 0,
+                    'aerial' => -99,
+                    'terrain' => -99,
+                    'meios_aquaticos' => -99,
+                    'man' => -99,
                     'district' => $distrito,
                     'concelho' => UTF8::ucwords(mb_strtolower($concelho)),
                     'dico' => $d->INE->__toString(),
