@@ -7,6 +7,7 @@ use App\Models\Location;
 use App\Tools\DiscordTool;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use voku\helper\UTF8;
 use GuzzleHttp\Exception\ClientException;
 
@@ -31,8 +32,6 @@ class ProcessANPCAllDataV2 extends Job
     public function handle()
     {
         $url = env('ANEPC_API_URL');
-
-
 
         $options = [
             'headers' => [
@@ -72,6 +71,31 @@ class ProcessANPCAllDataV2 extends Job
 
         }
         dispatch(new CheckImportantFireIncident());
+
+        $currentHash = md5(json_encode($incidents));
+        $json = file_get_contents('history.json');
+        $x = json_decode($json,true);
+
+        $last = end($x);
+        $now = Carbon::now();
+
+        if($last['hash'] !== $currentHash){
+            $x[] = [
+                'hash' => $currentHash,
+                'time' => $now,
+                'notify' => false
+            ];
+        } else {
+            $then = Carbon::parse($last['time']);
+            $diff = $then->diffInMinutes($now);
+            if( $diff >= 10){
+                DiscordTool::postError('A API não atualiza ha 10 minutos');
+                $last['notify'] = true;
+            }
+        }
+
+        file_put_contents('history.json', json_encode($x));
+
     }
 
     private function handleIncidents($data)
