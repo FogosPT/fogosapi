@@ -64,6 +64,8 @@ class NotificationTool
             ],
         ];
 
+        Log::debug(json_encode($headers));
+
         try{
             $response = $client->post(self::$endpoint,$headers );
         } catch (RequestException $e){
@@ -114,6 +116,7 @@ class NotificationTool
             ],
         ];
 
+        Log::debug(json_encode($headers));
         try{
             $response = $client->post(self::$endpoint,$headers );
         } catch (RequestException $e){
@@ -159,6 +162,8 @@ class NotificationTool
                 ],
             ],
         ];
+
+        Log::debug(json_encode($headers));
 
         try{
             $response = $client->post(self::$endpoint,$headers );
@@ -265,6 +270,8 @@ class NotificationTool
                 ],
             ],
         ];
+
+        Log::debug(json_encode($headers));
 
         try{
             $response = $client->post(self::$endpoint,$headers );
