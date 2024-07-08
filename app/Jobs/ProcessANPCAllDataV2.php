@@ -78,6 +78,8 @@ class ProcessANPCAllDataV2 extends Job
 
         $last = end($x);
         $now = Carbon::now();
+        $then = Carbon::parse($last['time']);
+        $diff = $then->diffInMinutes($now);
 
         if($last['hash'] !== $currentHash){
             $x[] = [
@@ -85,9 +87,11 @@ class ProcessANPCAllDataV2 extends Job
                 'time' => $now,
                 'notify' => false
             ];
+
+            if($last['notify']){
+                DiscordTool::postError('Voltou a API depois de ' . $diff . ' minutos sem atualizar');
+            }
         } else {
-            $then = Carbon::parse($last['time']);
-            $diff = $then->diffInMinutes($now);
             if( $diff >= 10){
                 DiscordTool::postError('A API não atualiza ha 10 minutos');
                 $last['notify'] = true;
