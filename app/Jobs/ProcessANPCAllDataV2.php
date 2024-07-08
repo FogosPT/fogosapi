@@ -85,6 +85,7 @@ class ProcessANPCAllDataV2 extends Job
             $x[] = [
                 'hash' => $currentHash,
                 'time' => $now,
+                'ticks' => 0,
                 'notify' => false
             ];
 
@@ -96,11 +97,13 @@ class ProcessANPCAllDataV2 extends Job
                 if(!$last['notify']){
                     DiscordTool::postError('A API não atualiza ha 10 minutos');
                     $last['notify'] = true;
-                    $x[] = $last;
                 }
-
+            } elseif($last['ticks'] % 5 === 0){
+                DiscordTool::postError('A API não atualiza ha '.$diff.' minutos');
             }
 
+            $last['ticks']++;
+            $x[] = $last;
         }
 
         file_put_contents('history.json', json_encode($x));
