@@ -9,6 +9,7 @@ use App\Jobs\HourlySummary;
 use App\Jobs\ProcessANPCAllData;
 use App\Jobs\ProcessANPCAllDataV2;
 use App\Jobs\ProcessDataForHistoryTotal;
+use App\Jobs\ProcessICNFNewFireData;
 use App\Jobs\ProcessMadeiraWarnings;
 use App\Jobs\ProcessPlanes;
 use App\Jobs\ProcessRCM;
@@ -66,6 +67,7 @@ class Kernel extends ConsoleKernel
 
             $schedule->job(new DailySummary())->daily()->at('09:30');
 
+            $schedule->job(new ProcessICNFNewFireData())->everyFiveMinutes();
 
             //$schedule->job(new HandleANEPCImportantData())->everyTenMinutes();
             //$schedule->job(new HandleANEPCPositEmail())->everyTenMinutes();
