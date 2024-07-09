@@ -41,8 +41,6 @@ class ProcessICNFNewFireData extends Job
 
         preg_match_all('/\[(.*?)\]/', $data, $result);
 
-        print_r($result);
-
         $i = 0;
         foreach ($result[1] as $r) {
             if ($i === 0 || $i === 1) {
@@ -65,10 +63,10 @@ class ProcessICNFNewFireData extends Job
 
             $id = strip_tags(str_replace("'", '', $rr[0]));
 
-            $this->incident = Incident::where('id', $id)
+            $incident = Incident::where('id', $id)
                 ->get();
 
-            if (!isset($this->incident[0])) {
+            if (!isset($incident[0])) {
                 $d = $this->getData($id);
 
                 $date = new Carbon($d->DATAALERTA->__toString() . ' ' . $d->HORAALERTA->__toString(), 'Europe/lisbon');
@@ -125,7 +123,13 @@ class ProcessICNFNewFireData extends Job
 
                 Log::debug(json_encode($point));
 
-                $incident = new Incident($point);
+                $incidentDb = new Incident($point);
+                $incidentDb->save();
+            } else {
+                $incident = $incident[0];
+                $incident->statusCode = $statusCode;
+                $incident->status = $status;
+                $incident->statusColor = $statusColor;
                 $incident->save();
             }
         }
