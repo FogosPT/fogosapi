@@ -127,10 +127,12 @@ class ProcessICNFNewFireData extends Job
                 $incidentDb->save();
             } else {
                 $incident = $incident[0];
-                $incident->statusCode = $statusCode;
-                $incident->status = $status;
-                $incident->statusColor = $statusColor;
-                $incident->save();
+                if($incident->status === 'Em curso' && $status === 'Em Resolução'){
+                    $incident->statusCode = $statusCode;
+                    $incident->status = $status;
+                    $incident->statusColor = $statusColor;
+                    $incident->save();
+                }
             }
         }
     }
