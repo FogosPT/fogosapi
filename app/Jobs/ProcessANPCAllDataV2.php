@@ -85,12 +85,13 @@ class ProcessANPCAllDataV2 extends Job
             $x[] = [
                 'hash' => $currentHash,
                 'time' => $now,
-                'ticks' => 0,
+                'ticks' => 1,
                 'notify' => false
             ];
 
             if($last['notify']){
                 DiscordTool::postError('Voltou a API depois de ' . $diff . ' minutos sem atualizar');
+                $last['ticks'] = 0;
             }
         } else {
             if( $diff >= 10){
@@ -100,7 +101,7 @@ class ProcessANPCAllDataV2 extends Job
                 }
             }
 
-            if($last['ticks'] % 5 === 0){
+            if($last['ticks'] % 5 == 0){
                 DiscordTool::postError('A API não atualiza ha '.$diff.' minutos');
             }
 

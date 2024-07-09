@@ -41,6 +41,8 @@ class ProcessICNFNewFireData extends Job
 
         preg_match_all('/\[(.*?)\]/', $data, $result);
 
+        print_r($result);
+
         $i = 0;
         foreach ($result[1] as $r) {
             if ($i === 0 || $i === 1) {
@@ -51,10 +53,17 @@ class ProcessICNFNewFireData extends Job
             ++$i;
 
             $rr = explode("',", $r);
+            if(isset($rr[12]) && $rr[12] = "'Extinto"){
+                $status = 'Em Resolução';
+                $statusCode = 7;
+                $statusColor = '65C4ED';
+            } else {
+                $status = 'Em Curso';
+                $statusCode = 5;
+                $statusColor = 'B81E1F';
+            }
 
             $id = strip_tags(str_replace("'", '', $rr[0]));
-
-            Log::debug('id => ' . $id);
 
             $this->incident = Incident::where('id', $id)
                 ->get();
@@ -88,9 +97,9 @@ class ProcessICNFNewFireData extends Job
                     'coordinates' => [(float) $d->LAT->__toString(), (float) $d->LON->__toString()],
                     'naturezaCode' => '3103',
                     'natureza' => 'Mato',
-                    'statusCode' => 3,
-                    'statusColor' =>'CE773C',
-                    'status' => 'Despacho',
+                    'statusCode' => $statusCode,
+                    'statusColor' =>$statusColor,
+                    'status' => $status,
                     'localidade' => $localidade,
                     'active' => true,
                     'sadoId' => $id,
