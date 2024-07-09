@@ -53,7 +53,7 @@ class ProcessICNFNewFireData extends Job
             ++$i;
 
             $rr = explode("',", $r);
-            if(isset($rr[12]) && $rr[12] = "'Extinto"){
+            if(isset($rr[12]) && $rr[12] === "'Extinto"){
                 $status = 'Em Resolução';
                 $statusCode = 7;
                 $statusColor = '65C4ED';
