@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Incident;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class CleanICNFFires extends Job
 {
@@ -31,6 +32,7 @@ class CleanICNFFires extends Job
                 $diff = $incident->created->diffInMinutes($now);
                 if($diff > 60){
                     $incident->active = false;
+                    $incident->save();
                 }
             }
         }
