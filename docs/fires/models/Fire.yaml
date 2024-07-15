@@ -21,12 +21,32 @@ properties:
     format: hour
   location:
     type: string
+  detailLocation:
+    type: string
+    description: Detailed location from ICNF should be appended to the Location property
   aerial:
     type: integer
   terrain:
     type: integer
   man:
     type: integer
+  meios_aquaticos:
+    type: integer
+  heliFight:
+    type: integer
+    description: Helicopters FireFight
+  planeFight:
+    type: integer
+    description: Helicopters FireFight
+  heliCoord:
+    type: integer
+    description: Coordination helicopters
+  especieName:
+    type: string
+    description: Legacy property
+  familiaName:
+    type: string
+    description: Legacy property
   district:
     type: string
   concelho:
@@ -39,6 +59,12 @@ properties:
     type: number
   lng:
     type: number
+  pco:
+    type: string
+    description: Posto de Comando Operacional description
+  cos:
+    type: string
+    description: Comandante de Operações de Socorro
   naturezaCode:
     type: integer
     enum:
@@ -74,6 +100,18 @@ properties:
   disappear:
     type: boolean
     default: false
+  regiao:
+    type: string
+    description: Região of the incidente
+  subRegiao:
+    type: string
+    description: Sub Região of the incidente
+  kml:
+    type: string
+    description: KML of the burn area from ICNF
+  kmlVost:
+    type: string
+    description: KML of the burn area from Vost.pt
   created:
     type: object
     properties:
