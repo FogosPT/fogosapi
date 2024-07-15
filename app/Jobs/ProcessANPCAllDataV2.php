@@ -94,15 +94,16 @@ class ProcessANPCAllDataV2 extends Job
                 $last['ticks'] = 0;
             }
         } else {
-            if( $diff >= 10){
+            if( $diff >= 15){
                 if(!$last['notify']){
                     DiscordTool::postError('A API não atualiza ha 10 minutos');
                     $last['notify'] = true;
                 }
-            }
 
-            if($last['ticks'] % 5 == 0){
-                DiscordTool::postError('A API não atualiza ha '.$diff.' minutos');
+                if($last['ticks'] % 5 == 0){
+                    DiscordTool::postError('A API não atualiza ha '.$diff.' minutos');
+                }
+
             }
 
             $last['ticks']++;
