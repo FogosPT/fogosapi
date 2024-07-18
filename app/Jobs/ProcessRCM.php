@@ -10,7 +10,7 @@ use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
-    use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log;
 use voku\helper\UTF8;
 
 class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
@@ -489,8 +489,25 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
                 $status .= $e."\r\n";
             }
 
-            TwitterTool::tweet($status);
+            TwitterTool::tweet($status, false, false, false, false, true);
             FacebookTool::publish($statusFacebook);
         }
+
+        $whenUrl = $this->tomorrow ? '?risk-tomorrow=1' : '?risk=1';
+        $url = "{$whenUrl}";
+        $name = 'risk' . rand(0,255);
+        $path = "/var/www/html/public/screenshots/{$name}.png";
+        $urlImage = "https://api-dev.fogos.pt/screenshots/{$name}.png";
+
+        $status = date('d-m-Y')." Risco de incêndio para {$when} #FogosPT";
+
+        ScreenShotTool::takeScreenShot($url, $name);
+
+        $id = TwitterTool::tweet($status, false, $path, false, false, true);
+        TwitterTool::retweetVost($id);
+        FacebookTool::publishWithImage($status, $urlImage);
+        TelegramTool::publishImage($status, $path);
+
+        ScreenShotTool::removeScreenShotFile($name);
     }
 }

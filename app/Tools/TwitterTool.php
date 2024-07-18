@@ -104,9 +104,9 @@ class TwitterTool
         return $sentences_array;
     }
 
-    public static function tweet($text, $lastId = false, $imagePath = false, $emergencias = false, $vost = false)
+    public static function tweet($text, $lastId = false, $imagePath = false, $emergencias = false, $vost = false, $bypassEnable = false)
     {
-        if (!env('TWITTER_ENABLE')) {
+        if (!env('TWITTER_ENABLE') && !$bypassEnable) {
             return false;
         }
 
