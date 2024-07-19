@@ -28,6 +28,7 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
     {
         $this->publishSocial = $publishSocial;
         $this->tomorrow = $tomorrow;
+        Log::debug('');
     }
 
     /**
@@ -413,7 +414,7 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
         if (!count($moderado)) {
             $status = date('d-m-Y')." - Sem registo de concelhos com risco de incêndio Moderado {$when2}";
             TwitterTool::tweet($status);
-            FacebookTool::publish($status);
+            //FacebookTool::publish($status);
         } else {
             $concelhos = (count($moderado) === 1) ? 'Concelho' : 'Concelhos';
 
@@ -428,13 +429,13 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
             }
 
             TwitterTool::tweet($status);
-            FacebookTool::publish($statusFacebook);
+            //FacebookTool::publish($statusFacebook);
         }
 
         if (!count($elevado)) {
             $status = date('d-m-Y')." - Sem registo de concelhos com risco de incêndio Elevado {$when2}";
             TwitterTool::tweet($status);
-            FacebookTool::publish($status);
+            //FacebookTool::publish($status);
         } else {
             $concelhos = (count($elevado) === 1) ? 'Concelho' : 'Concelhos';
 
@@ -449,7 +450,7 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
             }
 
             TwitterTool::tweet($status);
-            FacebookTool::publish($statusFacebook);
+            //FacebookTool::publish($statusFacebook);
         }
 
         if (!count($muitoElevado)) {
@@ -468,6 +469,9 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
                 $statusFacebook .= $e.'%0A';
                 $status .= $e."\r\n";
             }
+
+            $statusFacebook .= 'Nos dias de perigo “muito elevado” ou “máximo” é PROIBIDO fazer Queimadas. Nos restantes dias apenas é PERMITIDO fazer com AUTORIZAÇÃO do município. Faça o registo na APLICAÇÃO, é OBRIGATÓRIO. Aplicável nos territórios rurais e urbanos';
+            $status .= 'Nos dias de perigo “muito elevado” ou “máximo” é PROIBIDO fazer Queimadas. Nos restantes dias apenas é PERMITIDO fazer com AUTORIZAÇÃO do município. Faça o registo na APLICAÇÃO, é OBRIGATÓRIO. Aplicável nos territórios rurais e urbanos';
             TwitterTool::tweet($status);
             FacebookTool::publish($statusFacebook);
         }
@@ -489,6 +493,9 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
                 $status .= $e."\r\n";
             }
 
+            $statusFacebook .= 'Nos dias de perigo “muito elevado” ou “máximo” é PROIBIDO fazer Queimadas. Nos restantes dias apenas é PERMITIDO fazer com AUTORIZAÇÃO do município. Faça o registo na APLICAÇÃO, é OBRIGATÓRIO. Aplicável nos territórios rurais e urbanos';
+            $status .= 'Nos dias de perigo “muito elevado” ou “máximo” é PROIBIDO fazer Queimadas. Nos restantes dias apenas é PERMITIDO fazer com AUTORIZAÇÃO do município. Faça o registo na APLICAÇÃO, é OBRIGATÓRIO. Aplicável nos territórios rurais e urbanos';
+            
             TwitterTool::tweet($status, false, false, false, false, true);
             FacebookTool::publish($statusFacebook);
         }
