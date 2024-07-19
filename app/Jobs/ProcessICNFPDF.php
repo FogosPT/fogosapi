@@ -85,8 +85,8 @@ class ProcessICNFPDF extends Job implements ShouldQueue
         if (!$alertFromExists) {
             $hashtag = HashTagTool::getHashTag($this->incident->concelho);
             $status = "ℹ Alerta dado por {$this->incident->alertFrom} https://{$domain}/fogo/{$this->incident->id} {$hashtag} ℹ";
-            $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
-            $this->incident->lastTweetId = $lastTweetId;
+            //$lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
+            //$this->incident->lastTweetId = $lastTweetId;
             $this->incident->save();
         }
 

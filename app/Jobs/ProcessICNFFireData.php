@@ -195,7 +195,7 @@ class ProcessICNFFireData extends Job
             $name = "screenshot-{$this->incident->id}"  . rand(0,255);
             $path = "/var/www/html/public/screenshots/{$name}.png";
 
-            ScreenShotTool::takeScreenShot($url, $name);
+            /*ScreenShotTool::takeScreenShot($url, $name);
 
             $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
@@ -203,9 +203,9 @@ class ProcessICNFFireData extends Job
             $this->incident->save();
 
             //FacebookTool::publish($status);
-            TelegramTool::publish($status);
-            BlueskyTool::publish($status);
-            ScreenShotTool::removeScreenShotFile($name);
+            //TelegramTool::publish($status);
+            //BlueskyTool::publish($status);
+            ScreenShotTool::removeScreenShotFile($name);*/
         }
 
         if ($notifyKML) {
@@ -247,8 +247,8 @@ class ProcessICNFFireData extends Job
                 $this->incident->save();
 
                 //FacebookTool::publish($status);
-                TelegramTool::publish($status);
-                BlueskyTool::publish($status);
+                //TelegramTool::publish($status);
+                //BlueskyTool::publish($status);
                 ScreenShotTool::removeScreenShotFile($name);
             }
 

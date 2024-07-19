@@ -66,7 +66,7 @@ class DailySummary extends Job
         $status = "ℹ Resumo diário de ontem {$start->format('d-m-Y')}:\r\n - Total de ignições: {$total} \r\n - Operacionais Mobilizados: {$maxMan} \r\n - Veiculos Mobilizados: {$maxCars} \r\n - Missões com Meios Aéreos: {$maxPlanes} \r\n - Total Área Ardida contabilizada: {$totalBurnArea} ha ℹ";
         $statusf = "ℹ Resumo diário de ontem {$start->format('d-m-Y')}:%0A - Total de ignições: {$total} %0A - Operacionais Mobilizados: {$maxMan} %0A - Veiculos Mobilizados: {$maxCars} %0A - Missões com Meios Aéreos: {$maxPlanes} %0A - Total Área Ardida contabilizada: {$totalBurnArea} ha ℹ";
 
-        $id = TwitterTool::tweet($status, false);
+        $id = TwitterTool::tweet($status, false,false,false,false,true);
         TwitterTool::retweetVost($id);
         FacebookTool::publish($statusf);
         TelegramTool::publish($status);
