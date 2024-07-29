@@ -1,0 +1,133 @@
+title: Fire V2
+description: V2 Fire model details
+type: object
+properties:
+  id:
+    type: string
+    description: Public identificator
+  coords:
+    type: boolean
+  dateTime:
+    type: object
+    properties:
+      sec:
+        type: integer
+        format: timestamp
+  date:
+    type: string
+    format: date
+  hour:
+    type: string
+    format: hour
+  location:
+    type: string
+  aerial:
+    type: integer
+  meios_aquaticos:
+    type: integer
+  man:
+    type: integer
+  terrain:
+    type: integer
+  district:
+    type: string
+  concelho:
+    type: string
+  freguesia:
+    type: string
+  dico:
+    type: string
+  lat:
+    type: number
+  lng:
+    type: number
+  naturezaCode:
+    type: integer
+    enum:
+      - 3101
+      - 3103
+      - 3105
+      - 3107
+  natureza:
+    type: string
+  especieName:
+    type: string
+    description: Legacy property
+  familiaName:
+    type: string
+    description: Legacy property
+  statusCode:
+    type: integer
+    enum:
+      - 3
+      - 4
+      - 5
+      - 6
+  statusColor:
+    type: string
+    description: Hexadecimal code representing colors, related with `statusCode` value.
+  status:
+    type: string
+  important:
+    type: boolean
+    default: false
+  localidade:
+    type: string
+  active:
+    type: boolean
+  sadoId:
+    type: string
+  sharepointId:
+    type: integer
+  extra:
+    type: string
+  disappear:
+    type: boolean
+    default: false
+  icnf:
+    type: string
+  detailLocation:
+    type: string
+    description: Detailed location from ICNF should be appended to the Location property
+  kml:
+    type: string
+    description: KML of the burn area from ICNF
+  kmlVost:
+    type: string
+    description: KML of the burn area from Vost.pt
+  pco:
+    type: string
+    description: Posto de Comando Operacional description
+  cos:
+    type: string
+    description: Comandante de Operações de Socorro
+  heliFight:
+    type: integer
+    description: Helicopters FireFight
+  heliCoord:
+    type: integer
+    description: Coordination helicopters
+  planeFight:
+    type: integer
+    description: Helicopters FireFight
+  anepcDirectUpdate:
+    type: boolean
+    default: false
+  regiao:
+    type: string
+    description: Região of the incidente
+  subRegiao:
+    type: string
+    description: Sub Região of the incidente
+  created:
+    type: object
+    properties:
+      sec:
+        type: integer
+        format: timestamp
+  updated:
+    type: object
+    properties:
+      sec:
+        type: integer
+        format: timestamp
