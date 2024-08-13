@@ -69,7 +69,7 @@ class Kernel extends ConsoleKernel
             $schedule->job(new DailySummary())->daily()->at('09:30');
 
             $schedule->job(new ProcessICNFNewFireData())->everyFiveMinutes();
-            $schedule->job(new CleanICNFFires())->everyFiveMinutes();
+            //$schedule->job(new CleanICNFFires())->everyFiveMinutes();
 
             //$schedule->job(new HandleANEPCImportantData())->everyTenMinutes();
             //$schedule->job(new HandleANEPCPositEmail())->everyTenMinutes();
