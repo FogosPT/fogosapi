@@ -1,6 +1,6 @@
 get:
   operationId: v2getFiresActiveList
-  summary: List active fires
+  summary: List active fires V2
   tags:
     - V2
   parameters:
@@ -14,7 +14,7 @@ get:
     - $ref: '../parameters/query/csv2.yaml'
   responses:
     200:
-      $ref: '../responses/legacy-fires-list.yaml'
+      $ref: '../responses/v2-fires-list.yaml'
     404:
       $ref: '../../common/responses/404.yaml'
     500:
