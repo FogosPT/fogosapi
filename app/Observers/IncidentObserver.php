@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Jobs\HandleHJProject;
 use App\Jobs\HandleNewIncidentEmergenciasSocialMedia;
 use App\Jobs\HandleNewIncidentSocialMedia;
+use App\Jobs\HandlePSProject;
 use App\Jobs\ProcessICNFFireData;
 use App\Jobs\SaveIncidentHistory;
 use App\Jobs\SaveIncidentStatusHistory;
@@ -45,6 +46,11 @@ trait IncidentObserver
                 dispatch(new HandleHJProject($incident, env('HL_PROJECT_TELEGRAM_CHANNEL_2')));
             } elseif (in_array($incident->dico, $hlDico3)){
                 dispatch(new HandleHJProject($incident, env('HL_PROJECT_TELEGRAM_CHANNEL_3')));
+            }
+
+            $psDico = explode(',', env('PS_PROJECT_TELEGRAM_CHANNEL_1_DICOS'));
+            if(in_array($incident->dico, $psDico)){
+                dispatch(new HandlePSProject($incident));
             }
         });
 
