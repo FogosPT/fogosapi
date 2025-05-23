@@ -31,4 +31,17 @@ class RCM extends Model
         4 => 'Muito Elevado',
         5 => 'Maximo',
     ];
+
+    public const RCM_TO_EMOJI = [
+        'Reduzido' => '🟢',
+        'Moderado' => '🔵',
+        'Elevado' => '🟡',
+        'Muito Elevado' => '🟠',
+        'Maximo' => '🔴',
+    ];
+
+    public function getRiskTodayEmoji()
+    {
+        return self::RCM_TO_EMOJI[$this->hoje];
+    }
 }
