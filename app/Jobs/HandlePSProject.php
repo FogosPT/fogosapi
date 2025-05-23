@@ -31,9 +31,17 @@ class HandlePSProject extends Job
 
         $status = "⚠️ NOVA OCORRÊNCIA NA ÁREA OPERACIONAL:
 
-{$this->incident->date} - {$this->incident->hour} // {$this->incident->natureza}, {$this->incident->localidade}, {$this->incident->concelho}
+{$this->incident->date} - {$this->incident->hour} - {$this->incident->localidade}
 
-✍🏻 Nº SADO DA OCORRÊNCIA: {$this->incident->sadoId}";
+{$this->incident->natureza}
+
+🧑‍🚒 - {$this->incident->man}
+🚒 - {$this->incident->terrain}
+🚁 - {$this->incident->aerial}
+🚤 - {$this->incident->meios_aquaticos}
+
+Estado: {$this->incident->status}
+";
 
         $data = [
             'chat_id' => env('PS_PROJECT_TELEGRAM_CHANNEL'),

@@ -32,7 +32,7 @@ class SendRiskPSProject extends Job
             ->orderBy('created', 'desc')
             ->first();
 
-        $status = "Risco de incêndio para hoje: {$rcm->getRiskTodayEmoji()} - {$rcm->hoje}";
+        $status = "Risco de incêndio para hoje: {$rcm->getRiskTodayEmoji()} {$rcm->hoje}";
 
         $data = [
             'chat_id' => env('PS_PROJECT_TELEGRAM_CHANNEL'),
