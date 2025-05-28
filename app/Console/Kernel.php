@@ -6,6 +6,7 @@ use App\Jobs\CleanICNFFires;
 use App\Jobs\DailySummary;
 use App\Jobs\HandleANEPCImportantData;
 use App\Jobs\HandleANEPCPositEmail;
+use App\Jobs\HandleWeatherWarnings;
 use App\Jobs\HourlySummary;
 use App\Jobs\ProcessANPCAllData;
 use App\Jobs\ProcessANPCAllDataV2;
@@ -70,7 +71,7 @@ class Kernel extends ConsoleKernel
             $schedule->job(new DailySummary())->daily()->at('09:30');
             $schedule->job(new SendRiskPSProject())->daily()->at('08:30');
 
-
+            $schedule->job(new HandleWeatherWarnings())->everyFifteenMinutes();
 
             $schedule->job(new ProcessICNFNewFireData())->everyFiveMinutes();
             //$schedule->job(new CleanICNFFires())->everyFiveMinutes();
