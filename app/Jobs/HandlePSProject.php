@@ -43,7 +43,7 @@ class HandlePSProject extends Job
 Estado: {$this->incident->status}
 Nº SADO DA OCORRÊNCIA: {$this->incident->sadoId}
 
-https://fogos.pt/fogo/{{$this->incident->sadoId}}/detalhe
+https://fogos.pt/fogo/{$this->incident->sadoId}/detalhe
 ";
 
 
