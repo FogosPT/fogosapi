@@ -41,7 +41,11 @@ class HandlePSProject extends Job
 🚤 - {$this->incident->meios_aquaticos}
 
 Estado: {$this->incident->status}
+Nº SADO DA OCORRÊNCIA: {$this->incident->sadoId}
+
+https://fogos.pt/fogo/{{$this->incident->sadoId}}/detalhe
 ";
+
 
         $data = [
             'chat_id' => env('PS_PROJECT_TELEGRAM_CHANNEL'),
