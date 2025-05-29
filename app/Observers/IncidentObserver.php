@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Jobs\HandleHJProject;
 use App\Jobs\HandleNewIncidentEmergenciasSocialMedia;
 use App\Jobs\HandleNewIncidentSocialMedia;
+use App\Jobs\HandlePRProject;
 use App\Jobs\HandlePSProject;
 use App\Jobs\ProcessICNFFireData;
 use App\Jobs\SaveIncidentHistory;
@@ -48,9 +49,22 @@ trait IncidentObserver
                 dispatch(new HandleHJProject($incident, env('HL_PROJECT_TELEGRAM_CHANNEL_3')));
             }
 
-            $psDico = explode(',', env('PS_PROJECT_TELEGRAM_CHANNEL_1_DICOS'));
+            $prDico1 = explode(',', env('PR_PROJECT_TELEGRAM_CHANNEL_1_DICOS'));
+            $prDico2 = explode(',', env('PR_PROJECT_TELEGRAM_CHANNEL_2_DICOS'));
+            $prDico3 = explode(',', env('PR_PROJECT_TELEGRAM_CHANNEL_3_DICOS'));
+
+            if(in_array($incident->dico, $prDico1)){
+                dispatch(new HandlePRProject($incident, env('PR_PROJECT_TELEGRAM_CHANNEL'), env('PR_PROJECT_TELEGRAM_CHANNEL_1')));
+            } elseif (in_array($incident->dico, $prDico2)){
+                dispatch(new HandlePRProject($incident, env('PR_PROJECT_TELEGRAM_CHANNEL'), env('PR_PROJECT_TELEGRAM_CHANNEL_2')));
+            } elseif (in_array($incident->dico, $prDico3)){
+                dispatch(new HandlePRProject($incident, env('PR_PROJECT_TELEGRAM_CHANNEL'), env('PR_PROJECT_TELEGRAM_CHANNEL_3')));
+            }
+
+
+            $psDico = explode(',', env('PS_PROJECT_TELEGRAM_CHANNEL_2_DICOS'));
             if(in_array($incident->dico, $psDico)){
-                dispatch(new HandlePSProject($incident));
+                dispatch(new HandlePRProject($incident, env('PR_PROJECT_TELEGRAM_CHANNEL2')));
             }
         });
 
