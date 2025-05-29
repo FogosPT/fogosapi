@@ -15,6 +15,7 @@ use App\Jobs\ProcessICNFNewFireData;
 use App\Jobs\ProcessMadeiraWarnings;
 use App\Jobs\ProcessPlanes;
 use App\Jobs\ProcessRCM;
+use App\Jobs\SendRiskPRProject;
 use App\Jobs\SendRiskPSProject;
 use App\Jobs\UpdateICNFData;
 use App\Jobs\UpdateWeatherData;
@@ -70,6 +71,7 @@ class Kernel extends ConsoleKernel
 
             $schedule->job(new DailySummary())->daily()->at('09:30');
             $schedule->job(new SendRiskPSProject())->daily()->at('08:30');
+            $schedule->job(new SendRiskPRProject())->daily()->at('08:30');
 
             $schedule->job(new HandleWeatherWarnings())->everyFifteenMinutes();
 
