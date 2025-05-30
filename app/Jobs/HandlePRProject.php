@@ -60,6 +60,7 @@ https://fogos.pt/fogo/{$this->incident->sadoId}/detalhe
             $data['message_thread_id'] = $this->thread;
         }
 
+        Log::debug(json_encode($data));
         file_get_contents("https://api.telegram.org/bot{$apiToken}/sendMessage?".http_build_query($data));
     }
 }
