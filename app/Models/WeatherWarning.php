@@ -3,10 +3,13 @@
 
 namespace App\Models;
 
+use App\Observers\WeatherWarningObserver;
 use Jenssegers\Mongodb\Eloquent\Model;
 
 class WeatherWarning extends Model
 {
+    use WeatherWarningObserver;
+
     protected $connection = 'mongodb';
     protected $collection = 'weather_warnings';
     protected $primaryKey = '_id';
