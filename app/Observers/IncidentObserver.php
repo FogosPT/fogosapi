@@ -64,7 +64,7 @@ trait IncidentObserver
 
             $psDico = explode(',', env('PS_PROJECT_TELEGRAM_CHANNEL2_DICOS'));
             if(in_array($incident->dico, $psDico)){
-                dispatch(new HandlePRProject($incident, env('PR_PROJECT_TELEGRAM_CHANNEL2')));
+                dispatch(new HandlePSProject($incident));
             }
         });
 
