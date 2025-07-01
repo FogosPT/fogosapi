@@ -40,7 +40,7 @@ class HandleNewIncidentSocialMedia extends Job
 
         $domain = env('SOCIAL_LINK_DOMAIN');
 
-        $status = "⚠🔥 Novo incêndio em {$this->incident->location} - {$this->incident->natureza} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  🔥⚠";
+        $status = "🔥⚠ Novo incêndio em {$this->incident->location} - {$this->incident->natureza}. Saiba mais em https://{$domain}/fogo/{$this->incident->id} {$hashTag} FogosPT  ⚠🔥";
 
         $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
