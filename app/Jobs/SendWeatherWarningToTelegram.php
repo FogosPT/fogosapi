@@ -40,7 +40,7 @@ class SendWeatherWarningToTelegram extends Job
         $apiToken = $this->telegramToken;
 
         $status = "⚠️ Novo Aviso IPMA ⚠️
-            - {$this->weatherWarning->level}
+            - {$this->weatherWarning->getLevelPT()}
             - {$this->weatherWarning->type}:
             {$this->weatherWarning->text}
 

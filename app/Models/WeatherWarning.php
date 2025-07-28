@@ -29,4 +29,18 @@ class WeatherWarning extends Model
         'endTime',
         'control'
     ];
+
+    public function getLevelPT()
+    {
+        switch ($this->level){
+            case 'yellow':
+                return 'amarelo';
+            case 'orange':
+                return 'laranja';
+            case 'red':
+                return 'vermelho';
+            default:
+                return $this->level;
+        }
+    }
 }
