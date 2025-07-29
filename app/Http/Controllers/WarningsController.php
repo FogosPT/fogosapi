@@ -38,7 +38,7 @@ class WarningsController extends Controller
         NotificationTool::sendWarningNotification($status);
 
         $text = "ALERTA: \r\n" . $status;
-        TwitterTool::tweet($text);
+        TwitterTool::tweet($text, false, false, false, false, true);
         TelegramTool::publish($text);
 
         $message = "ALERTA: %0A" . $status;
