@@ -286,28 +286,45 @@ class NotificationTool
     {
         $title = 'Alerta';
 
+        $client = new Client([
+            'base_uri' => 'https://fcm.googleapis.com',
+        ]);
+
         $headers = [
             'allow_redirects' => true,
             'headers' => [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
-                'Authorization' => 'key='.env('FIREBASE_KEY'),
+                'Authorization' => 'Bearer ' . self::getAuth()['access_token']
             ],
             'json' => [
-                'condition' => $topic,
-                'notification' => [
-                    'title' => "Fogos.pt - {$title}",
-                    'body' => $status,
-                    'sound' => 'default',
-                    'icon' => 'https://fogos.pt/img/logo.svg',
+                'message' => [
+                    //'condition' => "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in topics || 'web-warnings' in topics",
+                    'condition' => $topic,
+                    'notification' => [
+                        'title' => "Fogos.pt - {$title}",
+                        'body' => $status,
+                    ],
+                    'android' => [
+                        'priority' => 'high'
+                    ],
+                    'apns' => [
+                        'headers' => [
+                            'apns-priority' => "5"
+                        ]
+                    ],
                 ],
             ],
         ];
 
         Log::debug(json_encode($headers));
 
-        $client = new \GuzzleHttp\Client();
-        $response = $client->request('POST', 'https://fcm.googleapis.com/fcm/send', $headers);
+        try{
+            $response = $client->post(self::$endpoint,$headers );
+        } catch (RequestException $e){
+            Log::debug($e->getMessage());
+            Log::debug($e->getResponse()->getBody()->getContents());
+        }
     }
 
 
