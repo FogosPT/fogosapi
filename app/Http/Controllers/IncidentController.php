@@ -30,7 +30,7 @@ class IncidentController extends Controller
         if($request->exists('limit')){
             $limit = (int)$request->get('limit');
         } else {
-            $limit = 300;
+            $limit = 1000;
         }
 
         $geoJson = filter_var($request->get('geojson'), FILTER_VALIDATE_BOOLEAN);;
