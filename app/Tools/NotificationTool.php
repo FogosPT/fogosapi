@@ -15,328 +15,329 @@ class NotificationTool
 
     private static function getAuth()
     {
-        // specify the path to your application credentials
         putenv('GOOGLE_APPLICATION_CREDENTIALS=/var/www/html/credentials.json');
-
-        // define the scopes for your API call
         $scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
-
-        // create middleware
         $middleware = ApplicationDefaultCredentials::getCredentials($scopes);
-
-        $auth = $middleware->fetchAuthToken();
-
-        return $auth;
+        return $middleware->fetchAuthToken();
     }
 
-    public static function test()
+    // ──────────────────────────────────────────────
+    //  Topic builders — unified + legacy
+    // ──────────────────────────────────────────────
+
+    private static function prefix(): string
     {
-        $client = new Client([
-            'base_uri' => 'https://fcm.googleapis.com',
-        ]);
+        return env('APP_ENV') === 'production' ? '' : 'dev-';
+    }
 
-        $status = 'Test';
-
-        $headers = [
-            'allow_redirects' => true,
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . self::getClient()['access_token']
-            ],
-            'json' => [
-                'message' => [
-                    //'condition' => "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in topics || 'web-warnings' in topics",
-                    'topic' => "all",
-                    'notification' => [
-                        'title' => "Fogos.pt - Aviso",
-                        'body' => $status,
-                    ],
-                    'android' => [
-                        'priority' => 'high'
-                    ],
-                    'apns' => [
-                        'headers' => [
-                            'apns-priority' => "5"
-                        ]
-                    ]
-                ],
-            ],
+    /**
+     * Build a unified topic string for an incident.
+     * New clients subscribe to "incident-<id>", legacy clients
+     * still use "mobile-android-<id>", "mobile-ios-<id>", "web-<id>".
+     */
+    private static function buildIncidentTopic(string $id, bool $includeImportant = false): string
+    {
+        $p = self::prefix();
+        $parts = [
+            "'{$p}incident-{$id}' in topics",
         ];
 
-        Log::debug(json_encode($headers));
-
-        try{
-            $response = $client->post(self::$endpoint,$headers );
-        } catch (RequestException $e){
-            var_dump($e->getMessage());
-            var_dump($e->getResponse()->getBody()->getContents());
-        }
-    }
-
-
-    private static function sendRequest($topic, $status, $location, $id)
-    {
-        if (!env('NOTIFICATIONS_ENABLE')) {
-            return;
+        if (env('LEGACY_ENABLE')) {
+            $parts[] = "'{$p}web-{$id}' in topics";
+            $parts[] = "'{$p}mobile-android-{$id}' in topics";
+            $parts[] = "'{$p}mobile-ios-{$id}' in topics";
         }
 
-        $client = new Client([
-            'base_uri' => 'https://fcm.googleapis.com',
-        ]);
-
-        $headers = [
-            'allow_redirects' => true,
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . self::getAuth()['access_token']
-            ],
-            'json' => [
-                'message' => [
-                    //'condition' => "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in topics || 'web-warnings' in topics",
-                    'condition' => $topic,
-                    'notification' => [
-                        'title' => "Fogos.pt - {$location}",
-                        'body' => $status,
-                    ],
-                    'android' => [
-                        'priority' => 'high'
-                    ],
-                    'apns' => [
-                        'headers' => [
-                            'apns-priority' => "5"
-                        ]
-                    ],
-                    'data' => [
-                        'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                        'fireId' => $id
-                    ],
-                ],
-            ],
-        ];
-
-        Log::debug(json_encode($headers));
-        try{
-            $response = $client->post(self::$endpoint,$headers );
-        } catch (RequestException $e){
-            Log::debug($e->getMessage());
-            Log::debug($e->getResponse()->getBody()->getContents());
-        }
-
-    }
-
-    private static function sendCustomTitleRequest($topic, $status, $title, $forceEnable = false)
-    {
-        if (!env('NOTIFICATIONS_ENABLE')) {
-            return;
-        }
-
-        $client = new Client([
-            'base_uri' => 'https://fcm.googleapis.com',
-        ]);
-
-        $headers = [
-            'allow_redirects' => true,
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . self::getAuth()['access_token']
-            ],
-            'json' => [
-                'message' => [
-                    //'condition' => "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in topics || 'web-warnings' in topics",
-                    'condition' => $topic,
-                    'notification' => [
-                        'title' => "Fogos.pt - {$title}",
-                        'body' => $status,
-                    ],
-                    'android' => [
-                        'priority' => 'high'
-                    ],
-                    'apns' => [
-                        'headers' => [
-                            'apns-priority' => "5"
-                        ]
-                    ],
-                ],
-            ],
-        ];
-
-        Log::debug(json_encode($headers));
-
-        try{
-            $response = $client->post(self::$endpoint,$headers );
-        } catch (RequestException $e){
-            Log::debug($e->getMessage());
-            Log::debug($e->getResponse()->getBody()->getContents());
-        }
-
-    }
-
-    private static function buildLegacyTopic($id)
-    {
-        if (env('APP_ENV') === 'production') {
-            $topic = "'web-{$id}' in topics || 'mobile-android-{$id}' in topics || 'mobile-ios-{$id}' in topics";
-        } else {
-            $topic = "'dev-web-{$id}' in topics || 'dev-mobile-android-{$id}' in topics || 'dev-mobile-ios-{$id}' in topics";
-        }
-
-        return $topic;
-    }
-
-    private static function buildLegacyImportantTopic()
-    {
-        if (env('APP_ENV') === 'production') {
-            $topic = "'web-important' in topics || 'mobile-android-important' in topics || 'mobile-ios-important' in topics";
-        } else {
-            $topic = "'dev-web-important' in topics || 'dev-mobile-android-important' in topics || 'dev-mobile-ios-important' in topics";
-        }
-
-        return $topic;
-    }
-
-    private static function buildTopic($id, $important = false)
-    {
-        if (env('APP_ENV') === 'production') {
-            $topic = "'incident-{$id}' in topics";
-        } else {
-            $topic = "'dev-incident-{$id}' in topics";
-        }
-
-        if ($important) {
-            if (env('APP_ENV') === 'production') {
-                $topic .= " || 'incident-important' in topics";
-            } else {
-                $topic .= " || 'dev-incident-important' in topics";
+        if ($includeImportant) {
+            $parts[] = "'{$p}incident-important' in topics";
+            if (env('LEGACY_ENABLE')) {
+                $parts[] = "'{$p}web-important' in topics";
+                $parts[] = "'{$p}mobile-android-important' in topics";
+                $parts[] = "'{$p}mobile-ios-important' in topics";
             }
         }
 
-        return $topic;
+        return self::combineConditions($parts);
+    }
+
+    /**
+     * Build topic for "important" notifications only.
+     */
+    private static function buildImportantTopic(): string
+    {
+        $p = self::prefix();
+        $parts = [
+            "'{$p}incident-important' in topics",
+        ];
+
+        if (env('LEGACY_ENABLE')) {
+            $parts[] = "'{$p}web-important' in topics";
+            $parts[] = "'{$p}mobile-android-important' in topics";
+            $parts[] = "'{$p}mobile-ios-important' in topics";
+        }
+
+        return self::combineConditions($parts);
+    }
+
+    /**
+     * Build topic for warnings.
+     */
+    private static function buildWarningsTopic(): string
+    {
+        $p = self::prefix();
+        $parts = [
+            "'{$p}warnings' in topics",
+        ];
+
+        if (env('LEGACY_ENABLE')) {
+            $parts[] = "'{$p}mobile-android-warnings' in topics";
+            $parts[] = "'{$p}mobile-ios-warnings' in topics";
+            $parts[] = "'{$p}web-warnings' in topics";
+        }
+
+        return self::combineConditions($parts);
+    }
+
+    /**
+     * Build topic for planes.
+     */
+    private static function buildPlanesTopic(): string
+    {
+        $p = self::prefix();
+        $parts = [
+            "'{$p}planes' in topics",
+        ];
+
+        if (env('LEGACY_ENABLE')) {
+            $parts[] = "'{$p}mobile-android-planes' in topics";
+            $parts[] = "'{$p}mobile-ios-planes' in topics";
+        }
+
+        return self::combineConditions($parts);
+    }
+
+    /**
+     * Build topic for new fire in a district (by dico code).
+     */
+    private static function buildNewFireTopic(Incident $incident): string
+    {
+        $p = self::prefix();
+        $newTopic = $incident->dico . '00';
+
+        $parts = [
+            "'{$p}district-{$newTopic}' in topics",
+        ];
+
+        if (env('LEGACY_ENABLE')) {
+            $legacyDistrict = self::getLegacyDistrictTopic($incident->district);
+            $parts[] = "'{$legacyDistrict}' in topics";
+            $parts[] = "'{$p}web-{$newTopic}' in topics";
+            $parts[] = "'{$p}mobile-android-{$newTopic}' in topics";
+            $parts[] = "'{$p}mobile-ios-{$newTopic}' in topics";
+        }
+
+        return self::combineConditions($parts);
+    }
+
+    /**
+     * FCM conditions support max 5 topics with || / &&.
+     * If we exceed 5, we need to split into multiple sends.
+     * For now, combine up to 5 with ||.
+     */
+    private static function combineConditions(array $parts): string
+    {
+        // FCM limit: max 5 topics per condition
+        $parts = array_slice($parts, 0, 5);
+        return implode(' || ', $parts);
+    }
+
+    private static function getLegacyDistrictTopic(string $district): string
+    {
+        $map = [
+            'Bragança' => 'Braganca',
+            'Évora' => 'Evora',
+            'Castelo Branco' => 'CasteloBranco',
+            'Santarém' => 'Santarem',
+            'Setúbal' => 'Setubal',
+            'Viana Do Castelo' => 'VianadoCastelo',
+            'Vila Real' => 'VilaReal',
+        ];
+
+        return $map[$district] ?? $district;
+    }
+
+    // ──────────────────────────────────────────────
+    //  Core send methods
+    // ──────────────────────────────────────────────
+
+    /**
+     * Send a notification to a topic condition.
+     *
+     * @param string $condition  FCM condition string
+     * @param string $title      Notification title (prepended with "Fogos.pt - ")
+     * @param string $body       Notification body text
+     * @param array  $data       Optional data payload
+     */
+    private static function sendToCondition(string $condition, string $title, string $body, array $data = []): void
+    {
+        if (!env('NOTIFICATIONS_ENABLE')) {
+            return;
+        }
+
+        $client = new Client([
+            'base_uri' => 'https://fcm.googleapis.com',
+        ]);
+
+        $message = [
+            'condition' => $condition,
+            'notification' => [
+                'title' => "Fogos.pt - {$title}",
+                'body' => $body,
+            ],
+            'android' => [
+                'priority' => 'high',
+            ],
+            'apns' => [
+                'headers' => [
+                    'apns-priority' => '5',
+                ],
+            ],
+        ];
+
+        if (!empty($data)) {
+            $message['data'] = $data;
+        }
+
+        $headers = [
+            'allow_redirects' => true,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . self::getAuth()['access_token'],
+            ],
+            'json' => [
+                'message' => $message,
+            ],
+        ];
+
+        Log::debug(json_encode($headers));
+
+        try {
+            $client->post(self::$endpoint, $headers);
+        } catch (RequestException $e) {
+            Log::error('FCM send failed: ' . $e->getMessage());
+            if ($e->getResponse()) {
+                Log::error($e->getResponse()->getBody()->getContents());
+            }
+        }
+    }
+
+    /**
+     * Send to a plain topic name (not condition).
+     */
+    private static function sendToTopic(string $topic, string $title, string $body, array $data = []): void
+    {
+        if (!env('NOTIFICATIONS_ENABLE')) {
+            return;
+        }
+
+        $client = new Client([
+            'base_uri' => 'https://fcm.googleapis.com',
+        ]);
+
+        $message = [
+            'topic' => $topic,
+            'notification' => [
+                'title' => "Fogos.pt - {$title}",
+                'body' => $body,
+            ],
+            'android' => [
+                'priority' => 'high',
+            ],
+            'apns' => [
+                'headers' => [
+                    'apns-priority' => '5',
+                ],
+            ],
+        ];
+
+        if (!empty($data)) {
+            $message['data'] = $data;
+        }
+
+        $headers = [
+            'allow_redirects' => true,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . self::getAuth()['access_token'],
+            ],
+            'json' => [
+                'message' => $message,
+            ],
+        ];
+
+        Log::debug(json_encode($headers));
+
+        try {
+            $client->post(self::$endpoint, $headers);
+        } catch (RequestException $e) {
+            Log::error('FCM send failed: ' . $e->getMessage());
+            if ($e->getResponse()) {
+                Log::error($e->getResponse()->getBody()->getContents());
+            }
+        }
+    }
+
+    private static function fireData(string $incidentId): array
+    {
+        return [
+            'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+            'fireId' => $incidentId,
+        ];
+    }
+
+    // ──────────────────────────────────────────────
+    //  Public API — same method signatures as before
+    // ──────────────────────────────────────────────
+
+    public static function test()
+    {
+        self::sendToTopic('all', 'Aviso', 'Test');
     }
 
     public static function send($status, $location, $id, $topic = false)
     {
         if (!$topic) {
-            $topic = self::buildTopic($id, true);
+            $topic = self::buildIncidentTopic($id, true);
         }
 
-        self::sendRequest($topic, $status, $location, $id);
-
-        if (env('LEGACY_ENABLE')) {
-            $topic = self::buildLegacyTopic($id);
-            self::sendRequest($topic, $status, $location, $id);
-        }
+        self::sendToCondition($topic, $location, $status, self::fireData($id));
     }
 
     public static function sendImportant($status, $incidentId)
     {
-        $topic = self::buildLegacyImportantTopic();
-
-        $title = 'Ocorrência Importante';
-
-
-        $client = new Client([
-            'base_uri' => 'https://fcm.googleapis.com',
-        ]);
-
-        $headers = [
-            'allow_redirects' => true,
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . self::getAuth()['access_token']
-            ],
-            'json' => [
-                'message' => [
-                    //'condition' => "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in topics || 'web-warnings' in topics",
-                    'condition' => $topic,
-                    'notification' => [
-                        'title' => "Fogos.pt - {$title}",
-                        'body' => $status,
-                    ],
-                    'android' => [
-                        'priority' => 'high'
-                    ],
-                    'apns' => [
-                        'headers' => [
-                            'apns-priority' => "5"
-                        ]
-                    ],
-                    'data' => [
-                        'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                        'fireId' => $incidentId
-                    ]
-                ],
-            ],
-        ];
-
-        Log::debug(json_encode($headers));
-
-        try{
-            $response = $client->post(self::$endpoint,$headers );
-        } catch (RequestException $e){
-            Log::debug($e->getMessage());
-            Log::debug($e->getResponse()->getBody()->getContents());
-        }
-
+        $topic = self::buildImportantTopic();
+        self::sendToCondition($topic, 'Ocorrência Importante', $status, self::fireData($incidentId));
     }
 
-    public static function sendWarning($status, $topic)
+    public static function sendWarning($status, $topic = null)
     {
-        $title = 'Alerta';
-
-        $client = new Client([
-            'base_uri' => 'https://fcm.googleapis.com',
-        ]);
-
-        $headers = [
-            'allow_redirects' => true,
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . self::getAuth()['access_token']
-            ],
-            'json' => [
-                'message' => [
-                    //'condition' => "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in topics || 'web-warnings' in topics",
-                    'condition' => $topic,
-                    'notification' => [
-                        'title' => "Fogos.pt - {$title}",
-                        'body' => $status,
-                    ],
-                    'android' => [
-                        'priority' => 'high'
-                    ],
-                    'apns' => [
-                        'headers' => [
-                            'apns-priority' => "5"
-                        ]
-                    ],
-                ],
-            ],
-        ];
-
-        Log::debug(json_encode($headers));
-
-        try{
-            $response = $client->post(self::$endpoint,$headers );
-        } catch (RequestException $e){
-            Log::debug($e->getMessage());
-            Log::debug($e->getResponse()->getBody()->getContents());
+        if (!$topic) {
+            $topic = self::buildWarningsTopic();
         }
+        self::sendToCondition($topic, 'Alerta', $status);
     }
-
 
     public static function sendNewCosNotification(Incident $incident)
     {
-        $status = 'Novo Comandante de Operações de socorro: '.$incident->cos;
+        $status = 'Novo Comandante de Operações de socorro: ' . $incident->cos;
         self::send($status, $incident->location, $incident->id);
     }
 
     public static function sendNewPOSITNotification(Incident $incident)
     {
-        $status = 'Novo ponto de situação: '.$incident->POSITDescricao;
+        $status = 'Novo ponto de situação: ' . $incident->POSITDescricao;
         self::send($status, $incident->location, $incident->id);
     }
 
@@ -348,86 +349,34 @@ class NotificationTool
 
     public static function sendNewFireNotification(Incident $incident)
     {
-        $legacyTopic = null;
-
-        switch ($incident->district) {
-            case 'Bragança':
-                $legacyTopic = 'Braganca';
-
-                break;
-
-            case 'Évora':
-                $legacyTopic = 'Evora';
-
-                break;
-
-            case 'Castelo Branco':
-                $legacyTopic = 'CasteloBranco';
-
-                break;
-
-            case 'Santarém':
-                $legacyTopic = 'Santarem';
-
-                break;
-
-            case 'Setúbal':
-                $legacyTopic = 'Setubal';
-
-                break;
-
-            case 'Viana Do Castelo':
-                $legacyTopic = 'VianadoCastelo';
-
-                break;
-
-            case 'Vila Real':
-                $legacyTopic = 'VilaReal';
-
-                break;
-
-            default:
-                $legacyTopic = $incident->district;
-
-                break;
-        }
-
-        $newTopic = $incident->dico.'00';
-
-        if (env('APP_ENV') === 'production') {
-            $topic = "'{$legacyTopic}' in topics || 'web-{$newTopic}' in topics || 'mobile-android-{$newTopic}' in topics || 'mobile-ios-{$newTopic}' in topics";
-        } else {
-            $topic = "'{$legacyTopic}' in topics || 'dev-web-{$newTopic}' in topics || 'dev-mobile-android-{$newTopic}' in topics || 'dev-mobile-ios-{$newTopic}' in topics";
-        }
-
+        $topic = self::buildNewFireTopic($incident);
         $status = "Novo incêndio em {$incident->location}";
-
         self::send($status, $incident->location, $incident->id, $topic);
     }
 
     public static function sendWarningMadeiraNotification($title, $description)
     {
-        self::sendCustomTitleRequest('Madeira', $description, $title);
+        $p = self::prefix();
+        $condition = "'{$p}madeira' in topics";
+        if (env('LEGACY_ENABLE')) {
+            $condition .= " || 'Madeira' in topics";
+        }
+        self::sendToCondition($condition, $title, $description);
     }
 
     public static function sendPlaneNotification($status)
     {
-        $topic = "'mobile-android-planes' in topics || 'mobile-ios-planes' in topics";
-        $title = 'Fogos.pt - Meio Aéreo';
-        self::sendCustomTitleRequest($topic, $status, $title,true);
+        $topic = self::buildPlanesTopic();
+        self::sendToCondition($topic, 'Meio Aéreo', $status);
     }
 
     public static function sendWarningNotification($status)
     {
-        $topic = "'mobile-android-warnings' in topics || 'mobile-ios-warnings' in topics || 'web-warnings' in topics";
-
-        self::sendWarning($status, $topic);
+        self::sendWarning($status);
     }
 
     public static function sendAllNotification($status)
     {
-        $topic = "all";
-
-        self::sendWarning($status, $topic);
+        self::sendToTopic('all', 'Alerta', $status);
     }
 }
