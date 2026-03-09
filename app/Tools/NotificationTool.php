@@ -297,6 +297,64 @@ class NotificationTool
         ];
     }
 
+    /**
+     * Send a data-only message to a topic (no "notification" block).
+     * This ensures the message is always handled by the app's background handler,
+     * even when the app is in background/terminated (critical for Android).
+     */
+    private static function sendDataOnlyToTopic(string $topic, array $data): void
+    {
+        if (!env('NOTIFICATIONS_ENABLE')) {
+            return;
+        }
+
+        $client = new Client([
+            'base_uri' => 'https://fcm.googleapis.com',
+        ]);
+
+        $message = [
+            'topic' => $topic,
+            'data' => $data,
+            'android' => [
+                'priority' => 'high',
+            ],
+            'apns' => [
+                'headers' => [
+                    'apns-priority' => '10',
+                    'apns-push-type' => 'background',
+                ],
+                'payload' => [
+                    'aps' => [
+                        'content-available' => 1,
+                    ],
+                ],
+            ],
+        ];
+
+        $headers = [
+            'allow_redirects' => true,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . self::getAuth()['access_token'],
+            ],
+            'json' => [
+                'message' => $message,
+            ],
+        ];
+
+        Log::debug('FCM data-only: ' . json_encode($headers));
+
+        try {
+            $client->post(self::$endpoint, $headers);
+        } catch (RequestException $e) {
+            Log::error('FCM data-only send failed: ' . $e->getMessage());
+            if ($e->getResponse()) {
+                Log::error($e->getResponse()->getBody()->getContents());
+            }
+        }
+    }
+
     // ──────────────────────────────────────────────
     //  Public API — same method signatures as before
     // ──────────────────────────────────────────────
@@ -378,5 +436,24 @@ class NotificationTool
     public static function sendAllNotification($status)
     {
         self::sendToTopic('all', 'Alerta', $status);
+    }
+
+    /**
+     * Send a data-only message for nearby proximity checks.
+     * The mobile app calculates distance locally — no user location is sent to the server.
+     */
+    public static function sendNearbyNotification(Incident $incident)
+    {
+        $p = self::prefix();
+        $topic = "{$p}incident-nearby";
+
+        self::sendDataOnlyToTopic($topic, [
+            'type'     => 'nearby',
+            'fireId'   => (string) $incident->id,
+            'lat'      => (string) $incident->lat,
+            'lng'      => (string) $incident->lng,
+            'location' => (string) $incident->location,
+            'nature'   => (string) ($incident->natureza ?? ''),
+        ]);
     }
 }
