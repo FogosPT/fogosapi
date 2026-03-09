@@ -11,6 +11,7 @@ use App\Jobs\ProcessICNFFireData;
 use App\Jobs\SaveIncidentHistory;
 use App\Jobs\SaveIncidentStatusHistory;
 use App\Tools\DiscordTool;
+use App\Tools\NotificationTool;
 use Illuminate\Support\Facades\Log;
 
 trait IncidentObserver
@@ -31,6 +32,9 @@ trait IncidentObserver
                 }
 
                 dispatch(new HandleNewIncidentEmergenciasSocialMedia($incident));
+
+                // Send nearby notification for ALL incidents (proximity check is done on-device)
+                NotificationTool::sendNearbyNotification($incident);
 
                 if ( $incident->naturezaCode === '2409' ) {
                     DiscordTool::postAero("🚨 Novo acidente aereo em {$incident->location} 🚨");
