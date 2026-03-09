@@ -454,6 +454,7 @@ class NotificationTool
             'lng'      => (string) $incident->lng,
             'location' => (string) $incident->location,
             'nature'   => (string) ($incident->natureza ?? ''),
+            'isFire'   => $incident->isFire ? '1' : '0',
         ]);
     }
 }
