@@ -424,7 +424,9 @@ class NotificationTool
     {
         $topic = self::buildNewFireTopic($incident);
         $status = "Novo incêndio em {$incident->location}";
-        self::send($status, $incident->location, $incident->id, $topic);
+        $data = self::fireData($incident->id);
+        $data['isFire'] = '1';
+        self::sendToCondition($topic, $incident->location, $status, $data);
     }
 
     /**
@@ -437,7 +439,9 @@ class NotificationTool
         $status = $incident->isFire
             ? "Novo incêndio em {$incident->location}"
             : "Nova ocorrência em {$incident->location}{$nature}";
-        self::send($status, $incident->location, $incident->id, $topic);
+        $data = self::fireData($incident->id);
+        $data['isFire'] = $incident->isFire ? '1' : '0';
+        self::sendToCondition($topic, $incident->location, $status, $data);
     }
 
     public static function sendWarningMadeiraNotification($title, $description)
