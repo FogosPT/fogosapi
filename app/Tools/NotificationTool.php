@@ -402,19 +402,22 @@ class NotificationTool
     public static function sendNewCosNotification(Incident $incident)
     {
         $status = 'Novo Comandante de Operações de socorro: ' . $incident->cos;
-        self::send($status, $incident->location, $incident->id);
+        $topic = self::buildIncidentTopic($incident->id, false);
+        self::send($status, $incident->location, $incident->id, $topic);
     }
 
     public static function sendNewPOSITNotification(Incident $incident)
     {
         $status = 'Novo ponto de situação: ' . $incident->POSITDescricao;
-        self::send($status, $incident->location, $incident->id);
+        $topic = self::buildIncidentTopic($incident->id, false);
+        self::send($status, $incident->location, $incident->id, $topic);
     }
 
     public static function sendNewStatusNotification(Incident $incident, $incidentStatusHistory)
     {
         $status = "Alteração de estado: de {$incidentStatusHistory['status']} para {$incident->status}";
-        self::send($status, $incident->location, $incident->id);
+        $topic = self::buildIncidentTopic($incident->id, false);
+        self::send($status, $incident->location, $incident->id, $topic);
     }
 
     public static function sendNewFireNotification(Incident $incident)
