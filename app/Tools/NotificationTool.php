@@ -140,6 +140,18 @@ class NotificationTool
     }
 
     /**
+     * Build topic for ALL new incidents in a district (by dico code).
+     * Subscribers receive notifications for every incident type, not just fires.
+     */
+    private static function buildAllIncidentsTopic(Incident $incident): string
+    {
+        $p = self::prefix();
+        $newTopic = $incident->dico . '00';
+
+        return "'{$p}district-all-{$newTopic}' in topics";
+    }
+
+    /**
      * FCM conditions support max 5 topics with || / &&.
      * If we exceed 5, we need to split into multiple sends.
      * For now, combine up to 5 with ||.
@@ -409,6 +421,19 @@ class NotificationTool
     {
         $topic = self::buildNewFireTopic($incident);
         $status = "Novo incêndio em {$incident->location}";
+        self::send($status, $incident->location, $incident->id, $topic);
+    }
+
+    /**
+     * Send notification for any new incident to "all incidents" district subscribers.
+     */
+    public static function sendNewIncidentNotification(Incident $incident)
+    {
+        $topic = self::buildAllIncidentsTopic($incident);
+        $nature = $incident->natureza ? " — {$incident->natureza}" : '';
+        $status = $incident->isFire
+            ? "Novo incêndio em {$incident->location}"
+            : "Nova ocorrência em {$incident->location}{$nature}";
         self::send($status, $incident->location, $incident->id, $topic);
     }
 

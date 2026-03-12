@@ -36,6 +36,9 @@ trait IncidentObserver
                 // Send nearby notification for ALL incidents (proximity check is done on-device)
                 NotificationTool::sendNearbyNotification($incident);
 
+                // Send district notification to "all incidents" subscribers
+                NotificationTool::sendNewIncidentNotification($incident);
+
                 if ( $incident->naturezaCode === '2409' ) {
                     DiscordTool::postAero("🚨 Novo acidente aereo em {$incident->location} 🚨");
                 }
