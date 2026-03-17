@@ -57,6 +57,6 @@ class SendWeatherWarningToTelegram extends Job
             $data['message_thread_id'] = $this->telegramChannelThreadId;
         }
 
-        file_get_contents("https://api.telegram.org/bot{$apiToken}/sendMessage?".http_build_query($data));
+        \App\Tools\TelegramTool::sendMessage($apiToken, $data);
     }
 }

@@ -43,13 +43,6 @@ class HandleHJProject extends Job
             'message_thread_id' => $this->telegramChannel
         ];
 
-        try {
-            $client = new \GuzzleHttp\Client();
-            $client->post("https://api.telegram.org/bot{$apiToken}/sendMessage", [
-                'json' => $data,
-            ]);
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('HJProject Telegram send failed: ' . $e->getMessage());
-        }
+        \App\Tools\TelegramTool::sendMessage($apiToken, $data);
     }
 }

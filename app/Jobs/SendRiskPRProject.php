@@ -39,13 +39,11 @@ class SendRiskPRProject extends Job
 
             $status = "Risco de incêndio para hoje: {$rcm->getRiskTodayEmoji()} {$rcm->hoje}";
 
-            $data = [
+            \App\Tools\TelegramTool::sendMessage($apiToken, [
                 'chat_id' => env('PR_PROJECT_TELEGRAM_CHANNEL'),
                 'text' => $status,
                 'message_thread_id' => env('PR_PROJECT_TELEGRAM_CHANNEL_1')
-            ];
-
-            file_get_contents("https://api.telegram.org/bot{$apiToken}/sendMessage?".http_build_query($data));
+            ]);
         }
 
         foreach($prDico2 as $prDico) {
@@ -56,13 +54,11 @@ class SendRiskPRProject extends Job
 
             $status = "Risco de incêndio em {$rcm->concelho} para hoje: {$rcm->getRiskTodayEmoji()} {$rcm->hoje}";
 
-            $data = [
+            \App\Tools\TelegramTool::sendMessage($apiToken, [
                 'chat_id' => env('PR_PROJECT_TELEGRAM_CHANNEL'),
                 'text' => $status,
                 'message_thread_id' => env('PR_PROJECT_TELEGRAM_CHANNEL_2')
-            ];
-
-            file_get_contents("https://api.telegram.org/bot{$apiToken}/sendMessage?".http_build_query($data));
+            ]);
         }
 
         foreach($prDico3 as $prDico) {
@@ -73,13 +69,11 @@ class SendRiskPRProject extends Job
 
             $status = "Risco de incêndio para hoje: {$rcm->getRiskTodayEmoji()} {$rcm->hoje}";
 
-            $data = [
+            \App\Tools\TelegramTool::sendMessage($apiToken, [
                 'chat_id' => env('PR_PROJECT_TELEGRAM_CHANNEL'),
                 'text' => $status,
                 'message_thread_id' => env('PR_PROJECT_TELEGRAM_CHANNEL_3')
-            ];
-
-            file_get_contents("https://api.telegram.org/bot{$apiToken}/sendMessage?".http_build_query($data));
+            ]);
         }
 
         $rcm = RCM::where('dico', env('PS_PROJECT_TELEGRAM_CHANNEL2_DICOS'))
@@ -89,12 +83,10 @@ class SendRiskPRProject extends Job
 
         $status = "Risco de incêndio para hoje: {$rcm->getRiskTodayEmoji()} {$rcm->hoje}";
 
-        $data = [
+        \App\Tools\TelegramTool::sendMessage($apiToken, [
             'chat_id' => env('PR_PROJECT_TELEGRAM_CHANNEL2'),
             'text' => $status,
-        ];
-
-        file_get_contents("https://api.telegram.org/bot{$apiToken}/sendMessage?".http_build_query($data));
+        ]);
 
     }
 }
