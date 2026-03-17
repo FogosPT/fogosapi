@@ -152,6 +152,15 @@ class NotificationTool
     }
 
     /**
+     * Public helper: build incident topic WITHOUT "important".
+     * Use when the notification should only reach subscribers of a specific incident.
+     */
+    public static function buildIncidentTopicOnly(string $id): string
+    {
+        return self::buildIncidentTopic($id, false);
+    }
+
+    /**
      * FCM conditions support max 5 topics with || / &&.
      * If we exceed 5, we need to split into multiple sends.
      * For now, combine up to 5 with ||.

@@ -189,7 +189,8 @@ class ProcessICNFFireData extends Job
 
         if ($status) {
             $this->updateIncident();
-            NotificationTool::send($notification, $this->incident->location, $this->incident->id);
+            $topic = \App\Tools\NotificationTool::buildIncidentTopicOnly($this->incident->id);
+            NotificationTool::send($notification, $this->incident->location, $this->incident->id, $topic);
 
             $url = "fogo/{$this->incident->id}/detalhe";
             $name = "screenshot-{$this->incident->id}"  . rand(0,255);
