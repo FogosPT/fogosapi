@@ -62,7 +62,7 @@ class UpdateICNFData extends Job
 
         $incidents = Incident::where('created', '>=', $intervals[$this->interval]['after'])
             ->where('created', '<=', $intervals[$this->interval]['before'])
-            ->whereq('isFire', true)
+            ->where('isFire', true)
             ->get();
 
         foreach ($incidents as $incident) {
