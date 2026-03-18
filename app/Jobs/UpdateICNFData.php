@@ -7,6 +7,8 @@ use Carbon\Carbon;
 
 class UpdateICNFData extends Job
 {
+    public $queue = 'icnf';
+
     private $interval;
 
     /**
@@ -15,6 +17,7 @@ class UpdateICNFData extends Job
     public function __construct(int $interval = 0)
     {
         $this->interval = $interval;
+        $this->onQueue('icnf');
     }
 
     /**
@@ -63,7 +66,7 @@ class UpdateICNFData extends Job
             ->get();
 
         foreach ($incidents as $incident) {
-            dispatch(new ProcessICNFFireData($incident));
+            dispatch((new ProcessICNFFireData($incident))->onQueue('icnf'));
         }
     }
 }
