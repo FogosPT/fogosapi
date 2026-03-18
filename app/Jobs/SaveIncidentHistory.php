@@ -128,7 +128,7 @@ class SaveIncidentHistory extends Job
 
                 $status .= $diffAerial.')';
 
-                NotificationTool::send($status, $this->incident->location, $this->incident->id);
+//                NotificationTool::send($status, $this->incident->location, $this->incident->id);
             }
 
             if ($this->incident->man >= env('BIG_INCIDENT_MAN') && !$this->incident['notifyBig']) {

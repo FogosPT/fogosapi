@@ -511,9 +511,9 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
         ScreenShotTool::takeScreenShot($url, $name);
 
         $id = TwitterTool::tweet($status, false, $path, false, false, true);
-        TwitterTool::retweetVost($id);
-        FacebookTool::publishWithImage($status, $urlImage);
-        TelegramTool::publishImage($status, $path);
+//        TwitterTool::retweetVost($id);
+  //      FacebookTool::publishWithImage($status, $urlImage);
+    //    TelegramTool::publishImage($status, $path);
 
         ScreenShotTool::removeScreenShotFile($name);
     }

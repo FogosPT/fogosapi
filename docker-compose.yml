@@ -10,6 +10,8 @@ services:
       - ./.docker/server/conf.d:/etc/nginx/conf.d:ro
       - .:/var/www/html:delegated
     restart: unless-stopped
+    ports:
+      - 127.0.0.1:8080:80
     networks:
       fogos:
         aliases:
@@ -20,36 +22,37 @@ services:
     restart: unless-stopped
     volumes:
       - ./:/var/www/html
+      - ./assets/www.conf:/usr/local/etc/php-fpm.d/www.conf
     expose:
       - 9000
-    depends_on:
-      - fogos.mongodb
     networks:
       - fogos
 
-  fogos.mongodb:
-    image: mongo:4.4.6
-    expose:
-      - 27017
-    restart: unless-stopped
-    volumes:
-      - mongodb_data:/data/db
-      - ./.docker/mongodb/timezone:/etc/timezone
-      - ./.docker/mongodb/localtime:/etc/localtime
-    networks:
-      - fogos
+        #fogos.mongodb:
+        #image: mongo:4.4.6
+        #expose:
+        #- 27017
+        #restart: unless-stopped
+        #volumes:
+        #- mongodb_data:/data/db
+        #- ./.docker/mongodb/timezone:/etc/timezone
+        #- ./.docker/mongodb/localtime:/etc/localtime
+        #networks:
+        #- fogos
 
   fogos.redis:
     image: redis:6.2.3-alpine
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --requirepass 
     expose:
       - 6379
     restart: unless-stopped
+    ports:
+      - 6379:6379
     networks:
       - fogos
 
   fogos.chrome:
-    image: 'zenika/alpine-chrome:81'
+    image: 'zenika/alpine-chrome:latest'
     entrypoint: [ "chromium-browser", "--headless", "--no-sandbox", "--remote-debugging-address=0.0.0.0", "--remote-debugging-port=9222" ]
     expose:
       - 9222
@@ -83,8 +86,6 @@ services:
       - ./:/var/www/html
     expose:
       - 9000
-    depends_on:
-      - fogos.mongodb
     networks:
       - fogos
     command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600

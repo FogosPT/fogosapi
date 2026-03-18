@@ -8,10 +8,17 @@ use Illuminate\Http\Request;
 use Laravel\Lumen\Routing\Controller;
 use App\Models\RCMForJS;
 use voku\helper\UTF8;
+use App\Jobs\ProcessRCM;
+
 
 class RCMController extends Controller
+
 {
-    public function today()
+    
+	public function update(){dispatch_now(new ProcessRCM(false,false));}
+
+
+	public function today()
     {
         $risk = RCMForJS::where('when', 'hoje')
             ->orderBy('created', 'desc')

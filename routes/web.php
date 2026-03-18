@@ -73,6 +73,7 @@ $router->group(['prefix' => 'v2'], function () use ($router) {
 
     $router->group(['prefix' => 'rcm'], function () use ($router) {
         $router->get('today', '\App\Http\Controllers\RCMController@today');
+        $router->get('update', '\App\Http\Controllers\RCMController@update');
         $router->get('tomorrow', '\App\Http\Controllers\RCMController@tomorrow');
         $router->get('after', '\App\Http\Controllers\RCMController@after');
         $router->get('parish', '\App\Http\Controllers\RCMController@parish');

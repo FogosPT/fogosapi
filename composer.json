@@ -14,6 +14,7 @@
         "ext-mongodb": "*",
         "anik/form-request": "^4.2",
         "flipbox/lumen-generator": "^8.2",
+        "google/auth": "^1.40",
         "guzzlehttp/guzzle": "^7.0",
         "illuminate/redis": "^8.40",
         "j7mbo/twitter-api-php": "^1.0",
@@ -52,7 +53,10 @@
     "config": {
         "preferred-install": "dist",
         "sort-packages": true,
-        "optimize-autoloader": true
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "composer/package-versions-deprecated": true
+        }
     },
     "minimum-stability": "dev",
     "prefer-stable": true,

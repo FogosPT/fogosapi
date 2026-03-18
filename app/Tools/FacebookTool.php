@@ -73,7 +73,8 @@ class FacebookTool
 
         try{
             $client = new \GuzzleHttp\Client();
-            $response = $client->request('POST', self::getEmergenciasUrl($status));
+            //$response = $client->request('POST', self::getEmergenciasUrl($status));
+
         } catch (\Exception $e){
             Log::error($e->getMessage());
         }

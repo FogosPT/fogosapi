@@ -9,7 +9,7 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Support\Facades\Log;
 use voku\helper\UTF8;
 
-class ProcessANPCAllData extends Job implements ShouldQueue, ShouldBeUnique
+class ProcessANPCAllData extends Job //implements ShouldQueue, ShouldBeUnique
 {
     /**
      * Create a new job instance.

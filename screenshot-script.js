@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const targetURL = argv.url || 'https://fogos.pt';
 const viewport = [argv.width, argv.height];
-const screenshotDelay = 6000; // ms
+const screenshotDelay = 15000; // ms
 const fullPage = argv.fullPage || false;
 const ip = argv.ip;
 
