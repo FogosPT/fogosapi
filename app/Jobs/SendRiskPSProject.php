@@ -34,11 +34,9 @@ class SendRiskPSProject extends Job
 
         $status = "Risco de incêndio para hoje: {$rcm->getRiskTodayEmoji()} {$rcm->hoje}";
 
-        $data = [
+        \App\Tools\TelegramTool::sendMessage($apiToken, [
             'chat_id' => env('PS_PROJECT_TELEGRAM_CHANNEL'),
             'text' => $status,
-        ];
-
-        file_get_contents("https://api.telegram.org/bot{$apiToken}/sendMessage?".http_build_query($data));
+        ]);
     }
 }

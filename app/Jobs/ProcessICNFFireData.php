@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Log;
 
 class ProcessICNFFireData extends Job
 {
+    public $queue = 'icnf';
+
     private $incident;
 
     /**

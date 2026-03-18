@@ -88,7 +88,20 @@ services:
       - 9000
     networks:
       - fogos
-    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    command: php artisan queue:work --queue=default --sleep=3 --tries=3 --max-time=3600
+
+  fogos.worker-icnf:
+    image: ghcr.io/fogospt/fogosapi
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/html
+    expose:
+      - 9000
+    depends_on:
+      - fogos.mongodb
+    networks:
+      - fogos
+    command: php artisan queue:work --queue=icnf --sleep=3 --tries=3 --max-time=3600
 
 volumes:
   mongodb_data:
