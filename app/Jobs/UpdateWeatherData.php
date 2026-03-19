@@ -54,27 +54,39 @@ class UpdateWeatherData extends Job
                 if($d){
                     $weatherData = WeatherData::where('stationId', $stationId)
                         ->where('date', $ddate)
-                        ->get();
+                        ->first();
 
-                    if(!isset($weatherData[0])){
+                    if(!$weatherData){
                         $weatherData = new WeatherData();
-
-                        $weatherData->intensidadeVentoKM = $d->intensidadeVentoKM;
-                        $weatherData->temperatura = $d->temperatura;
-                        $weatherData->radiacao = $d->radiacao;
-                        $weatherData->idDireccVento = $d->idDireccVento;
-                        $weatherData->precAcumulada = $d->precAcumulada;
-                        $weatherData->intensidadeVento = $d->intensidadeVento;
-                        $weatherData->humidade = $d->humidade;
-                        $weatherData->pressao = $d->pressao;
                         $weatherData->date = $ddate;
                         $weatherData->stationId = $stationId;
-
-                        $weatherData->save();
                     }
+
+                    $weatherData->intensidadeVentoKM = $this->sanitizeValue($d->intensidadeVentoKM);
+                    $weatherData->temperatura = $this->sanitizeValue($d->temperatura);
+                    $weatherData->radiacao = $this->sanitizeValue($d->radiacao);
+                    $weatherData->idDireccVento = $this->sanitizeValue($d->idDireccVento);
+                    $weatherData->precAcumulada = $this->sanitizeValue($d->precAcumulada);
+                    $weatherData->intensidadeVento = $this->sanitizeValue($d->intensidadeVento);
+                    $weatherData->humidade = $this->sanitizeValue($d->humidade);
+                    $weatherData->pressao = $this->sanitizeValue($d->pressao);
+
+                    $weatherData->save();
                 }
             }
         }
 
+    }
+
+    /**
+     * Sanitize IPMA values: treat -99 as null (IPMA's "no data" marker) and nulls.
+     */
+    private function sanitizeValue($value)
+    {
+        if ($value === null || $value == -99) {
+            return null;
+        }
+
+        return $value;
     }
 }
