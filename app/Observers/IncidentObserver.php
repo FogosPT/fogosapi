@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Jobs\AssignNearestWeatherStation;
 use App\Jobs\HandleHJProject;
 use App\Jobs\HandleNewIncidentEmergenciasSocialMedia;
 use App\Jobs\HandleNewIncidentSocialMedia;
@@ -21,6 +22,10 @@ trait IncidentObserver
         parent::boot();
 
         static::created(function ($incident) {
+            // Assign nearest weather station
+            if ($incident->lat && $incident->lng) {
+                dispatch(new AssignNearestWeatherStation($incident->id));
+            }
 
             if($incident->dateTime->year >= 2022 ){
                 dispatch(new SaveIncidentHistory($incident));
@@ -76,6 +81,13 @@ trait IncidentObserver
         });
 
         static::updated(function ($incident) {
+            // Recalculate nearest weather station when coordinates change
+            if ($incident->isDirty('lat') || $incident->isDirty('lng')) {
+                if ($incident->lat && $incident->lng) {
+                    dispatch(new AssignNearestWeatherStation($incident->id));
+                }
+            }
+
             if($incident->dateTime->year >= 2022 ) {
                 //Log::info("Incident updated Event Fire observer: ".$incident);
                 dispatch(new SaveIncidentStatusHistory($incident));

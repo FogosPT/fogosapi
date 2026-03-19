@@ -48,7 +48,8 @@ class Incident extends Model
         'heliFight' => 'integer',
         'heliCoord' => 'integer',
         'planeFight' => 'integer',
-        'anepcDirectUpdate' => 'boolean'
+        'anepcDirectUpdate' => 'boolean',
+        'nearestWeatherStationId' => 'integer',
     ];
 
     protected $fillable = [
@@ -100,7 +101,8 @@ class Incident extends Model
         'anepcDirectUpdate',
         'regiao',
         'sub_regiao',
-        'meios_aquaticos'
+        'meios_aquaticos',
+        'nearestWeatherStationId',
     ];
 
     public const NATUREZA_CODE_FIRE = [
