@@ -15,6 +15,7 @@ class IncidentResource extends JsonResource
         }
 
         $data = WeatherData::where('stationId', (string) $this->nearestWeatherStationId)
+            ->where('date', '>=', now()->subDay())
             ->orderBy('date', 'desc')
             ->first();
 
