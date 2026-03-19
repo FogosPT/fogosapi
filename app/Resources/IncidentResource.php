@@ -14,7 +14,7 @@ class IncidentResource extends JsonResource
             return null;
         }
 
-        $data = WeatherData::where('stationId', $this->nearestWeatherStationId)
+        $data = WeatherData::where('stationId', (string) $this->nearestWeatherStationId)
             ->orderBy('date', 'desc')
             ->first();
 
@@ -22,7 +22,7 @@ class IncidentResource extends JsonResource
             return null;
         }
 
-        $station = WeatherStation::where('id', $this->nearestWeatherStationId)->first();
+        $station = WeatherStation::where('id', (int) $this->nearestWeatherStationId)->first();
 
         return [
             'stationId' => $this->nearestWeatherStationId,
