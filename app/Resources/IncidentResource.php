@@ -3,6 +3,7 @@
 namespace App\Resources;
 
 use App\Models\WeatherData;
+use App\Models\WeatherStation;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class IncidentResource extends JsonResource
@@ -21,7 +22,11 @@ class IncidentResource extends JsonResource
             return null;
         }
 
+        $station = WeatherStation::where('id', $this->nearestWeatherStationId)->first();
+
         return [
+            'stationId' => $this->nearestWeatherStationId,
+            'stationLocation' => $station->location ?? null,
             'temperatura' => $data->temperatura,
             'humidade' => $data->humidade,
             'intensidadeVento' => $data->intensidadeVento,
