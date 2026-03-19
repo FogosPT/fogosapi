@@ -66,7 +66,7 @@ class Kernel extends ConsoleKernel
 
 
             $schedule->job(new UpdateWeatherStations())->daily()->at('03:21');
-            $schedule->job(new UpdateWeatherData())->everyTwoHours();
+            $schedule->job(new UpdateWeatherData())->hourly();
 
             $schedule->job(new UpdateWeatherDataDaily())->daily()->at('04:21');
 

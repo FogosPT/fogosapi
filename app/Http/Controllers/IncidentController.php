@@ -74,6 +74,7 @@ class IncidentController extends Controller
                 $_i = $i->toArray();
                 unset($_i['icnf']);
                 unset($_i['coordinates']);
+                unset($_i['weather']);
                 fputcsv($f, $_i, ';');
             }
 
@@ -119,6 +120,7 @@ class IncidentController extends Controller
                 unset($keys['icnf']);
                 unset($keys['coordinates']);
                 unset($keys['kmlVost']);
+                unset($keys['weather']);
 
                 fputcsv($f, array_keys($keys), ';');
 
@@ -132,6 +134,7 @@ class IncidentController extends Controller
                     unset($_i['icnf']);
                     unset($_i['coordinates']);
                     unset($_i['kmlVost']);
+                    unset($_i['weather']);
                     $_i['kml'] = null;
                     $_i['extra'] = null;
                     fputcsv($f, $_i, ';');
@@ -152,6 +155,7 @@ class IncidentController extends Controller
                 unset($keys['icnf']);
                 unset($keys['coordinates']);
                 unset($keys['kmlVost']);
+                unset($keys['weather']);
 
                 fputcsv($f, array_keys($keys), ';');
 
@@ -398,6 +402,7 @@ class IncidentController extends Controller
                 unset($keys['icnf']);
                 unset($keys['coordinates']);
                 unset($keys['kmlVost']);
+                unset($keys['weather']);
 
                 fputcsv($f, array_keys($keys), ';');
 
@@ -410,6 +415,7 @@ class IncidentController extends Controller
                     unset($_i['icnf']);
                     unset($_i['coordinates']);
                     unset($_i['kmlVost']);
+                    unset($_i['weather']);
                     $_i['kml'] = null;
                     $_i['extra'] = null;
                     fputcsv($f, $_i, ';');
