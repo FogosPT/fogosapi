@@ -37,7 +37,8 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\FixFMA::class,
         \App\Console\Commands\SaveWarningAndSendNotificationAndSocial::class,
         \App\Console\Commands\GetICNFBurnAreaLegacy::class,
-        \App\Console\Commands\ImportLocations::class
+        \App\Console\Commands\ImportLocations::class,
+        \App\Console\Commands\AssignWeatherStations::class,
     ];
 
     /**
