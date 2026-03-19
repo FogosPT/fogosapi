@@ -16,6 +16,7 @@ class WeatherStation extends Model
     protected $fillable = [
         'id',
         'coordinates',
+        'geoJSON',
         'location',
         'type',
     ];

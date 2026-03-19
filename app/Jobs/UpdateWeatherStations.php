@@ -61,6 +61,10 @@ class UpdateWeatherStations extends Job
             $station->type = "point";
             $station->location = $d->properties->localEstacao;
             $station->coordinates = $d->geometry->coordinates;
+            $station->geoJSON = [
+                'type' => 'Point',
+                'coordinates' => $d->geometry->coordinates, // [lng, lat]
+            ];
 
             if($station->coordinates[1] < 34){
                 $station->place = 'Madeira';
