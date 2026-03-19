@@ -2,10 +2,39 @@
 
 namespace App\Resources;
 
+use App\Models\WeatherData;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class IncidentResource extends JsonResource
 {
+    private function getLatestWeather(): ?array
+    {
+        if (!$this->nearestWeatherStationId) {
+            return null;
+        }
+
+        $data = WeatherData::where('stationId', $this->nearestWeatherStationId)
+            ->orderBy('date', 'desc')
+            ->first();
+
+        if (!$data) {
+            return null;
+        }
+
+        return [
+            'temperatura' => $data->temperatura,
+            'humidade' => $data->humidade,
+            'intensidadeVento' => $data->intensidadeVento,
+            'intensidadeVentoKM' => $data->intensidadeVentoKM,
+            'idDireccVento' => $data->idDireccVento,
+            'direccVento' => WeatherData::WIND_DIRECTIONS[$data->idDireccVento] ?? null,
+            'precAcumulada' => $data->precAcumulada,
+            'radiacao' => $data->radiacao,
+            'pressao' => $data->pressao,
+            'date' => $data->date,
+        ];
+    }
+
     public function toArray($request): array
     {
         $ob = [
@@ -52,6 +81,8 @@ class IncidentResource extends JsonResource
             'anepcDirectUpdate' => $this->anepcDirectUpdate,
             'regiao' => $this->regiao,
             'sub_regiao' => $this->sub_regiao,
+            'nearestWeatherStationId' => $this->nearestWeatherStationId,
+            'weather' => $this->getLatestWeather(),
             'created' => $this->createdObject,
             'updated' => $this->updatedObject,
 
