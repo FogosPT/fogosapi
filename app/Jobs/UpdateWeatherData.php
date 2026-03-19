@@ -50,6 +50,7 @@ class UpdateWeatherData extends Job
         foreach($data as $date => $stations){
             $ddate = Carbon::parse($date);
             foreach($stations as $stationId => $d){
+                $stationId = (string) $stationId;
 
                 if($d){
                     $weatherData = WeatherData::where('stationId', $stationId)
