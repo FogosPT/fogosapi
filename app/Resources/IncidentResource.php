@@ -4,6 +4,7 @@ namespace App\Resources;
 
 use App\Models\WeatherData;
 use App\Models\WeatherStation;
+use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class IncidentResource extends JsonResource
@@ -15,7 +16,7 @@ class IncidentResource extends JsonResource
         }
 
         $data = WeatherData::where('stationId', (string) $this->nearestWeatherStationId)
-            ->where('date', '>=', now()->subDay())
+            ->where('date', '>=', Carbon::now()->subDay())
             ->orderBy('date', 'desc')
             ->first();
 
