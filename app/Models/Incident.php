@@ -109,6 +109,9 @@ class Incident extends Model
         '3101',
         '3103',
         '3105',
+        '3111',
+        '3109',
+        '4335',
     ];
 
     public const NATUREZA_CODE_URBAN_FIRE = [
@@ -141,9 +144,7 @@ class Incident extends Model
         '3203',
         '2201',
         '2203',
-        '3111',
-        '3109',
-        '3107'
+        '3107',
     ];
 
     public const NATUREZA_CODE_FMA = [
