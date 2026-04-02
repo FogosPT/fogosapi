@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Jenssegers\Mongodb\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 
 class WeatherData extends Model
 {
@@ -13,7 +13,11 @@ class WeatherData extends Model
     public const CREATED_AT = 'created';
     public const UPDATED_AT = 'updated';
 
-    protected $dates = ['date', 'created', 'updated'];
+    protected $casts = [
+        'date'    => 'datetime',
+        'created' => 'datetime',
+        'updated' => 'datetime',
+    ];
 
     public const WIND_DIRECTIONS = [
         0 => null,

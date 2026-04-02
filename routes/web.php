@@ -1,99 +1,96 @@
 <?php
 
-/** @var \Laravel\Lumen\Routing\Router $router */
-$router->get('/', fn () => $router->app->version());
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', fn () => app()->version());
 
 // LEGACY
-$router->get('/new/fires', '\App\Http\Controllers\LegacyController@newFires');
-$router->get('/fires/data', '\App\Http\Controllers\LegacyController@firesData');
+Route::get('/new/fires', '\App\Http\Controllers\LegacyController@newFires');
+Route::get('/fires/data', '\App\Http\Controllers\LegacyController@firesData');
 
-$router->group(['prefix' => 'fires'], function () use ($router) {
-    $router->get('/', '\App\Http\Controllers\LegacyController@fires');
-    $router->get('/danger', '\App\Http\Controllers\LegacyController@firesDanger');
-    $router->get('/status', '\App\Http\Controllers\LegacyController@firesStatus');
+Route::group(['prefix' => 'fires'], function () {
+    Route::get('/', '\App\Http\Controllers\LegacyController@fires');
+    Route::get('/danger', '\App\Http\Controllers\LegacyController@firesDanger');
+    Route::get('/status', '\App\Http\Controllers\LegacyController@firesStatus');
 });
 
-$router->group(['prefix' => 'madeira'], function () use ($router) {
-    $router->get('/fires', '\App\Http\Controllers\LegacyController@firesMadeira');
-    $router->get('/fires/status', '\App\Http\Controllers\LegacyController@firesStatusMadeira');
+Route::group(['prefix' => 'madeira'], function () {
+    Route::get('/fires', '\App\Http\Controllers\LegacyController@firesMadeira');
+    Route::get('/fires/status', '\App\Http\Controllers\LegacyController@firesStatusMadeira');
 });
 
-$router->group(['prefix' => 'v1'], function () use ($router) {
-    $router->get('warnings', '\App\Http\Controllers\LegacyController@warnings');
-    $router->get('warnings/site', '\App\Http\Controllers\LegacyController@warningsSite');
-    $router->get('madeira/warnings', '\App\Http\Controllers\LegacyController@warningsMadeira');
-    $router->get('now', '\App\Http\Controllers\LegacyController@now');
-    $router->get('now/data', '\App\Http\Controllers\LegacyController@nowData');
-    $router->get('status', '\App\Http\Controllers\LegacyController@status');
-    $router->get('active', '\App\Http\Controllers\LegacyController@active');
-    $router->get('aerial', '\App\Http\Controllers\LegacyController@aerial');
-    $router->get('stats', '\App\Http\Controllers\LegacyController@stats');
-    $router->get('risk', '\App\Http\Controllers\LegacyController@risk');
-    $router->get('risk-today', '\App\Http\Controllers\LegacyController@riskToday');
-    $router->get('risk-tomorrow', '\App\Http\Controllers\LegacyController@riskTomorrow');
-    $router->get('risk-after', '\App\Http\Controllers\LegacyController@riskAfter');
-    $router->get('list', '\App\Http\Controllers\LegacyController@listConcelho');
+Route::group(['prefix' => 'v1'], function () {
+    Route::get('warnings', '\App\Http\Controllers\LegacyController@warnings');
+    Route::get('warnings/site', '\App\Http\Controllers\LegacyController@warningsSite');
+    Route::get('madeira/warnings', '\App\Http\Controllers\LegacyController@warningsMadeira');
+    Route::get('now', '\App\Http\Controllers\LegacyController@now');
+    Route::get('now/data', '\App\Http\Controllers\LegacyController@nowData');
+    Route::get('status', '\App\Http\Controllers\LegacyController@status');
+    Route::get('active', '\App\Http\Controllers\LegacyController@active');
+    Route::get('aerial', '\App\Http\Controllers\LegacyController@aerial');
+    Route::get('stats', '\App\Http\Controllers\LegacyController@stats');
+    Route::get('risk', '\App\Http\Controllers\LegacyController@risk');
+    Route::get('risk-today', '\App\Http\Controllers\LegacyController@riskToday');
+    Route::get('risk-tomorrow', '\App\Http\Controllers\LegacyController@riskTomorrow');
+    Route::get('risk-after', '\App\Http\Controllers\LegacyController@riskAfter');
+    Route::get('list', '\App\Http\Controllers\LegacyController@listConcelho');
 
-    $router->group(['prefix' => 'stats'], function () use ($router) {
-        $router->get('8hours', '\App\Http\Controllers\LegacyController@stats8hours');
-        $router->get('8hours/yesterday', '\App\Http\Controllers\LegacyController@stats8hoursYesterday');
-        $router->get('last-night', '\App\Http\Controllers\LegacyController@lastNight');
-        $router->get('week', '\App\Http\Controllers\LegacyController@statsWeek');
-        $router->get('today', '\App\Http\Controllers\LegacyController@statsToday');
-        $router->get('yesterday', '\App\Http\Controllers\LegacyController@statsYesterday');
-        $router->get('burn-area', '\App\Http\Controllers\LegacyController@burnedAreaLastDays');
-        $router->get('motive', '\App\Http\Controllers\LegacyController@motivesThisMonths');
-
+    Route::group(['prefix' => 'stats'], function () {
+        Route::get('8hours', '\App\Http\Controllers\LegacyController@stats8hours');
+        Route::get('8hours/yesterday', '\App\Http\Controllers\LegacyController@stats8hoursYesterday');
+        Route::get('last-night', '\App\Http\Controllers\LegacyController@lastNight');
+        Route::get('week', '\App\Http\Controllers\LegacyController@statsWeek');
+        Route::get('today', '\App\Http\Controllers\LegacyController@statsToday');
+        Route::get('yesterday', '\App\Http\Controllers\LegacyController@statsYesterday');
+        Route::get('burn-area', '\App\Http\Controllers\LegacyController@burnedAreaLastDays');
+        Route::get('motive', '\App\Http\Controllers\LegacyController@motivesThisMonths');
     });
 });
 
-$router->group(['prefix' => 'v2'], function () use ($router) {
-    $router->group(['prefix' => 'other'], function () use ($router) {
-        $router->get('mobile-contributors', '\App\Http\Controllers\OtherController@getMobileContributors');
+Route::group(['prefix' => 'v2'], function () {
+    Route::group(['prefix' => 'other'], function () {
+        Route::get('mobile-contributors', '\App\Http\Controllers\OtherController@getMobileContributors');
     });
 
-    $router->group(['prefix' => 'incidents'], function () use ($router) {
-        $router->get('search', '\App\Http\Controllers\IncidentController@search');
-        $router->get('active/kml', '\App\Http\Controllers\IncidentController@activeKML');
-        $router->get('active', '\App\Http\Controllers\IncidentController@active');
-        $router->get('1000ha-burned', '\App\Http\Controllers\IncidentController@burnMoreThan1000');
-        $router->get('{id}/kml', '\App\Http\Controllers\IncidentController@kml');
-        $router->get('{id}/kmlVost', '\App\Http\Controllers\IncidentController@kmlVost');
+    Route::group(['prefix' => 'incidents'], function () {
+        Route::get('search', '\App\Http\Controllers\IncidentController@search');
+        Route::get('active/kml', '\App\Http\Controllers\IncidentController@activeKML');
+        Route::get('active', '\App\Http\Controllers\IncidentController@active');
+        Route::get('1000ha-burned', '\App\Http\Controllers\IncidentController@burnMoreThan1000');
+        Route::get('{id}/kml', '\App\Http\Controllers\IncidentController@kml');
+        Route::get('{id}/kmlVost', '\App\Http\Controllers\IncidentController@kmlVost');
 
-        $router->post('{id}/posit', '\App\Http\Controllers\IncidentController@addPosit');
-        $router->post('{id}/kml', '\App\Http\Controllers\IncidentController@addKML');
+        Route::post('{id}/posit', '\App\Http\Controllers\IncidentController@addPosit');
+        Route::post('{id}/kml', '\App\Http\Controllers\IncidentController@addKML');
     });
 
-    $router->group(['prefix' => 'weather'], function () use ($router) {
-        $router->get('thunders', '\App\Http\Controllers\WeatherController@thunders');
-        $router->get('stations', '\App\Http\Controllers\WeatherController@stations');
-        $router->get('daily', '\App\Http\Controllers\WeatherController@daily');
-        $router->get('ipma-services', '\App\Http\Controllers\WeatherController@ipmaServicesHTTPS');
+    Route::group(['prefix' => 'weather'], function () {
+        Route::get('thunders', '\App\Http\Controllers\WeatherController@thunders');
+        Route::get('stations', '\App\Http\Controllers\WeatherController@stations');
+        Route::get('daily', '\App\Http\Controllers\WeatherController@daily');
+        Route::get('ipma-services', '\App\Http\Controllers\WeatherController@ipmaServicesHTTPS');
     });
 
-    $router->group(['prefix' => 'rcm'], function () use ($router) {
-        $router->get('today', '\App\Http\Controllers\RCMController@today');
-        $router->get('update', '\App\Http\Controllers\RCMController@update');
-        $router->get('tomorrow', '\App\Http\Controllers\RCMController@tomorrow');
-        $router->get('after', '\App\Http\Controllers\RCMController@after');
-        $router->get('parish', '\App\Http\Controllers\RCMController@parish');
+    Route::group(['prefix' => 'rcm'], function () {
+        Route::get('today', '\App\Http\Controllers\RCMController@today');
+        Route::get('update', '\App\Http\Controllers\RCMController@update');
+        Route::get('tomorrow', '\App\Http\Controllers\RCMController@tomorrow');
+        Route::get('after', '\App\Http\Controllers\RCMController@after');
+        Route::get('parish', '\App\Http\Controllers\RCMController@parish');
     });
 
-    $router->group(['prefix' => 'planes'], function () use ($router) {
-        $router->get('{icao}', '\App\Http\Controllers\PlanesController@icao');
-
+    Route::group(['prefix' => 'planes'], function () {
+        Route::get('{icao}', '\App\Http\Controllers\PlanesController@icao');
     });
 
-    $router->group(['prefix' => 'warnings'], function () use ($router) {
-        $router->post('add', '\App\Http\Controllers\WarningsController@add');
-        $router->post('add/agif', '\App\Http\Controllers\WarningsController@addAgif');
+    Route::group(['prefix' => 'warnings'], function () {
+        Route::post('add', '\App\Http\Controllers\WarningsController@add');
+        Route::post('add/agif', '\App\Http\Controllers\WarningsController@addAgif');
     });
 
-    $router->group(['prefix' => 'stats'], function () use ($router) {
-        $router->group(['prefix' => 'today'], function () use ($router) {
-            $router->get('ignitions-hourly', '\App\Http\Controllers\StatsController@ignitionsHourly');
-
+    Route::group(['prefix' => 'stats'], function () {
+        Route::group(['prefix' => 'today'], function () {
+            Route::get('ignitions-hourly', '\App\Http\Controllers\StatsController@ignitionsHourly');
         });
-
     });
 });

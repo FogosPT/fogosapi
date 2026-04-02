@@ -3,7 +3,7 @@
 namespace Tests\Feature\Controllers\LegacyController;
 
 use Database\Factories\IncidentFactory;
-use Laravel\Lumen\Testing\DatabaseMigrations;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 
 class NewFiresTest extends TestCase
@@ -17,12 +17,12 @@ class NewFiresTest extends TestCase
 
         $fireIncident = IncidentFactory::new()->active()->fire()->create();
 
-        $this->json('GET', 'new/fires')
-            ->seeJsonStructure([
+        $this->getJson('new/fires')
+            ->assertJsonStructure([
                 'success',
                 'data',
             ])
-            ->seeJsonContains([
+            ->assertJsonFragment([
                 'id' => $fireIncident->id,
                 'coords' => $fireIncident->coords,
                 'dateTime' => $fireIncident->dateTimeObject,
@@ -51,7 +51,6 @@ class NewFiresTest extends TestCase
                 'created' => $fireIncident->createdObject,
                 'updated' => $fireIncident->updatedObject,
             ])
-            ->response
             ->assertJsonCount(1, 'data');
     }
 
@@ -62,11 +61,10 @@ class NewFiresTest extends TestCase
 
         $inactiveFireIncident = IncidentFactory::new()->fire()->create();
 
-        $this->json('GET', 'new/fires')
-            ->dontSeeJson([
+        $this->getJson('new/fires')
+            ->assertJsonMissing([
                 'id' => $inactiveFireIncident->id,
             ])
-            ->response
             ->assertJsonCount(0, 'data');
     }
 }

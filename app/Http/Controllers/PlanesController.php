@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Planes;
 use Illuminate\Http\JsonResponse;
-use Laravel\Lumen\Routing\Controller;
+use Illuminate\Routing\Controller;
 
 class PlanesController extends Controller
 {

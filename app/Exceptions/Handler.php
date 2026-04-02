@@ -5,7 +5,7 @@ namespace App\Exceptions;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
-use Laravel\Lumen\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
@@ -30,26 +30,8 @@ class Handler extends ExceptionHandler
      *
      * @throws \Exception
      */
-    public function report(Throwable $exception)
-    {
-        parent::report($exception);
-    }
-
-    /**
-     * Render an exception into an HTTP response.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @throws \Throwable
-     *
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Response
-     */
     public function render($request, Throwable $exception)
     {
-        if (app()->bound('sentry') && $this->shouldReport($exception)) {
-            app('sentry')->captureException($exception);
-        }
-
         if ($exception instanceof ModelNotFoundException && $request->wantsJson()) {
             return response()->json(['message' => 'Not Found!'], 404);
         }

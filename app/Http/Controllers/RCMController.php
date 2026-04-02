@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\RCM;
 use App\Tools\RCMTool;
 use Illuminate\Http\Request;
-use Laravel\Lumen\Routing\Controller;
+use Illuminate\Routing\Controller;
 use App\Models\RCMForJS;
 use voku\helper\UTF8;
 use App\Jobs\ProcessRCM;

@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use Anik\Form\FormRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
 class IncidentSearchRequest extends FormRequest
 {
