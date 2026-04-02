@@ -7,7 +7,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class IncidentStatusHistory extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'statusHistory';
+    protected $table = 'statusHistory';
     protected $primaryKey = '_id';
 
     public const CREATED_AT = 'created';

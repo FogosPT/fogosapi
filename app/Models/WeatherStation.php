@@ -7,7 +7,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class WeatherStation extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'weatherStations';
+    protected $table = 'weatherStations';
     protected $primaryKey = '_id';
 
     public const CREATED_AT = 'created';

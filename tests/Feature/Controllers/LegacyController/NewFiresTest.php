@@ -4,6 +4,7 @@ namespace Tests\Feature\Controllers\LegacyController;
 
 use Database\Factories\IncidentFactory;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class NewFiresTest extends TestCase
@@ -13,7 +14,7 @@ class NewFiresTest extends TestCase
     /** @test */
     public function it_can_list_new_active_fire_incidents(): void
     {
-        $this->withoutJobs();
+        Queue::fake();
 
         $fireIncident = IncidentFactory::new()->active()->fire()->create();
 
@@ -57,7 +58,7 @@ class NewFiresTest extends TestCase
     /** @test */
     public function it_doesnt_lists_inactive_fire_incidents(): void
     {
-        $this->withoutJobs();
+        Queue::fake();
 
         $inactiveFireIncident = IncidentFactory::new()->fire()->create();
 

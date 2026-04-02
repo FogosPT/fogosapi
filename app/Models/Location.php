@@ -8,7 +8,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class Location extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'locations';
+    protected $table = 'locations';
     protected $primaryKey = '_id';
 
     protected $fillable = [

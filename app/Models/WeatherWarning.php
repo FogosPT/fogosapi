@@ -11,7 +11,7 @@ class WeatherWarning extends Model
     use WeatherWarningObserver;
 
     protected $connection = 'mongodb';
-    protected $collection = 'weather_warnings';
+    protected $table = 'weather_warnings';
     protected $primaryKey = '_id';
 
     public const CREATED_AT = 'created';

@@ -9,7 +9,7 @@ class IncidentModelTest extends TestCase
 {
     private Incident $model;
 
-    public function propertiesCastsProvider(): array
+    public static function propertiesCastsProvider(): array
     {
         return [
             'active as boolean' => ['active', 'boolean'],

@@ -7,7 +7,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class WarningMadeira extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'warningMadeira';
+    protected $table = 'warningMadeira';
     protected $primaryKey = '_id';
 
     public const CREATED_AT = 'created';

@@ -7,7 +7,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class HistoryTotal extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'historyTotal';
+    protected $table = 'historyTotal';
     protected $primaryKey = '_id';
 
     public const CREATED_AT = 'created';

@@ -7,7 +7,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class WeatherDataDaily extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'weatherDataDaily';
+    protected $table = 'weatherDataDaily';
     protected $primaryKey = '_id';
 
     public const CREATED_AT = 'created';

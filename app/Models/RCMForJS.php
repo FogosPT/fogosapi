@@ -7,7 +7,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class RCMForJS extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'rcmJS';
+    protected $table = 'rcmJS';
     protected $primaryKey = '_id';
 
     public const CREATED_AT = 'created';

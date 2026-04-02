@@ -11,7 +11,7 @@ class Incident extends Model
     use IncidentObserver;
 
     protected $connection = 'mongodb';
-    protected $collection = 'data';
+    protected $table = 'data';
     protected $primaryKey = '_id';
 
     public const CREATED_AT = 'created';

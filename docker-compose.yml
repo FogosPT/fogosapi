@@ -22,7 +22,6 @@ services:
     restart: unless-stopped
     volumes:
       - ./:/var/www/html
-      - ./assets/www.conf:/usr/local/etc/php-fpm.d/www.conf
     expose:
       - 9000
     networks:
@@ -42,7 +41,7 @@ services:
 
   fogos.redis:
     image: redis:6.2.3-alpine
-    command: redis-server --appendonly yes --requirepass 
+    command: redis-server --appendonly yes --requirepass
     expose:
       - 6379
     restart: unless-stopped
@@ -97,8 +96,6 @@ services:
       - ./:/var/www/html
     expose:
       - 9000
-    depends_on:
-      - fogos.mongodb
     networks:
       - fogos
     command: php artisan queue:work --queue=icnf --sleep=3 --tries=3 --max-time=3600
