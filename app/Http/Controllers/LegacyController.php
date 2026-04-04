@@ -733,6 +733,10 @@ class LegacyController extends Controller
             ->limit(1)
             ->get();
 
+        if ($risk->isEmpty()) {
+            return response()->json(['success' => false, 'data' => null], 404);
+        }
+
         $risk = $risk[0]->toArray();
         unset($risk['created'], $risk['updated'], $risk['_id']);
 
@@ -751,6 +755,10 @@ class LegacyController extends Controller
             ->limit(1)
             ->get();
 
+        if ($risk->isEmpty()) {
+            return response()->json(['success' => false, 'data' => null], 404);
+        }
+
         $risk = $risk[0]->toArray();
         unset($risk['created'], $risk['updated'], $risk['_id']);
 
@@ -768,6 +776,10 @@ class LegacyController extends Controller
             ->orderBy('created', 'desc')
             ->limit(1)
             ->get();
+
+        if ($risk->isEmpty()) {
+            return response()->json(['success' => false, 'data' => null], 404);
+        }
 
         $risk = $risk[0]->toArray();
         unset($risk['created'], $risk['updated'], $risk['_id']);
