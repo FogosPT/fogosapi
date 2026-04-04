@@ -1,0 +1,28 @@
+get:
+  operationId: v2GetPlaneByIcao
+  summary: Last 20 ADS-B position records for an aircraft identified by its ICAO address
+  tags:
+    - Planes
+  parameters:
+    - name: icao
+      in: path
+      required: true
+      description: ICAO 24-bit transponder address (hex, e.g. 4B1B00)
+      schema:
+        type: string
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: array
+                items:
+                  $ref: '../models/Plane.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

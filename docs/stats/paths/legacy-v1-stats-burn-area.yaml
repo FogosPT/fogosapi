@@ -1,0 +1,23 @@
+get:
+  operationId: getStatsBurnedArea
+  summary: Total burned area (hectares) per day for the last 7 days
+  tags:
+    - Stats
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: object
+                description: Keys are dates in dd-mm-yyyy format, values are total burned hectares
+                additionalProperties:
+                  type: number
+                  description: Total burned area in hectares
+    500:
+      $ref: '../../common/responses/500.yaml'

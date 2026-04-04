@@ -1,0 +1,9 @@
+title: Paginator
+type: object
+properties:
+  currentPage:
+    type: integer
+  totalPages:
+    type: integer
+  totalItems:
+    type: integer

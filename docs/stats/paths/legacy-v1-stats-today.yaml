@@ -1,0 +1,10 @@
+get:
+  operationId: getStatsTodayLegacy
+  summary: Fire incident stats for today (since midnight)
+  tags:
+    - Stats
+  responses:
+    200:
+      $ref: '../responses/legacy-stats-list.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

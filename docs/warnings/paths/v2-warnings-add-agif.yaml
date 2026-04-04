@@ -1,0 +1,25 @@
+post:
+  operationId: v2AddWarningAgif
+  summary: Create an AGIF warning and broadcast via push notifications, Twitter, Telegram, Facebook, and Bluesky
+  description: Requires a valid API key in the `key` header.
+  tags:
+    - Warnings
+  requestBody:
+    required: true
+    content:
+      application/x-www-form-urlencoded:
+        schema:
+          type: object
+          required:
+            - status
+          properties:
+            status:
+              type: string
+              description: Warning message text
+  responses:
+    200:
+      description: Warning created
+    401:
+      $ref: '../../common/responses/401.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

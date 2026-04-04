@@ -1,0 +1,26 @@
+get:
+  operationId: v2GetWeatherDaily
+  summary: Daily weather data for all stations on a given date
+  tags:
+    - Weather
+  parameters:
+    - name: date
+      in: query
+      required: true
+      description: Date in any Carbon-parseable format (e.g. 2024-07-15)
+      schema:
+        type: string
+        format: date
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: object
+    410:
+      description: Gone — `date` query parameter is required
+    500:
+      $ref: '../../common/responses/500.yaml'

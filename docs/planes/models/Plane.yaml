@@ -1,0 +1,49 @@
+title: Plane
+description: ADS-B position record for an aerial firefighting asset
+type: object
+properties:
+  icao:
+    type: string
+    description: ICAO 24-bit transponder address (hex)
+  reg:
+    type: string
+    description: Aircraft registration
+  type:
+    type: string
+    description: Aircraft type designator
+  call:
+    type: string
+    description: Callsign
+  lat:
+    type: number
+    description: Latitude
+  lon:
+    type: number
+    description: Longitude
+  alt:
+    type: integer
+    description: Barometric altitude (feet)
+  galt:
+    type: integer
+    description: Geometric altitude (feet)
+  spd:
+    type: number
+    description: Ground speed (knots)
+  trak:
+    type: number
+    description: Track angle (degrees true)
+  vsi:
+    type: integer
+    description: Vertical speed (feet/min)
+  gnd:
+    type: boolean
+    description: True if aircraft is on the ground
+  mil:
+    type: boolean
+    description: True if military aircraft
+  cou:
+    type: string
+    description: Country of registration
+  postime:
+    type: integer
+    description: Unix timestamp of last position fix

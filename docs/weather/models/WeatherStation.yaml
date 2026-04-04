@@ -1,0 +1,22 @@
+title: WeatherStation
+type: object
+properties:
+  id:
+    type: integer
+    description: IPMA station ID
+  location:
+    type: string
+    description: Human-readable station location name
+  type:
+    type: string
+    description: Station type
+  coordinates:
+    type: object
+    properties:
+      lat:
+        type: number
+      lng:
+        type: number
+  geoJSON:
+    type: object
+    description: GeoJSON Point feature for this station

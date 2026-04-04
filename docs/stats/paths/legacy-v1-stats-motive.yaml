@@ -1,0 +1,22 @@
+get:
+  operationId: getStatsMotiveThisMonth
+  summary: Fire incident counts grouped by cause (tipocausa + causafamilia) for the current month
+  tags:
+    - Stats
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: object
+                description: Keys are cause labels, values are incident counts
+                additionalProperties:
+                  type: integer
+    500:
+      $ref: '../../common/responses/500.yaml'

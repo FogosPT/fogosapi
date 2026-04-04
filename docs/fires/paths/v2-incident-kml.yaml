@@ -1,0 +1,69 @@
+get:
+  operationId: v2GetIncidentKML
+  summary: Download the ICNF burn-area KML file for an incident
+  tags:
+    - V2
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Incident public ID
+      schema:
+        type: string
+  responses:
+    200:
+      description: KML file attachment
+      content:
+        application/xml:
+          schema:
+            type: string
+            format: binary
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'
+
+post:
+  operationId: v2AddIncidentKMLVost
+  summary: Attach a VOST KML burn-area file to an incident
+  description: Requires a valid API key in the `key` header. Optionally posts a tweet with a screenshot.
+  tags:
+    - V2
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Incident public ID
+      schema:
+        type: string
+  requestBody:
+    required: true
+    content:
+      application/x-www-form-urlencoded:
+        schema:
+          type: object
+          required:
+            - kml
+          properties:
+            kml:
+              type: string
+              description: KML content to attach
+            status:
+              type: string
+              description: Optional tweet text; if provided a screenshot is taken and tweeted
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+    401:
+      $ref: '../../common/responses/401.yaml'
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'
