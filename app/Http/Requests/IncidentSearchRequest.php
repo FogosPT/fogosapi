@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use Anik\Form\FormRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
 class IncidentSearchRequest extends FormRequest
 {
@@ -11,7 +11,7 @@ class IncidentSearchRequest extends FormRequest
      *
      * @return bool
      */
-    protected function authorize(): bool
+    public function authorize(): bool
     {
         return true;
     }
@@ -21,7 +21,7 @@ class IncidentSearchRequest extends FormRequest
      *
      * @return array
      */
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'all' => 'boolean',

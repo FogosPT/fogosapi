@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use Jenssegers\Mongodb\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 
 class Warning extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'warning';
+    protected $table = 'warning';
     protected $primaryKey = '_id';
 
     public const CREATED_AT = 'created';

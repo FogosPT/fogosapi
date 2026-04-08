@@ -4,20 +4,25 @@
 namespace App\Models;
 
 use App\Observers\WeatherWarningObserver;
-use Jenssegers\Mongodb\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 
 class WeatherWarning extends Model
 {
     use WeatherWarningObserver;
 
     protected $connection = 'mongodb';
-    protected $collection = 'weather_warnings';
+    protected $table = 'weather_warnings';
     protected $primaryKey = '_id';
 
     public const CREATED_AT = 'created';
     public const UPDATED_AT = 'updated';
 
-    protected $dates = ['created', 'updated', 'startTime', 'endTime'];
+    protected $casts = [
+        'created'   => 'datetime',
+        'updated'   => 'datetime',
+        'startTime' => 'datetime',
+        'endTime'   => 'datetime',
+    ];
 
     protected $fillable = [
         'reportDate',

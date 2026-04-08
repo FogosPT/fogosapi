@@ -9,9 +9,15 @@
             <directory suffix="Test.php">./tests</directory>
         </testsuite>
     </testsuites>
+    <source>
+        <include>
+            <directory suffix=".php">./app</directory>
+        </include>
+    </source>
     <php>
         <env name="APP_ENV" value="testing"/>
-        <env name="CACHE_DRIVER" value="array"/>
+        <env name="APP_KEY" value="base64:ymQNfpaYx1EOn3zmibg45NKX+99eEcFU8KcOYU1MguY="/>
+        <env name="CACHE_STORE" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
     </php>
 </phpunit>

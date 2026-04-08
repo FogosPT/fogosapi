@@ -18,7 +18,7 @@ use App\Resources\V1\WarningResource;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Laravel\Lumen\Routing\Controller;
+use Illuminate\Routing\Controller;
 use voku\helper\UTF8;
 
 /** @deprecated */

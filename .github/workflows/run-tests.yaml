@@ -18,24 +18,25 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        php: [8.0]
+        php: [8.3]
 
     name: For PHP ${{ matrix.php }}
 
+    services:
+      mongodb:
+        image: mongo:7.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: root
+          MONGO_INITDB_ROOT_PASSWORD: root
+        ports:
+          - 27017:27017
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Start MongoDB
-        uses: getong/mongo-action@v1.1
-        with:
-          mongo version: '4.4.6'
-          host port: 27017
-          mongo username: 'root'
-          mongo password: 'root'
+        uses: actions/checkout@v4
 
       - name: Cache dependencies
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: ~/.composer/cache/files
           key: dependencies-php-${{ matrix.php }}-composer-${{ hashFiles('composer.json') }}
@@ -44,6 +45,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          extensions: mongodb
           coverage: pcov
 
       - name: Duplicate example env file

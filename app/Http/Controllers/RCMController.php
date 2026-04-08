@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\RCM;
 use App\Tools\RCMTool;
 use Illuminate\Http\Request;
-use Laravel\Lumen\Routing\Controller;
+use Illuminate\Routing\Controller;
 use App\Models\RCMForJS;
 use voku\helper\UTF8;
 use App\Jobs\ProcessRCM;
@@ -25,6 +25,10 @@ class RCMController extends Controller
             ->limit(1)
             ->get();
 
+        if ($risk->isEmpty()) {
+            abort(404);
+        }
+
         $risk = $risk[0]->toArray();
 
         $dicos = $risk['local'];
@@ -41,6 +45,10 @@ class RCMController extends Controller
             ->limit(1)
             ->get();
 
+        if ($risk->isEmpty()) {
+            abort(404);
+        }
+
         $risk = $risk[0]->toArray();
 
         $dicos = $risk['local'];
@@ -56,6 +64,10 @@ class RCMController extends Controller
             ->orderBy('created', 'desc')
             ->limit(1)
             ->get();
+
+        if ($risk->isEmpty()) {
+            abort(404);
+        }
 
         $risk = $risk[0]->toArray();
 

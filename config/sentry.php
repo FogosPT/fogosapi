@@ -2,7 +2,7 @@
 
 return [
     'dsn' => env('SENTRY_DSN', ''),
-
-    // capture release as git sha
-    // 'release' => trim(exec('git log --pretty="%h" -n1 HEAD')),
+    'traces_sample_rate' => env('SENTRY_TRACES_SAMPLE_RATE', 0.0),
+    'profiles_sample_rate' => env('SENTRY_PROFILES_SAMPLE_RATE', 0.0),
+    'send_default_pii' => false,
 ];

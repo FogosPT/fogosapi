@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use Jenssegers\Mongodb\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 
 class Planes extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'pplanes';
+    protected $table = 'pplanes';
     protected $primaryKey = '_id';
 
     public const CREATED_AT = 'created';

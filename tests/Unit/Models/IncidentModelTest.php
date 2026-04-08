@@ -9,7 +9,7 @@ class IncidentModelTest extends TestCase
 {
     private Incident $model;
 
-    public function propertiesCastsProvider(): array
+    public static function propertiesCastsProvider(): array
     {
         return [
             'active as boolean' => ['active', 'boolean'],
@@ -64,11 +64,14 @@ class IncidentModelTest extends TestCase
     /** @test */
     public function it_has_correct_dates_properties_casted(): void
     {
-        $dates = $this->model->getDates();
+        $casts = $this->model->getCasts();
 
-        self::assertContains('dateTime', $dates);
-        self::assertContains('updated', $dates);
-        self::assertContains('created', $dates);
+        self::assertArrayHasKey('dateTime', $casts);
+        self::assertEquals('datetime', $casts['dateTime']);
+        self::assertArrayHasKey('updated', $casts);
+        self::assertEquals('datetime', $casts['updated']);
+        self::assertArrayHasKey('created', $casts);
+        self::assertEquals('datetime', $casts['created']);
     }
 
     /**

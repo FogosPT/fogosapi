@@ -22,7 +22,7 @@ use App\Jobs\UpdateWeatherData;
 use App\Jobs\UpdateWeatherDataDaily;
 use App\Jobs\UpdateWeatherStations;
 use Illuminate\Console\Scheduling\Schedule;
-use Laravel\Lumen\Console\Kernel as ConsoleKernel;
+use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
 {

@@ -3,23 +3,24 @@
 namespace App\Models;
 
 use App\Observers\IncidentObserver;
-use Jenssegers\Mongodb\Eloquent\Builder;
-use Jenssegers\Mongodb\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Builder;
+use MongoDB\Laravel\Eloquent\Model;
 
 class Incident extends Model
 {
     use IncidentObserver;
 
     protected $connection = 'mongodb';
-    protected $collection = 'data';
+    protected $table = 'data';
     protected $primaryKey = '_id';
 
     public const CREATED_AT = 'created';
     public const UPDATED_AT = 'updated';
 
-    protected $dates = ['dateTime', 'created', 'updated'];
-
     protected $casts = [
+        'dateTime' => 'datetime',
+        'created'  => 'datetime',
+        'updated'  => 'datetime',
         'active' => 'boolean',
         'aerial' => 'integer',
         'coords' => 'boolean',
