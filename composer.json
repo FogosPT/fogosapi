@@ -21,7 +21,7 @@
         "sentry/sentry-laravel": "^4.0",
         "smalot/pdfparser": "^1.0",
         "spatie/pdf-to-text": "^1.4",
-        "voku/portable-utf8": "^5.4"
+        "voku/portable-utf8": "^6.0"
     },
     "require-dev": {
         "roave/security-advisories": "dev-latest",
