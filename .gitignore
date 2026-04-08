@@ -12,6 +12,12 @@ Homestead.yaml
 docker-compose.override.yaml
 public/screenshots
 storage/app
-storage/framework
-storage/logs
+storage/framework/cache/data/*
+!storage/framework/cache/data/.gitkeep
+storage/framework/sessions/*
+!storage/framework/sessions/.gitkeep
+storage/framework/views/*
+!storage/framework/views/.gitkeep
+storage/logs/*
+!storage/logs/.gitkeep
 bootstrap/cache/*.php
