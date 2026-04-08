@@ -175,8 +175,8 @@ class ProcessICNFFireData extends Job
         $domain = env('SOCIAL_LINK_DOMAIN');
 
         if ($notifyFonte && $notifyCausa) {
-            $status = "ℹ Alerta via: {$this->incident->icnf['fontealerta']} - Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa}, {$this->incident->icnf->causa} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  ℹ";
-            $notification = "Alerta via: {$this->incident->icnf['fontealerta']} - Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf->tipocausa}, {$this->incident->icnf->causa}";
+            $status = "ℹ Alerta via: {$this->incident->icnf['fontealerta']} - Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf['tipocausa']}, {$this->incident->icnf['causa']} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  ℹ";
+            $notification = "Alerta via: {$this->incident->icnf['fontealerta']} - Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf['tipocausa']}, {$this->incident->icnf['causa']}";
         } else {
             if ($notifyCausa) {
                 $status = "ℹ Causa: {$this->incident->icnf['causafamilia']}, {$this->incident->icnf['tipocausa']} https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT  ℹ";
