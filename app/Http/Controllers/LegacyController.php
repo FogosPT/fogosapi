@@ -115,7 +115,7 @@ class LegacyController extends Controller
             abort(404);
         }
 
-        $history = IncidentHistory::whereFireId(\$id)
+        $history = IncidentHistory::whereFireId($id)
             ->orderBy('created', 'asc')
             ->limit(2000)
             ->get();
