@@ -48,7 +48,7 @@ class UpdateWeatherData extends Job
         $data = json_decode($data);
 
         foreach($data as $date => $stations){
-            $ddate = Carbon::parse($date);
+            $ddate = Carbon::parse($date, 'UTC');
             foreach($stations as $stationId => $d){
                 $stationId = (string) $stationId;
 

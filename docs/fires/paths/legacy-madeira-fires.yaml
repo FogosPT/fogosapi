@@ -1,6 +1,6 @@
 get:
-  operationId: getNewFires
-  summary: List active fires
+  operationId: getMadeiraFires
+  summary: List fire incidents for Madeira (deprecated, returns empty)
   tags:
     - Fires
   responses:

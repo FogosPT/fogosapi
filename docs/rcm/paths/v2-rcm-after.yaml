@@ -1,0 +1,14 @@
+get:
+  operationId: v2GetRCMAfter
+  summary: Day-after-tomorrow's fire risk map as a GeoJSON FeatureCollection (one feature per DICO)
+  tags:
+    - RCM
+  responses:
+    200:
+      description: GeoJSON FeatureCollection
+      content:
+        application/json:
+          schema:
+            type: object
+    500:
+      $ref: '../../common/responses/500.yaml'

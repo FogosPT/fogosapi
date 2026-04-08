@@ -38,7 +38,7 @@ class IncidentResource extends JsonResource
             'precAcumulada' => $data->precAcumulada,
             'radiacao' => $data->radiacao,
             'pressao' => $data->pressao,
-            'date' => $data->date,
+            'date' => $data->date?->setTimezone(config('app.timezone')),
         ];
     }
 

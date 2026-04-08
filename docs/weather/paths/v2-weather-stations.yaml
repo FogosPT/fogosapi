@@ -1,0 +1,31 @@
+get:
+  operationId: v2GetWeatherStations
+  summary: List weather stations, or fetch a single station by ID or place name
+  tags:
+    - Weather
+  parameters:
+    - name: id
+      in: query
+      required: false
+      description: Filter by station numeric ID
+      schema:
+        type: integer
+    - name: place
+      in: query
+      required: false
+      description: Filter by station place name (exact match)
+      schema:
+        type: string
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../models/WeatherStation.yaml'
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

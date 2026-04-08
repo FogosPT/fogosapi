@@ -10,24 +10,38 @@ info:
 
 servers:
   - url: 'https://api.fogos.pt'
-    description: Development Server
-  - url: 'https://api.fogos.pt'
     description: Production Server
+  - url: 'http://localhost:8080'
+    description: Local Development Server
 
 tags:
   - name: Assets
+    description: Aerial assets and history
   - name: Fires
+    description: Fire incident endpoints (legacy)
   - name: Misc
+    description: Miscellaneous text-formatted endpoints used by social bots
   - name: Stats
+    description: Statistics on fire incidents
   - name: Warnings
+    description: Weather and operational warnings
+  - name: RCM
+    description: Risco de Incêndio (fire risk) maps and parish lookups
+  - name: Weather
+    description: Weather stations and IPMA data
+  - name: Planes
+    description: Aerial firefighting asset tracking (ADS-B)
   - name: V2
+    description: V2 incident endpoints
 
 paths:
+  # Assets
   /v1/aerial:
     $ref: './assets/paths/legacy-v1-aerial.yaml'
   /v1/now/data:
     $ref: './assets/paths/legacy-v1-now-data.yaml'
 
+  # Fires (legacy)
   /fires:
     $ref: './fires/paths/legacy-fires.yaml'
   /fires/danger:
@@ -38,6 +52,10 @@ paths:
     $ref: './fires/paths/legacy-fires-status.yaml'
   /new/fires:
     $ref: './fires/paths/legacy-new-fires.yaml'
+  /madeira/fires:
+    $ref: './fires/paths/legacy-madeira-fires.yaml'
+  /madeira/fires/status:
+    $ref: './fires/paths/legacy-madeira-fires-status.yaml'
   /v1/active:
     $ref: './fires/paths/legacy-v1-active.yaml'
   /v1/list:
@@ -45,15 +63,19 @@ paths:
   /v1/now:
     $ref: './fires/paths/legacy-v1-now.yaml'
 
+  # Misc (legacy — mostly text for social bots)
   /v1/risk-today:
     $ref: './misc/paths/legacy-v1-risk-today.yaml'
+  /v1/risk-tomorrow:
+    $ref: './misc/paths/legacy-v1-risk-tomorrow.yaml'
+  /v1/risk-after:
+    $ref: './misc/paths/legacy-v1-risk-after.yaml'
   /v1/risk:
     $ref: './misc/paths/legacy-v1-risk.yaml'
   /v1/status:
     $ref: './misc/paths/legacy-v1-status.yaml'
-  /v2/other/mobile-contributors:
-    $ref: './misc/paths/v2-mobile-contributors.yaml'
 
+  # Warnings (legacy)
   /v1/madeira/warnings:
     $ref: './warnings/paths/legacy-v1-madeira-warnings.yaml'
   /v1/warnings:
@@ -61,6 +83,7 @@ paths:
   /v1/warnings/site:
     $ref: './warnings/paths/legacy-v1-warnings-site.yaml'
 
+  # Stats (legacy)
   /v1/stats:
     $ref: './stats/paths/legacy-v1-stats.yaml'
   /v1/stats/8hours:
@@ -71,8 +94,65 @@ paths:
     $ref: './stats/paths/legacy-v1-stats-last-night.yaml'
   /v1/stats/week:
     $ref: './stats/paths/legacy-v1-stats-week.yaml'
+  /v1/stats/today:
+    $ref: './stats/paths/legacy-v1-stats-today.yaml'
+  /v1/stats/yesterday:
+    $ref: './stats/paths/legacy-v1-stats-yesterday.yaml'
+  /v1/stats/burn-area:
+    $ref: './stats/paths/legacy-v1-stats-burn-area.yaml'
+  /v1/stats/motive:
+    $ref: './stats/paths/legacy-v1-stats-motive.yaml'
 
+  # V2 — Incidents
   /v2/incidents/active:
     $ref: './fires/paths/v2-active.yaml'
+  /v2/incidents/active/kml:
+    $ref: './fires/paths/v2-active-kml.yaml'
   /v2/incidents/search:
     $ref: './fires/paths/v2-search.yaml'
+  /v2/incidents/1000ha-burned:
+    $ref: './fires/paths/v2-1000ha-burned.yaml'
+  /v2/incidents/{id}/kml:
+    $ref: './fires/paths/v2-incident-kml.yaml'
+  /v2/incidents/{id}/kmlVost:
+    $ref: './fires/paths/v2-incident-kmlvost.yaml'
+  /v2/incidents/{id}/posit:
+    $ref: './fires/paths/v2-incident-posit.yaml'
+
+  # V2 — Weather
+  /v2/weather/thunders:
+    $ref: './weather/paths/v2-weather-thunders.yaml'
+  /v2/weather/stations:
+    $ref: './weather/paths/v2-weather-stations.yaml'
+  /v2/weather/daily:
+    $ref: './weather/paths/v2-weather-daily.yaml'
+  /v2/weather/ipma-services:
+    $ref: './weather/paths/v2-weather-ipma-services.yaml'
+
+  # V2 — RCM (fire risk maps)
+  /v2/rcm/today:
+    $ref: './rcm/paths/v2-rcm-today.yaml'
+  /v2/rcm/tomorrow:
+    $ref: './rcm/paths/v2-rcm-tomorrow.yaml'
+  /v2/rcm/after:
+    $ref: './rcm/paths/v2-rcm-after.yaml'
+  /v2/rcm/parish:
+    $ref: './rcm/paths/v2-rcm-parish.yaml'
+
+  # V2 — Planes
+  /v2/planes/{icao}:
+    $ref: './planes/paths/v2-planes-icao.yaml'
+
+  # V2 — Warnings
+  /v2/warnings/add:
+    $ref: './warnings/paths/v2-warnings-add.yaml'
+  /v2/warnings/add/agif:
+    $ref: './warnings/paths/v2-warnings-add-agif.yaml'
+
+  # V2 — Stats
+  /v2/stats/today/ignitions-hourly:
+    $ref: './stats/paths/v2-stats-ignitions-hourly.yaml'
+
+  # V2 — Other
+  /v2/other/mobile-contributors:
+    $ref: './misc/paths/v2-mobile-contributors.yaml'

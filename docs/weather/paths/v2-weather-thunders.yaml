@@ -1,0 +1,18 @@
+get:
+  operationId: v2GetWeatherThunders
+  summary: Lightning/thunder data (not yet implemented — returns placeholder)
+  tags:
+    - Weather
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              message:
+                type: string
+                example: soon

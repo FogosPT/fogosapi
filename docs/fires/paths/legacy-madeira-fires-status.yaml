@@ -1,0 +1,10 @@
+get:
+  operationId: getMadeiraFiresStatus
+  summary: Fire status for Madeira (deprecated, returns empty)
+  tags:
+    - Fires
+  responses:
+    200:
+      $ref: '../responses/legacy-fires-status-list.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

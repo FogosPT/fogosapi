@@ -1,0 +1,12 @@
+get:
+  operationId: getMiscRiskAfter
+  summary: RCM data for the day after tomorrow (formatted for web JS)
+  tags:
+    - Misc
+  responses:
+    200:
+      $ref: '../responses/legacy-risk-list.yaml'
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

@@ -1,0 +1,24 @@
+get:
+  operationId: v2GetIncidentKMLVost
+  summary: Download the VOST burn-area KML file for an incident
+  tags:
+    - V2
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Incident public ID
+      schema:
+        type: string
+  responses:
+    200:
+      description: KML file attachment
+      content:
+        application/xml:
+          schema:
+            type: string
+            format: binary
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

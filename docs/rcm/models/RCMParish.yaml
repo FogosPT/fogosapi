@@ -1,0 +1,13 @@
+title: RCMParish
+description: Fire risk (Risco de Incêndio) for a concelho across three days
+type: object
+properties:
+  today:
+    type: string
+    description: Risk level for today
+  tomorrow:
+    type: string
+    description: Risk level for tomorrow
+  after:
+    type: string
+    description: Risk level for the day after tomorrow

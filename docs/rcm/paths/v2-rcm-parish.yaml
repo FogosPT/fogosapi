@@ -1,0 +1,28 @@
+get:
+  operationId: v2GetRCMParish
+  summary: Fire risk for a specific concelho across today, tomorrow, and the day after
+  tags:
+    - RCM
+  parameters:
+    - name: concelho
+      in: query
+      required: true
+      description: Concelho name (case-insensitive)
+      schema:
+        type: string
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                $ref: '../models/RCMParish.yaml'
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

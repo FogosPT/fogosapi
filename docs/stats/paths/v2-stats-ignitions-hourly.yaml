@@ -1,0 +1,30 @@
+get:
+  operationId: v2GetIgnitionsHourly
+  summary: Fire ignition count grouped by hour for a given day (defaults to today)
+  tags:
+    - Stats
+  parameters:
+    - name: day
+      in: query
+      required: false
+      description: Date in any Carbon-parseable format (e.g. 2024-07-15). Defaults to today.
+      schema:
+        type: string
+        format: date
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: object
+                description: Keys are hour-range labels (e.g. "8H - 9H"), values are ignition counts
+                additionalProperties:
+                  type: integer
+    500:
+      $ref: '../../common/responses/500.yaml'

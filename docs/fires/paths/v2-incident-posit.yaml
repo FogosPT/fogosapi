@@ -1,0 +1,45 @@
+post:
+  operationId: v2AddIncidentPosit
+  summary: Update incident PCO/COS details and POSIT text
+  description: Requires a valid API key in the `key` header.
+  tags:
+    - V2
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Incident public ID
+      schema:
+        type: string
+  requestBody:
+    required: true
+    content:
+      application/x-www-form-urlencoded:
+        schema:
+          type: object
+          properties:
+            posit:
+              type: string
+              description: Situational report text
+            pco:
+              type: string
+              description: Posto de Comando Operacional
+            cos:
+              type: string
+              description: Comandante de Operações de Socorro
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+    401:
+      $ref: '../../common/responses/401.yaml'
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

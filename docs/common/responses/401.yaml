@@ -1,0 +1,6 @@
+description: "Unauthorized. A valid API key must be provided in the `key` header."
+content:
+  application/json:
+    schema:
+      title: 401 Unauthorized
+      type: object

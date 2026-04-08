@@ -1,0 +1,14 @@
+get:
+  operationId: v2GetIPMAServicesHTTPS
+  summary: Proxy for IPMA WMS GetCapabilities (rewrites http:// URLs to https://)
+  tags:
+    - Weather
+  responses:
+    200:
+      description: WMS GetCapabilities XML document
+      content:
+        application/xml:
+          schema:
+            type: string
+    500:
+      $ref: '../../common/responses/500.yaml'
