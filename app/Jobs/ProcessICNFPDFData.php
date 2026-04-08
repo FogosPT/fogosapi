@@ -58,7 +58,7 @@ class ProcessICNFPDFData extends Job implements ShouldQueue, ShouldBeUnique
 
             $id = str_replace("'", '', $rr[0]);
 
-            $this->incident = Incident::where('id', $id)
+            $this->incident = Incident::whereFireId($id)
                 ->get();
 
             if (isset($this->incident[0])) {

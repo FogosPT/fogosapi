@@ -83,7 +83,7 @@ class GetICNFBurnAreaLegacy extends Command
 
                 $i++;
 
-                $incident = Incident::where('id', $d[14])->get();
+                $incident = Incident::whereFireId($d[14])->get();
 
                 if(isset($incident[0])){
                     $incident = $incident[0];

@@ -30,7 +30,7 @@ class SaveIncidentStatusHistory extends Job
     {
         $this->updateIncident();
 
-        $last = IncidentStatusHistory::where('id', $this->incident->id)
+        $last = IncidentStatusHistory::whereFireId($this->incident->id)
             ->orderBy('created', 'desc')
             ->limit(1)
             ->get();
@@ -126,6 +126,6 @@ class SaveIncidentStatusHistory extends Job
 
     private function updateIncident()
     {
-        $this->incident = Incident::where('id', $this->incident->id)->firstOrFail();
+        $this->incident = Incident::whereFireId($this->incident->id)->firstOrFail();
     }
 }

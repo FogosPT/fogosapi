@@ -63,7 +63,7 @@ class ProcessICNFNewFireData extends Job
 
             $id = strip_tags(str_replace("'", '', $rr[0]));
 
-            $incident = Incident::where('id', $id)
+            $incident = Incident::whereFireId($id)
                 ->get();
 
             if (!isset($incident[0])) {

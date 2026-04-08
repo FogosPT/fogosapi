@@ -204,6 +204,15 @@ class Incident extends Model
         12 => 'BDBDBD',
     ];
 
+    /**
+     * Query by business fire ID, compatible with both legacy (jenssegers) documents
+     * {_id: ObjectId, id: "string"} and new documents {_id: "string"}.
+     */
+    public function scopeWhereFireId(Builder $query, string $id): Builder
+    {
+        return $query->whereRaw(['$or' => [['id' => $id], ['_id' => $id]]]);
+    }
+
     public function scopeIsActive(Builder $query): Builder
     {
         return $query->where('active', true);

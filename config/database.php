@@ -15,6 +15,11 @@ return [
             'options' => [
                 'database' => 'admin', // sets the authentication database required by mongo 3
             ],
+            // Prevent the package from renaming nested 'id' fields to '_id'.
+            // Legacy documents (created via jenssegers) store the business ID in a
+            // separate 'id' field alongside an ObjectId '_id'. Queries must match both
+            // structures using $or; disabling this rename keeps nested 'id' intact.
+            'rename_embedded_id_field' => false,
         ],
     ],
     'migrations' => 'migrations',

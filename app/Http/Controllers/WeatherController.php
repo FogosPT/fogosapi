@@ -86,7 +86,7 @@ class WeatherController extends Controller
         $place = $request->get('place');
 
         if($id){
-            $station = WeatherStation::where('id', (int)$id)->get();
+            $station = WeatherStation::whereStationId((int)$id)->get();
         } elseif($place){
             $station = WeatherStation::where('place', $place)->get();
         } else {

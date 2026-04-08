@@ -87,7 +87,7 @@ class HandleANEPCImportantData extends Job
         }
 
         foreach($fires as $fire){
-            $incident = Incident::where('id', $fire['id'])->first();
+            $incident = Incident::whereFireId($fire['id'])->first();
             if (!$incident) {
                 continue;
             }

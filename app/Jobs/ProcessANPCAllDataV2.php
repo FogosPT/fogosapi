@@ -116,7 +116,7 @@ class ProcessANPCAllDataV2 extends Job
     private function handleIncidents($data)
     {
         foreach ($data as $i) {
-            $exists = Incident::where('id', $i['numero_sado'])->get();
+            $exists = Incident::whereFireId($i['numero_sado'])->get();
 
             if (isset($exists[0])) {
                 $this->updateIncident($exists[0], $i);

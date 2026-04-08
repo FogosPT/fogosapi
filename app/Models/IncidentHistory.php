@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use MongoDB\Laravel\Eloquent\Builder;
 use MongoDB\Laravel\Eloquent\Model;
 
 class IncidentHistory extends Model
@@ -12,6 +13,11 @@ class IncidentHistory extends Model
 
     public const CREATED_AT = 'created';
     public const UPDATED_AT = 'updated';
+
+    public function scopeWhereFireId(Builder $query, string $id): Builder
+    {
+        return $query->whereRaw(['$or' => [['id' => $id], ['_id' => $id]]]);
+    }
 
     protected $fillable = [
         'id',

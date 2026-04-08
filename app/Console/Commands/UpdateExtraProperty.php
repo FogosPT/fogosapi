@@ -42,7 +42,7 @@ class UpdateExtraProperty extends Command
         $status = $this->argument('status');
         $id = $this->argument('id');
 
-        $incident = Incident::where('id', $id)->get()[0];
+        $incident = Incident::whereFireId($id)->get()[0];
 
         $incident->extra = $status;
         $incident->save();

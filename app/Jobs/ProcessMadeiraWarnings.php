@@ -40,7 +40,7 @@ class ProcessMadeiraWarnings extends Job implements ShouldQueue, ShouldBeUnique
         foreach ($data['result'] as $d) {
             $id = md5($d['menu'].$d['dia_hora']);
 
-            $exists = WarningMadeira::where('id', $id)->get();
+            $exists = WarningMadeira::whereWarningId($id)->get();
 
             if (!isset($exists[0])) {
                 if (preg_match('/fogo|incêndio|incendio/i', $d['title']) || preg_match('/fogo|incêndio|incendio/i', $d['description'])) {

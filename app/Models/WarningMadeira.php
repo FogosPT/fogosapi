@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use MongoDB\Laravel\Eloquent\Builder;
 use MongoDB\Laravel\Eloquent\Model;
 
 class WarningMadeira extends Model
@@ -12,6 +13,11 @@ class WarningMadeira extends Model
 
     public const CREATED_AT = 'created';
     public const UPDATED_AT = 'updated';
+
+    public function scopeWhereWarningId(Builder $query, string $id): Builder
+    {
+        return $query->whereRaw(['$or' => [['id' => $id], ['_id' => $id]]]);
+    }
 
     protected $fillable = [
         'title',

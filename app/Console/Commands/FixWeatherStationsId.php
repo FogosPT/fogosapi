@@ -65,7 +65,7 @@ class FixWeatherStationsId extends Command
         foreach($data as $d){
             $id = $d->properties->idEstacao;
 
-            $station = WeatherStation::where('id', $id)->get();
+            $station = WeatherStation::whereStationId($id)->get();
 
             if(isset($station[0])){
                 $station = $station[0];

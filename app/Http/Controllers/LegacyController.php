@@ -107,7 +107,7 @@ class LegacyController extends Controller
     {
         $id = $request->get('id');
 
-        $incident = Incident::where('id', $id)->get();
+        $incident = Incident::whereFireId($id)->get();
 
         if (isset($incident[0])) {
             $incident = $incident[0];
@@ -115,7 +115,7 @@ class LegacyController extends Controller
             abort(404);
         }
 
-        $history = IncidentHistory::where('id', $id)
+        $history = IncidentHistory::whereFireId(\$id)
             ->orderBy('created', 'asc')
             ->limit(2000)
             ->get();
@@ -166,7 +166,7 @@ class LegacyController extends Controller
     {
         $id = $request->get('id');
 
-        $incident = Incident::where('id', $id)->get();
+        $incident = Incident::whereFireId($id)->get();
 
         if (isset($incident[0])) {
 
@@ -292,7 +292,7 @@ class LegacyController extends Controller
     {
         $id = $request->get('id');
 
-        $incident = Incident::where('id', $id)->get();
+        $incident = Incident::whereFireId($id)->get();
 
         if (isset($incident[0])) {
             $rcm = RCM::where('concelho', $incident[0]->concelho)
@@ -326,11 +326,11 @@ class LegacyController extends Controller
     {
         $id = $request->get('id');
 
-        $incident = Incident::where('id', $id)->get();
+        $incident = Incident::whereFireId($id)->get();
 
         if (isset($incident[0])) {
             $incident = $incident[0];
-            $statusHistory = IncidentStatusHistory::where('id', $id)
+            $statusHistory = IncidentStatusHistory::whereFireId($id)
                 ->orderBy('created', 'desc')
                 ->get();
 

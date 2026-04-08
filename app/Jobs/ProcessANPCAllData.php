@@ -69,7 +69,7 @@ class ProcessANPCAllData extends Job //implements ShouldQueue, ShouldBeUnique
     private function handleIncidents($data)
     {
         foreach ($data as $i) {
-            $exists = Incident::where('id', $i['Numero'])->get();
+            $exists = Incident::whereFireId($i['Numero'])->get();
 
             if (isset($exists[0])) {
                 $this->updateIncident($exists[0], $i);

@@ -17,7 +17,7 @@ class AssignNearestWeatherStation extends Job
 
     public function handle(): void
     {
-        $incident = Incident::where('id', $this->incidentId)->first();
+        $incident = Incident::whereFireId($this->incidentId)->first();
 
         if (!$incident || !$incident->lat || !$incident->lng) {
             return;

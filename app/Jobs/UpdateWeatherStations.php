@@ -49,7 +49,7 @@ class UpdateWeatherStations extends Job
         foreach($data as $d){
             $id = (int)$d->properties->idEstacao;
 
-            $station = WeatherStation::where('id', $id)->get();
+            $station = WeatherStation::whereStationId($id)->get();
 
             if(isset($station[0])){
                 $station = $station[0];
