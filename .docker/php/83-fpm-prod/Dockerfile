@@ -1,4 +1,4 @@
-FROM php:8.3-fpm
+FROM php:8.3-fpm-bookworm
 
 LABEL description="Fogos.pt API Production PHP 8.3 image"
 LABEL org.opencontainers.image.source="https://github.com/FogosPT/fogosapi"
