@@ -24,7 +24,7 @@ class IncidentResource extends JsonResource
             return null;
         }
 
-        $station = WeatherStation::whereStationId((int) \$this->nearestWeatherStationId)->first();
+        $station = WeatherStation::whereStationId((int) $this->nearestWeatherStationId)->first();
 
         return [
             'stationId' => $this->nearestWeatherStationId,
