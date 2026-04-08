@@ -43,6 +43,11 @@
 ///////////////////////////////////*////////////////,,*////////////////////////
 ```
 
+## API
+
+- [Registo para utilizar a API](https://fogos.pt/pt/api)
+- [Termos de utilização da API](https://fogos.pt/pt/api-termos)
+
 ## Run
 
 ```shell

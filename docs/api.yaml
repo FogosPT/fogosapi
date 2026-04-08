@@ -2,7 +2,11 @@ openapi: 3.0.3
 
 info:
   title: Fogos.pt
-  description: Fogos.pt Official API Documentation
+  description: |
+    Fogos.pt Official API Documentation.
+
+    - [Registo para utilizar a API](https://fogos.pt/pt/api)
+    - [Termos de utilização da API](https://fogos.pt/pt/api-termos)
   version: 1.0.0
   contact:
     name: Tomahock
