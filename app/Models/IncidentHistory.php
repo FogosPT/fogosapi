@@ -16,10 +16,11 @@ class IncidentHistory extends Model
 
     public function scopeWhereFireId(Builder $query, string $id): Builder
     {
-        return $query->whereRaw(['$or' => [['id' => $id], ['_id' => $id]]]);
+        return $query->whereRaw(['$or' => [['incidentId' => $id], ['id' => $id]]]);
     }
 
     protected $fillable = [
+        'incidentId',
         'id',
         'sharepointId',
         'aerial',

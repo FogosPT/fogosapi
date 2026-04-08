@@ -32,7 +32,7 @@ class SaveIncidentHistory extends Job
     private function saveNewIncidentHistory()
     {
         $incidentHistory = new IncidentHistory();
-        $incidentHistory->id = $this->incident->id;
+        $incidentHistory->incidentId = $this->incident->id;
         $incidentHistory->sharepointId = $this->incident->sharepointId;
         $incidentHistory->aerial = $this->incident->aerial;
         $incidentHistory->terrain = $this->incident->terrain;

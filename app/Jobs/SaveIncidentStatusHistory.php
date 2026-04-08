@@ -115,7 +115,7 @@ class SaveIncidentStatusHistory extends Job
         }
 
         $incidentStatusHistory = new IncidentStatusHistory();
-        $incidentStatusHistory->id = $this->incident->id;
+        $incidentStatusHistory->incidentId = $this->incident->id;
         $incidentStatusHistory->sharepointId = $this->incident->sharepointId;
         $incidentStatusHistory->location = $this->incident->location;
         $incidentStatusHistory->status = $this->incident->status;

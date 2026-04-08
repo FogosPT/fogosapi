@@ -16,10 +16,11 @@ class WeatherStation extends Model
 
     public function scopeWhereStationId(Builder $query, int $id): Builder
     {
-        return $query->whereRaw(['$or' => [['id' => $id], ['_id' => $id]]]);
+        return $query->whereRaw(['$or' => [['stationId' => $id], ['id' => $id]]]);
     }
 
     protected $fillable = [
+        'stationId',
         'id',
         'coordinates',
         'geoJSON',

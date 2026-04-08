@@ -55,7 +55,7 @@ class UpdateWeatherStations extends Job
                 $station = $station[0];
             } else {
                 $station = new WeatherStation();
-                $station->id = (int)$id;
+                $station->stationId = (int)$id;
             }
 
             $station->type = "point";
