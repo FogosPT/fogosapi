@@ -164,6 +164,6 @@ class SaveIncidentHistory extends Job
 
     private function updateIncident()
     {
-        $this->incident = Incident::where('id', $this->incident->id)->get()[0];
+        $this->incident = Incident::where('id', $this->incident->id)->firstOrFail();
     }
 }

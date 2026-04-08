@@ -48,3 +48,7 @@ RUN docker-php-ext-install \
     timezonedb
 
 COPY zz-docker.conf /usr/local/etc/php-fpm.d/zz-docker.conf
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

@@ -440,7 +440,10 @@ class IncidentController extends Controller
 
     public function kml(Request $request, $id)
     {
-        $incident = Incident::where('id', $id)->get()[0];
+        $incident = Incident::where('id', $id)->first();
+        if (!$incident) {
+            abort(404);
+        }
         $incidentkml = $incident->kml;
 
         $response = new StreamedResponse();
@@ -455,7 +458,10 @@ class IncidentController extends Controller
 
     public function kmlVost(Request $request, $id)
     {
-        $incident = Incident::where('id', $id)->get()[0];
+        $incident = Incident::where('id', $id)->first();
+        if (!$incident) {
+            abort(404);
+        }
         $incidentkml = $incident->kmlVost;
 
         $response = new StreamedResponse();
@@ -501,7 +507,7 @@ class IncidentController extends Controller
             abort(401);
         }
 
-        $incident = Incident::where('id', $id)->get()[0];
+        $incident = Incident::where('id', $id)->firstOrFail();
 
         $incident->extra = $request->post('posit');
         $incident->pco = $request->post('pco');
@@ -522,7 +528,7 @@ class IncidentController extends Controller
             abort(401);
         }
 
-        $incident = Incident::where('id', $id)->get()[0];
+        $incident = Incident::where('id', $id)->firstOrFail();
 
         $incident->kmlVost = $request->post('kml');
 
