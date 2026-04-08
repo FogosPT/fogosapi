@@ -2,20 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessRCM;
 use App\Models\RCM;
+use App\Models\RCMForJS;
 use App\Tools\RCMTool;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use App\Models\RCMForJS;
+use Illuminate\Support\Facades\Bus;
 use voku\helper\UTF8;
-use App\Jobs\ProcessRCM;
 
 
 class RCMController extends Controller
 
 {
     
-	public function update(){dispatch_now(new ProcessRCM(false,false));}
+    public function update(){Bus::dispatchNow(new ProcessRCM(false,false));}
 
 
 	public function today()
@@ -88,7 +89,7 @@ class RCMController extends Controller
             ->limit(1)
             ->get();
 
-        if (!isset($risk[0])) {
+        if ($risk->isEmpty()) {
             abort(404);
         }
 
