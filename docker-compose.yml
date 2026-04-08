@@ -96,6 +96,8 @@ services:
       - ./:/var/www/html
     expose:
       - 9000
+    depends_on:
+      - fogos.mongodb
     networks:
       - fogos
     command: php artisan queue:work --queue=icnf --sleep=3 --tries=3 --max-time=3600

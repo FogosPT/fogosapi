@@ -25,6 +25,10 @@ class RCMController extends Controller
             ->limit(1)
             ->get();
 
+        if ($risk->isEmpty()) {
+            abort(404);
+        }
+
         $risk = $risk[0]->toArray();
 
         $dicos = $risk['local'];
@@ -41,6 +45,10 @@ class RCMController extends Controller
             ->limit(1)
             ->get();
 
+        if ($risk->isEmpty()) {
+            abort(404);
+        }
+
         $risk = $risk[0]->toArray();
 
         $dicos = $risk['local'];
@@ -56,6 +64,10 @@ class RCMController extends Controller
             ->orderBy('created', 'desc')
             ->limit(1)
             ->get();
+
+        if ($risk->isEmpty()) {
+            abort(404);
+        }
 
         $risk = $risk[0]->toArray();
 
