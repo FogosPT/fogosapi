@@ -9,6 +9,15 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class IncidentResource extends JsonResource
 {
+    private function haversineDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $earthRadius = 6371;
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+        $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
+        return round($earthRadius * 2 * asin(sqrt($a)), 1);
+    }
+
     private function getLatestWeather(): ?array
     {
         if (!$this->nearestWeatherStationId) {
@@ -26,9 +35,20 @@ class IncidentResource extends JsonResource
 
         $station = WeatherStation::whereStationId((int) $this->nearestWeatherStationId)->first();
 
+        $stationDistance = null;
+        if ($station && isset($station->coordinates[0], $station->coordinates[1]) && $this->lat && $this->lng) {
+            $stationDistance = $this->haversineDistance(
+                (float) $this->lat,
+                (float) $this->lng,
+                (float) $station->coordinates[1],
+                (float) $station->coordinates[0]
+            );
+        }
+
         return [
             'stationId' => $this->nearestWeatherStationId,
             'stationLocation' => $station->location ?? null,
+            'stationDistance' => $stationDistance,
             'temperatura' => $data->temperatura,
             'humidade' => $data->humidade,
             'intensidadeVento' => $data->intensidadeVento,
