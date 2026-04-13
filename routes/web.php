@@ -59,6 +59,7 @@ Route::group(['prefix' => 'v2'], function () {
         Route::get('1000ha-burned', '\App\Http\Controllers\IncidentController@burnMoreThan1000');
         Route::get('{id}/kml', '\App\Http\Controllers\IncidentController@kml');
         Route::get('{id}/kmlVost', '\App\Http\Controllers\IncidentController@kmlVost');
+        Route::get('{id}/kmlFirms', '\App\Http\Controllers\IncidentController@kmlFIRMS');
 
         Route::post('{id}/posit', '\App\Http\Controllers\IncidentController@addPosit');
         Route::post('{id}/kml', '\App\Http\Controllers\IncidentController@addKML');

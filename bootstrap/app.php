@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\DailySummary;
+use App\Jobs\ProcessFIRMSData;
 use App\Jobs\HandleWeatherWarnings;
 use App\Jobs\HourlySummary;
 use App\Jobs\ProcessANPCAllDataV2;
@@ -57,6 +58,7 @@ return Application::configure(basePath: dirname(__DIR__))
             //$schedule->job(new SendRiskPRProject())->daily()->at('08:30');
 
             $schedule->job(new HandleWeatherWarnings())->everyFifteenMinutes();
+            $schedule->job(new ProcessFIRMSData())->everyFifteenMinutes();
 
             $schedule->job(new ProcessICNFNewFireData())->everyFiveMinutes();
             //$schedule->job(new CleanICNFFires())->everyFiveMinutes();

@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\IncidentSearchRequest;
+use App\Models\Hotspot;
 use App\Models\Incident;
 use App\Resources\IncidentResource;
+use App\Tools\ConvexHullTool;
 use App\Tools\FacebookTool;
 use App\Tools\HashTagTool;
 use App\Tools\ScreenShotTool;
@@ -566,5 +568,179 @@ class IncidentController extends Controller
         return new JsonResponse([
             'success' => true,
         ]);
+    }
+
+    public function kmlFIRMS(Request $request, string $id): StreamedResponse
+    {
+        $incident = Incident::whereFireId($id)->first();
+        if (!$incident) {
+            abort(404);
+        }
+
+        if (!$incident->lat || !$incident->lng) {
+            abort(422, 'Incident has no coordinates.');
+        }
+
+        $hotspot = Hotspot::whereIncidentId((string) $incident->id)->first();
+
+        $allHotspots = [];
+
+        if ($hotspot) {
+            foreach (($hotspot->viirs ?? []) as $pt) {
+                $pt['source'] = 'VIIRS';
+                $allHotspots[] = $pt;
+            }
+            foreach (($hotspot->modis ?? []) as $pt) {
+                $pt['source'] = 'MODIS';
+                $allHotspots[] = $pt;
+            }
+        }
+
+        $incidentPoint  = ['lat' => (float) $incident->lat, 'lng' => (float) $incident->lng];
+        $geometryPoints = [$incidentPoint];
+
+        foreach ($allHotspots as $h) {
+            $geometryPoints[] = ['lat' => (float) $h['lat'], 'lng' => (float) $h['lng']];
+        }
+
+        $hull     = ConvexHullTool::compute($geometryPoints);
+        $buffered = ConvexHullTool::applyBuffer($hull);
+
+        $kmlContent = $this->buildFIRMSKml($incident, $allHotspots, $buffered, $incidentPoint);
+
+        $response = new StreamedResponse();
+        $response->setCallback(function () use ($kmlContent) {
+            echo $kmlContent;
+        });
+
+        $disposition = $response->headers->makeDisposition(
+            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+            $incident->id . '-firms.kml'
+        );
+        $response->headers->set('Content-Disposition', $disposition);
+        $response->headers->set('Content-Type', 'application/vnd.google-earth.kml+xml');
+
+        return $response;
+    }
+
+    private function buildFIRMSKml(
+        Incident $incident,
+        array    $hotspots,
+        array    $hull,
+        array    $incidentPt
+    ): string {
+        $w = new \XMLWriter();
+        $w->openMemory();
+        $w->startDocument('1.0', 'UTF-8');
+
+        $w->startElement('kml');
+        $w->writeAttribute('xmlns', 'http://www.opengis.net/kml/2.2');
+        $w->startElement('Document');
+
+        // AOI polygon style (red outline, semi-transparent red fill; KML colors: AABBGGRR)
+        $w->startElement('Style');
+        $w->writeAttribute('id', 'aoi');
+        $w->startElement('LineStyle');
+        $w->writeElement('color', 'ff0000ff');
+        $w->writeElement('width', '2');
+        $w->endElement();
+        $w->startElement('PolyStyle');
+        $w->writeElement('color', '330000ff');
+        $w->endElement();
+        $w->endElement();
+
+        // VIIRS hotspot style (yellow)
+        $w->startElement('Style');
+        $w->writeAttribute('id', 'viirs');
+        $w->startElement('IconStyle');
+        $w->writeElement('color', 'ff00ffff');
+        $w->writeElement('scale', '0.8');
+        $w->endElement();
+        $w->endElement();
+
+        // MODIS hotspot style (orange)
+        $w->startElement('Style');
+        $w->writeAttribute('id', 'modis');
+        $w->startElement('IconStyle');
+        $w->writeElement('color', 'ff0080ff');
+        $w->writeElement('scale', '0.8');
+        $w->endElement();
+        $w->endElement();
+
+        // Incident pin style (red)
+        $w->startElement('Style');
+        $w->writeAttribute('id', 'incident');
+        $w->startElement('IconStyle');
+        $w->writeElement('color', 'ff0000ff');
+        $w->writeElement('scale', '1.2');
+        $w->endElement();
+        $w->endElement();
+
+        // AOI polygon (only when hull has at least 3 vertices)
+        if (count($hull) >= 3) {
+            $w->startElement('Placemark');
+            $w->writeElement('name', 'AOI - ' . $incident->id);
+            $w->writeElement('description', 'Área de Interesse gerada a partir de deteções satelitais NASA FIRMS (VIIRS/MODIS)');
+            $w->writeElement('styleUrl', '#aoi');
+            $w->startElement('Polygon');
+            $w->writeElement('extrude', '0');
+            $w->writeElement('altitudeMode', 'clampToGround');
+            $w->startElement('outerBoundaryIs');
+            $w->startElement('LinearRing');
+
+            $coords = '';
+            foreach ($hull as $vertex) {
+                $coords .= round($vertex['lng'], 6) . ',' . round($vertex['lat'], 6) . ",0\n";
+            }
+            // Close the ring
+            $first   = $hull[0];
+            $coords .= round($first['lng'], 6) . ',' . round($first['lat'], 6) . ",0\n";
+
+            $w->writeElement('coordinates', $coords);
+            $w->endElement(); // LinearRing
+            $w->endElement(); // outerBoundaryIs
+            $w->endElement(); // Polygon
+            $w->endElement(); // Placemark
+        }
+
+        // Incident point placemark
+        $w->startElement('Placemark');
+        $w->writeElement('name', 'Incêndio ' . $incident->id);
+        $w->writeElement('description', htmlspecialchars(
+            ($incident->location ?? '') . ' — ' . ($incident->natureza ?? ''),
+            ENT_XML1
+        ));
+        $w->writeElement('styleUrl', '#incident');
+        $w->startElement('Point');
+        $w->writeElement('coordinates', $incidentPt['lng'] . ',' . $incidentPt['lat'] . ',0');
+        $w->endElement(); // Point
+        $w->endElement(); // Placemark
+
+        // Hotspot placemarks
+        foreach ($hotspots as $i => $h) {
+            $source  = $h['source'] ?? 'UNKNOWN';
+            $styleId = strtolower($source) === 'viirs' ? '#viirs' : '#modis';
+
+            $w->startElement('Placemark');
+            $w->writeElement('name', "{$source} #{$i}");
+            $desc = "Satélite: {$source}\n"
+                . 'FRP: ' . round((float) ($h['frp'] ?? 0), 1) . " MW\n"
+                . 'Confiança: ' . ($h['confidence'] ?? 'n/a') . "\n"
+                . 'Data/Hora (UTC): ' . ($h['acq_date'] ?? '') . ' ' . ($h['acq_time'] ?? '') . "\n"
+                . 'Dia/Noite: ' . ($h['daynight'] ?? '');
+            $w->writeElement('description', $desc);
+            $w->writeElement('styleUrl', $styleId);
+            $w->startElement('Point');
+            $w->writeElement('coordinates',
+                round((float) $h['lng'], 6) . ',' . round((float) $h['lat'], 6) . ',0'
+            );
+            $w->endElement(); // Point
+            $w->endElement(); // Placemark
+        }
+
+        $w->endElement(); // Document
+        $w->endElement(); // kml
+
+        return $w->outputMemory(true);
     }
 }
