@@ -432,7 +432,8 @@ class NotificationTool
     public static function sendNewFireNotification(Incident $incident)
     {
         $topic = self::buildNewFireTopic($incident);
-        $status = "Novo incêndio em {$incident->location}";
+        $nature = $incident->natureza ? " - {$incident->natureza}" : '';
+        $status = "Novo incêndio em {$incident->location}{$nature}";
         $data = self::fireData($incident->id);
         $data['isFire'] = '1';
         self::sendToCondition($topic, $incident->location, $status, $data);
