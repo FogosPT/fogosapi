@@ -477,7 +477,7 @@ class NotificationTool
 
     public static function sendAllNotification($status)
     {
-        self::sendToTopic('all', 'Alerta', $status);
+        self::sendToTopic('agif', 'Alerta', $status);
     }
 
     /**
