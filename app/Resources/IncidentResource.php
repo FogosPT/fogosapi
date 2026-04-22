@@ -109,6 +109,7 @@ class IncidentResource extends JsonResource
             'regiao' => $this->regiao,
             'sub_regiao' => $this->sub_regiao,
             'nearestWeatherStationId' => $this->nearestWeatherStationId,
+            'isFire' => $this->isFire,
             'weather' => $this->getLatestWeather(),
             'created' => $this->createdObject,
             'updated' => $this->updatedObject,
