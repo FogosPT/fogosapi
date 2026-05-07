@@ -51,7 +51,7 @@ services:
       - fogos
 
   fogos.minio:
-    image: minio/minio:RELEASE.2024-10-13T13-34-11Z
+    image: minio/minio:RELEASE.2023-09-30T07-02-29Z
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
