@@ -63,6 +63,16 @@ Route::group(['prefix' => 'v2'], function () {
 
         Route::post('{id}/posit', '\App\Http\Controllers\IncidentController@addPosit');
         Route::post('{id}/kml', '\App\Http\Controllers\IncidentController@addKML');
+
+        Route::get('{id}/photos', '\App\Http\Controllers\IncidentPhotoController@publicList');
+        Route::post('{id}/photos', '\App\Http\Controllers\IncidentPhotoController@upload')
+            ->middleware('photo.ratelimit');
+    });
+
+    Route::group(['prefix' => 'moderation/photos', 'middleware' => 'photo.modauth'], function () {
+        Route::get('/', '\App\Http\Controllers\PhotoModerationController@index');
+        Route::post('{photoId}/approve', '\App\Http\Controllers\PhotoModerationController@approve');
+        Route::post('{photoId}/reject', '\App\Http\Controllers\PhotoModerationController@reject');
     });
 
     Route::group(['prefix' => 'weather'], function () {

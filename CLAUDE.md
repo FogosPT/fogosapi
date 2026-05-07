@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FogosPT API — a Portuguese wildfire incident tracking API built on **Laravel Lumen 8** (PHP 8.0+). It ingests data from ANEPC (Portugal's national civil protection authority), ICNF (national forestry authority), and IPMA (weather), then exposes that data via REST endpoints. Background jobs handle all data ingestion and social media notifications (Twitter/X, Telegram, Discord, Facebook, Bluesky).
+FogosPT API — a Portuguese wildfire incident tracking API built on **Laravel 12** (PHP 8.2+). It ingests data from ANEPC (Portugal's national civil protection authority), ICNF (national forestry authority), and IPMA (weather), then exposes that data via REST endpoints. Background jobs handle all data ingestion and social media notifications (Twitter/X, Telegram, Discord, Facebook, Bluesky).
 
 ## Commands
 
@@ -40,9 +40,10 @@ php artisan list
 ## Architecture
 
 ### Framework & Infrastructure
-- **Lumen 8** (micro-framework, no session/view layer)
-- **MongoDB** (primary datastore via `jenssegers/mongodb`) — collection `fires.data` is the main incidents collection
+- **Laravel 12** (PHP 8.2+). App bootstrap lives in `bootstrap/app.php` using the `Application::configure()` style (routes, middleware, schedule, console commands all wired there).
+- **MongoDB** (primary datastore via `mongodb/laravel-mongodb` ^5.0) — collection `fires.data` is the main incidents collection
 - **Redis** — queue backend (`QUEUE_CONNECTION=redis`). Jobs are dispatched via `dispatch(new JobClass())` and consumed by a queue worker
+- **MinIO** (S3-compatible) — object storage for user-submitted incident photos. Configured as the `minio` disk in `config/filesystems.php`. In production, data is bind-mounted at `/data`.
 - **Sentry** — error tracking
 
 ### Request Lifecycle
@@ -50,7 +51,12 @@ All routes are defined in `routes/web.php`. The app has two versioned API famili
 - `v1/*` — legacy endpoints served by `LegacyController`, mostly reading from MongoDB with direct queries
 - `v2/*` — current endpoints: `IncidentController`, `WeatherController`, `RCMController`, `PlanesController`, `WarningsController`, `StatsController`
 
-Write endpoints (`POST /v2/incidents/{id}/posit`, `POST /v2/incidents/{id}/kml`) are protected by an `API_WRITE_KEY` header check.
+Write endpoints (`POST /v2/incidents/{id}/posit`, `POST /v2/incidents/{id}/kml`) are protected by an `API_WRITE_KEY` header check (validated inline in the controller, not via middleware).
+
+Photo endpoints:
+- `POST /v2/incidents/{id}/photos` — public upload, rate-limited via `photo.ratelimit` middleware
+- `GET /v2/incidents/{id}/photos` — public listing of approved photos (no GPS exposed)
+- `GET|POST /v2/moderation/photos[/...]` — moderation queue, protected by `photo.modauth` middleware checking `PHOTO_MODERATION_KEY` header
 
 ### Jobs (Background Processing)
 The scheduler runs when `SCHEDULER_ENABLE=true`. Key jobs and their cadence:
@@ -64,9 +70,10 @@ The scheduler runs when `SCHEDULER_ENABLE=true`. Key jobs and their cadence:
 - `HandleWeatherWarnings` — every 15 minutes; processes IPMA weather warnings
 
 ### Models (MongoDB)
-All models extend `Jenssegers\Mongodb\Eloquent\Model`. Key models:
-- `Incident` — collection `data`; central entity. Has scopes: `isActive()`, `isFire()`, `isFMA()`, `isOtherFire()`. Classification constants (`NATUREZA_CODE_*`) and `STATUS_ID`/`STATUS_COLORS` are defined here
+All models extend `MongoDB\Laravel\Eloquent\Model`. Key models:
+- `Incident` — collection `data`; central entity. Has scopes: `isActive()`, `isFire()`, `isFMA()`, `isOtherFire()`, `whereFireId()` (handles both legacy `id` field and new `_id`). Classification constants (`NATUREZA_CODE_*`) and `STATUS_ID`/`STATUS_COLORS` are defined here. Primary key is `_id`.
 - `IncidentHistory` / `IncidentStatusHistory` — historical records linked to `Incident` via `id` field
+- `IncidentPhoto` — collection `incident_photos`; user-submitted photos with moderation status (`pending`/`approved`). Stores GPS, EXIF, and storage key into the MinIO `incident-photos` bucket.
 - `Location` — geocoding lookup table (level 1 = district, level 2 = concelho)
 - `WeatherStation` / `WeatherData` / `WeatherDataDaily` — weather data
 - `RCM` / `RCMForJS` — fire risk maps
@@ -81,9 +88,11 @@ Stateless helper classes for external integrations:
 - `ScreenShotTool` — takes headless browser screenshots for social posts
 - `HashTagTool` — generates Portuguese location hashtags
 - `RCMTool` — processes RCM image data
+- `PhotoStorageTool` — uploads/deletes incident photos on the MinIO disk; computes public URLs from `MINIO_PUBLIC_BASE_URL`
+- `ImageProcessingTool` — extracts EXIF from PNG `eXIf` chunks (via `lsolesen/pel`), strips metadata, resizes and re-encodes to JPEG via Imagick
 
 ### Resources
-API responses use Lumen resource classes in `app/Resources/`. `IncidentResource` shapes the main incident payload.
+API responses use resource classes in `app/Resources/` (note: this project keeps them at `app/Resources/`, not the Laravel-default `app/Http/Resources/`). `IncidentResource` shapes the main incident payload.
 
 ### Feature Flags (env)
 Several features are toggled via `.env`:
@@ -92,3 +101,6 @@ Several features are toggled via `.env`:
 - `TELEGRAM_ENABLE`, `TWITTER_ENABLE`, `FACEBOOK_ENABLE`, `DISCORD_ENABLE`, `NOTIFICATIONS_ENABLE` — social/notification channels
 - `TROLL_MODE` — returns fake data for unauthorized API consumers (checks against whitelisted user-agents/referers)
 - `PROXY_ENABLE` / `PROXY_URL` — route outbound requests through a proxy
+- `PHOTO_MODERATION_KEY` — header token guarding the photo moderation endpoints
+- `PHOTO_UPLOAD_MAX_BYTES`, `PHOTO_RATE_PER_IP_PER_MINUTE`, `PHOTO_RATE_PER_INCIDENT_PER_IP_PER_HOUR`, `PHOTO_RATE_PER_INCIDENT_GLOBAL_PER_HOUR`, `PHOTO_PENDING_PER_INCIDENT_CAP` — photo upload limits and rate gates
+- `MINIO_ENDPOINT`, `MINIO_PUBLIC_BASE_URL`, `MINIO_BUCKET`, `MINIO_REGION`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD` — MinIO/S3 storage configuration

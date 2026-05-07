@@ -69,6 +69,11 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->validateCsrfTokens(except: ['*']);
+        $middleware->trustProxies(at: '*');
+        $middleware->alias([
+            'photo.ratelimit' => \App\Http\Middleware\PhotoUploadRateLimit::class,
+            'photo.modauth'   => \App\Http\Middleware\PhotoModerationAuth::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
