@@ -55,6 +55,7 @@ RUN docker-php-ext-install \
     timezonedb
 
 COPY zz-docker.conf /usr/local/etc/php-fpm.d/zz-docker.conf
+COPY uploads.ini /usr/local/etc/php/conf.d/zz-uploads.ini
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
