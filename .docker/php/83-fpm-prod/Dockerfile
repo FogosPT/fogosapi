@@ -15,10 +15,14 @@ RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y --no-install-recommends \
     git \
     libc-client-dev \
+    libfreetype6-dev \
+    libjpeg-dev \
     libkrb5-dev \
     libmcrypt-dev \
+    libpng-dev \
     libpq-dev \
     libssl-dev \
+    libwebp-dev \
     libzip-dev \
     nodejs \
     openssh-client \
@@ -27,10 +31,13 @@ RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - && \
     && npm install --global chrome-remote-interface minimist
 
 RUN docker-php-ext-configure \
-    imap --with-kerberos --with-imap-ssl
+    imap --with-kerberos --with-imap-ssl && \
+    docker-php-ext-configure \
+    gd --with-freetype --with-jpeg --with-webp
 
 RUN docker-php-ext-install \
     bcmath \
+    gd \
     imap \
     pcntl \
     zip && \
