@@ -19,6 +19,8 @@ class IncidentPhoto extends Model
         'size_bytes' => 'integer',
         'width'      => 'integer',
         'height'     => 'integer',
+        'public'     => 'boolean',
+        'signature'  => 'string',
         'taken_at'   => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -27,6 +29,8 @@ class IncidentPhoto extends Model
     protected $fillable = [
         'fire_id',
         'status',
+        'public',
+        'signature',
         'storage_key',
         'size_bytes',
         'width',

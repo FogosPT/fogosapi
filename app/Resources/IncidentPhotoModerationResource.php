@@ -13,6 +13,8 @@ class IncidentPhotoModerationResource extends JsonResource
             'id'         => (string) $this->_id,
             'fire_id'    => $this->fire_id,
             'status'     => $this->status,
+            'public'     => (bool) ($this->public ?? true),
+            'signature'  => $this->signature,
             'url'        => PhotoStorageTool::publicUrl($this->storage_key),
             'mime'       => $this->mime,
             'size_bytes' => $this->size_bytes,

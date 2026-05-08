@@ -101,10 +101,15 @@ class IncidentPhotoController extends Controller
             return new JsonResponse(['success' => false, 'error' => 'storage_failed'], 500);
         }
 
+        $public    = $this->parsePublicFlag($request);
+        $signature = $this->parseSignature($request);
+
         $photo = new IncidentPhoto();
         $photo->_id        = $objectId;
         $photo->fire_id    = $fireId;
         $photo->status     = IncidentPhoto::STATUS_PENDING;
+        $photo->public     = $public;
+        $photo->signature  = $signature;
         $photo->storage_key = $storageKey;
         $photo->size_bytes = $processed['size'];
         $photo->width      = $processed['width'];
@@ -125,6 +130,27 @@ class IncidentPhotoController extends Controller
             'success' => true,
             'data'    => ['id' => $photoId, 'status' => IncidentPhoto::STATUS_PENDING],
         ], 202);
+    }
+
+    private function parsePublicFlag(Request $request): bool
+    {
+        if (!$request->has('public')) {
+            return true;
+        }
+        return filter_var($request->input('public'), FILTER_VALIDATE_BOOLEAN);
+    }
+
+    private function parseSignature(Request $request): ?string
+    {
+        $raw = $request->input('signature');
+        if (!is_string($raw)) {
+            return null;
+        }
+        $clean = trim(strip_tags($raw));
+        if ($clean === '') {
+            return null;
+        }
+        return mb_substr($clean, 0, 30);
     }
 
     private function debugLog(bool $enabled, string $reason, Request $request, string $fireId, array $context): void
@@ -173,6 +199,7 @@ class IncidentPhotoController extends Controller
         $perPage = min(50, max(1, (int) $request->get('per_page', 20)));
         $photos  = IncidentPhoto::where('fire_id', $id)
             ->where('status', IncidentPhoto::STATUS_APPROVED)
+            ->where('public', true)
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 
