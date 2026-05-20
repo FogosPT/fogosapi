@@ -67,19 +67,20 @@ services:
     networks:
       - fogos
 
-  fogos.chrome:
-    image: 'zenika/alpine-chrome:latest'
-    entrypoint: [ "chromium-browser", "--headless", "--no-sandbox", "--remote-debugging-address=0.0.0.0", "--remote-debugging-port=9222" ]
+  fogos.renderer:
+    build: ./renderer
     expose:
-      - 9222
-    restart: always
+      - 3000
+    restart: unless-stopped
     deploy:
       resources:
         limits:
           cpus: 2
-          memory: 4048M
+          memory: 2048M
     networks:
-      - fogos
+      fogos:
+        aliases:
+          - fogos-renderer
 
   fogos.scheduler:
     image: ghcr.io/fogospt/fogosapi-scheduler

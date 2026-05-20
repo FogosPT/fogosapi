@@ -7,7 +7,7 @@ use App\Tools\BlueskyTool;
 use App\Tools\FacebookTool;
 use App\Tools\HashTagTool;
 use App\Tools\NotificationTool;
-use App\Tools\ScreenShotTool;
+use App\Tools\Renderer;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
 use GuzzleHttp\Client;
@@ -194,42 +194,33 @@ class ProcessICNFFireData extends Job
             $topic = \App\Tools\NotificationTool::buildIncidentTopicOnly($this->incident->id);
             NotificationTool::send($notification, $this->incident->location, $this->incident->id, $topic);
 
-            $url = "fogo/{$this->incident->id}/detalhe";
-            $name = "screenshot-{$this->incident->id}"  . rand(0,255);
-            $path = "/var/www/html/public/screenshots/{$name}.png";
-
-            /*ScreenShotTool::takeScreenShot($url, $name);
-
-            $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
-
-            $this->incident->lastTweetId = $lastTweetId;
-            $this->incident->save();
-
-            //FacebookTool::publish($status);
-            //TelegramTool::publish($status);
-            //BlueskyTool::publish($status);
-            ScreenShotTool::removeScreenShotFile($name);*/
         }
 
         if ($notifyKML) {
             $this->updateIncident();
             $status = "ℹ🗺 Area ardida disponível https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  🗺ℹ";
 
-            $url = "fogo/{$this->incident->id}/detalhe";
-            $name = "screenshot-{$this->incident->id}" . rand(0,255);
-            $path = "/var/www/html/public/screenshots/{$name}.png";
+            $shot = Renderer::capture("fogo/{$this->incident->id}/detalhe", null, null, '.leaflet-tile-loaded');
+            $path = $shot ? $shot->path() : false;
 
-            ScreenShotTool::takeScreenShot($url, $name);
+            try {
+                $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
-            $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
+                $this->incident->lastTweetId = $lastTweetId;
+                $this->incident->save();
 
-            $this->incident->lastTweetId = $lastTweetId;
-            $this->incident->save();
-
-            FacebookTool::publish($status);
-            TelegramTool::publishImage($status, $path);
-            BlueskyTool::publish($status);
-            ScreenShotTool::removeScreenShotFile($name);
+                FacebookTool::publish($status);
+                if ($path) {
+                    TelegramTool::publishImage($status, $path);
+                } else {
+                    TelegramTool::publish($status);
+                }
+                BlueskyTool::publish($status);
+            } finally {
+                if ($shot) {
+                    $shot->cleanup();
+                }
+            }
         }
 
         if($notifyBurn){
@@ -238,21 +229,19 @@ class ProcessICNFFireData extends Job
             if($totalBurned > 0.5){
                 $status = "ℹ Total de área ardida: {$totalBurned} ha https://{$domain}/fogo/{$this->incident->id}/detalhe {$hashTag} #FogosPT  ℹ";
 
-                $url = "fogo/{$this->incident->id}/detalhe";
-                $name = "screenshot-{$this->incident->id}"  . rand(0,255);
-                $path = "/var/www/html/public/screenshots/{$name}.png";
+                $shot = Renderer::capture("fogo/{$this->incident->id}/detalhe", null, null, '.leaflet-tile-loaded');
+                $path = $shot ? $shot->path() : false;
 
-                ScreenShotTool::takeScreenShot($url, $name);
+                try {
+                    $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
-                $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
-
-                $this->incident->lastTweetId = $lastTweetId;
-                $this->incident->save();
-
-                //FacebookTool::publish($status);
-                //TelegramTool::publish($status);
-                //BlueskyTool::publish($status);
-                ScreenShotTool::removeScreenShotFile($name);
+                    $this->incident->lastTweetId = $lastTweetId;
+                    $this->incident->save();
+                } finally {
+                    if ($shot) {
+                        $shot->cleanup();
+                    }
+                }
             }
 
         }

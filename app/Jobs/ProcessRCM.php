@@ -5,7 +5,7 @@ namespace App\Jobs;
 use App\Models\RCM;
 use App\Models\RCMForJS;
 use App\Tools\FacebookTool;
-use App\Tools\ScreenShotTool;
+use App\Tools\Renderer;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -501,20 +501,22 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
         }
 
         $whenUrl = $this->tomorrow ? '?risk-tomorrow=1' : '?risk=1';
-        $url = "{$whenUrl}";
-        $name = 'risk' . rand(0,255);
-        $path = "/var/www/html/public/screenshots/{$name}.png";
-        $urlImage = "https://api-dev.fogos.pt/screenshots/{$name}.png";
-
         $status = date('d-m-Y')." Risco de incêndio para {$when} #FogosPT";
 
-        ScreenShotTool::takeScreenShot($url, $name);
+        $shot = Renderer::capture($whenUrl, null, null, '.leaflet-tile-loaded');
+        $path = $shot ? $shot->path() : false;
 
-        $id = TwitterTool::tweet($status, false, $path, false, false, true);
-//        TwitterTool::retweetVost($id);
-  //      FacebookTool::publishWithImage($status, $urlImage);
-    //    TelegramTool::publishImage($status, $path);
-
-        ScreenShotTool::removeScreenShotFile($name);
+        try {
+            $id = TwitterTool::tweet($status, false, $path, false, false, true);
+//            TwitterTool::retweetVost($id);
+//            if ($path) {
+//                FacebookTool::publishWithImage($status, $path);
+//                TelegramTool::publishImage($status, $path);
+//            }
+        } finally {
+            if ($shot) {
+                $shot->cleanup();
+            }
+        }
     }
 }

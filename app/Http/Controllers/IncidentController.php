@@ -9,7 +9,7 @@ use App\Resources\IncidentResource;
 use App\Tools\ConvexHullTool;
 use App\Tools\FacebookTool;
 use App\Tools\HashTagTool;
-use App\Tools\ScreenShotTool;
+use App\Tools\Renderer;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
 use Carbon\Carbon;
@@ -536,33 +536,35 @@ class IncidentController extends Controller
 
         $incident->save();
 
-        $url = "fogo/{$incident->id}/detalhe?aasd=" .  rand(0,255);
-        $name = "screenshot-{$incident->id}"  . rand(0,255);
-        $path = "/var/www/html/public/screenshots/{$name}.png";
-
+        $urlPath = "fogo/{$incident->id}/detalhe?aasd=" . rand(0,255);
         $status = $request->post('status');
 
-        if($status)
-        {
-            ScreenShotTool::takeScreenShot($url, $name, 1200, 450);
-
-
-            TwitterTool::tweet($status, false, $path, false, true);
-
-            ScreenShotTool::removeScreenShotFile($name);
+        if ($status) {
+            $shot = Renderer::capture($urlPath, 1200, 450, '.leaflet-tile-loaded');
+            $path = $shot ? $shot->path() : false;
+            try {
+                TwitterTool::tweet($status, false, $path, false, true);
+            } finally {
+                if ($shot) {
+                    $shot->cleanup();
+                }
+            }
         } else {
-            ScreenShotTool::takeScreenShot($url, $name, 1200, 550);
-
             $domain = env('SOCIAL_LINK_DOMAIN');
             $hashTag = HashTagTool::getHashTag($incident->concelho);
-
             $status = "🗺 Nova área de interesse por @VostPT  https://{$domain}/fogo/{$incident->id}/detalhe {$hashTag} 🗺";
 
-            $lastId = TwitterTool::tweet($status, $incident->lastTweetId, $path, false, false);
-            ScreenShotTool::removeScreenShotFile($name);
-
-            $incident->lastTweetId = $lastId;
-            $incident->save();
+            $shot = Renderer::capture($urlPath, 1200, 550, '.leaflet-tile-loaded');
+            $path = $shot ? $shot->path() : false;
+            try {
+                $lastId = TwitterTool::tweet($status, $incident->lastTweetId, $path, false, false);
+                $incident->lastTweetId = $lastId;
+                $incident->save();
+            } finally {
+                if ($shot) {
+                    $shot->cleanup();
+                }
+            }
         }
 
         return new JsonResponse([

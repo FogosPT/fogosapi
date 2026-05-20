@@ -1,0 +1,17 @@
+{
+  "name": "fogos-renderer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Headless screenshot service for FogosPT social media cards.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "fastify": "^4.28.1",
+    "playwright": "^1.47.2"
+  }
+}

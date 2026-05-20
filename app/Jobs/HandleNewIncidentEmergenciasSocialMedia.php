@@ -6,7 +6,6 @@ use App\Models\Incident;
 use App\Tools\FacebookTool;
 use App\Tools\HashTagTool;
 use App\Tools\NotificationTool;
-use App\Tools\ScreenShotTool;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
 

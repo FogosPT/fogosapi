@@ -5,7 +5,7 @@ namespace App\Jobs;
 use App\Models\Incident;
 use App\Tools\BlueskyTool;
 use App\Tools\FacebookTool;
-use App\Tools\ScreenShotTool;
+use App\Tools\Renderer;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
 
@@ -75,18 +75,22 @@ class HourlySummary extends Job
             $statusf .= "{$total} {$incendio} em resolução. Meios Mobilizados:%0A👩‍ {$man}%0A🚒 {$cars}%0A🚁 {$areal} %0A https://fogos.pt #FogosPT";
         }
 
-        $url = 'estatisticas?phantom=1';
-        $name = 'stats' . rand(0,255);
-        $path = "/var/www/html/public/screenshots/{$name}.png";
-        $urlImage = "https://api-dev.fogos.pt/screenshots/{$name}.png";
+        $shot = Renderer::capture('estatisticas?phantom=1', 1200, 450);
+        $path = $shot ? $shot->path() : false;
 
-        ScreenShotTool::takeScreenShot($url, $name, 1200, 450);
-
-        TwitterTool::tweet($status, false, $path);
-        BlueskyTool::publish($status);
-        FacebookTool::publishWithImage($statusf, $urlImage);
-        TelegramTool::publishImage($status, $path);
-
-        ScreenShotTool::removeScreenShotFile($name);
+        try {
+            TwitterTool::tweet($status, false, $path);
+            BlueskyTool::publish($status);
+            if ($path) {
+                FacebookTool::publishWithImage($statusf, $path);
+                TelegramTool::publishImage($status, $path);
+            } else {
+                TelegramTool::publish($status);
+            }
+        } finally {
+            if ($shot) {
+                $shot->cleanup();
+            }
+        }
     }
 }
