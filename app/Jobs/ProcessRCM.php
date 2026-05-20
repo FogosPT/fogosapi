@@ -500,7 +500,7 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
             FacebookTool::publish($statusFacebook);
         }
 
-        $whenUrl = $this->tomorrow ? '?risk-tomorrow=1' : '?risk=1';
+        $whenUrl = $this->tomorrow ? 'pt?risk-tomorrow=1' : 'pt?risk=1';
         $status = date('d-m-Y')." Risco de incêndio para {$when} #FogosPT";
 
         $shot = Renderer::capture($whenUrl, null, null, '.leaflet-tile-loaded');
