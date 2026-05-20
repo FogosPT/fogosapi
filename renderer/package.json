@@ -12,6 +12,6 @@
   },
   "dependencies": {
     "fastify": "^4.28.1",
-    "playwright": "^1.47.2"
+    "playwright": "1.60.0"
   }
 }
