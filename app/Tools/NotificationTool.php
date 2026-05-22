@@ -2,24 +2,12 @@
 
 namespace App\Tools;
 
+use App\Jobs\SendFcmNotification;
 use App\Models\Incident;
-use GuzzleHttp\Exception\RequestException;
-use Illuminate\Support\Facades\Log;
-use Google\Auth\ApplicationDefaultCredentials;
-use GuzzleHttp\Client;
-
 
 class NotificationTool
 {
-    private static $endpoint = '/v1/projects/admob-app-id-6663345165/messages:send';
-
-    private static function getAuth()
-    {
-        putenv('GOOGLE_APPLICATION_CREDENTIALS=/var/www/html/credentials.json');
-        $scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
-        $middleware = ApplicationDefaultCredentials::getCredentials($scopes);
-        return $middleware->fetchAuthToken();
-    }
+    private const SEND_DELAY_MINUTES = 3;
 
     // ──────────────────────────────────────────────
     //  Topic builders — unified + legacy
@@ -201,14 +189,6 @@ class NotificationTool
      */
     private static function sendToCondition(string $condition, string $title, string $body, array $data = []): void
     {
-        if (!env('NOTIFICATIONS_ENABLE')) {
-            return;
-        }
-
-        $client = new Client([
-            'base_uri' => 'https://fcm.googleapis.com',
-        ]);
-
         $message = [
             'condition' => $condition,
             'notification' => [
@@ -229,28 +209,7 @@ class NotificationTool
             $message['data'] = $data;
         }
 
-        $headers = [
-            'allow_redirects' => true,
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . self::getAuth()['access_token'],
-            ],
-            'json' => [
-                'message' => $message,
-            ],
-        ];
-
-        Log::debug(json_encode($headers));
-
-        try {
-            $client->post(self::$endpoint, $headers);
-        } catch (RequestException $e) {
-            Log::error('FCM send failed: ' . $e->getMessage());
-            if ($e->getResponse()) {
-                Log::error($e->getResponse()->getBody()->getContents());
-            }
-        }
+        self::dispatchMessage($message);
     }
 
     /**
@@ -258,14 +217,6 @@ class NotificationTool
      */
     private static function sendToTopic(string $topic, string $title, string $body, array $data = []): void
     {
-        if (!env('NOTIFICATIONS_ENABLE')) {
-            return;
-        }
-
-        $client = new Client([
-            'base_uri' => 'https://fcm.googleapis.com',
-        ]);
-
         $message = [
             'topic' => $topic,
             'notification' => [
@@ -286,28 +237,7 @@ class NotificationTool
             $message['data'] = $data;
         }
 
-        $headers = [
-            'allow_redirects' => true,
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . self::getAuth()['access_token'],
-            ],
-            'json' => [
-                'message' => $message,
-            ],
-        ];
-
-        Log::debug(json_encode($headers));
-
-        try {
-            $client->post(self::$endpoint, $headers);
-        } catch (RequestException $e) {
-            Log::error('FCM send failed: ' . $e->getMessage());
-            if ($e->getResponse()) {
-                Log::error($e->getResponse()->getBody()->getContents());
-            }
-        }
+        self::dispatchMessage($message);
     }
 
     private static function fireData(string $incidentId): array
@@ -325,14 +255,6 @@ class NotificationTool
      */
     private static function sendDataOnlyToTopic(string $topic, array $data): void
     {
-        if (!env('NOTIFICATIONS_ENABLE')) {
-            return;
-        }
-
-        $client = new Client([
-            'base_uri' => 'https://fcm.googleapis.com',
-        ]);
-
         $message = [
             'topic' => $topic,
             'data' => $data,
@@ -352,28 +274,17 @@ class NotificationTool
             ],
         ];
 
-        $headers = [
-            'allow_redirects' => true,
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . self::getAuth()['access_token'],
-            ],
-            'json' => [
-                'message' => $message,
-            ],
-        ];
+        self::dispatchMessage($message);
+    }
 
-        Log::debug('FCM data-only: ' . json_encode($headers));
-
-        try {
-            $client->post(self::$endpoint, $headers);
-        } catch (RequestException $e) {
-            Log::error('FCM data-only send failed: ' . $e->getMessage());
-            if ($e->getResponse()) {
-                Log::error($e->getResponse()->getBody()->getContents());
-            }
+    private static function dispatchMessage(array $message): void
+    {
+        if (!env('NOTIFICATIONS_ENABLE')) {
+            return;
         }
+
+        dispatch(new SendFcmNotification($message))
+            ->delay(now()->addMinutes(self::SEND_DELAY_MINUTES));
     }
 
     // ──────────────────────────────────────────────
