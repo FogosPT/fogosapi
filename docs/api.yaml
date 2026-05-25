@@ -20,23 +20,28 @@ servers:
 
 tags:
   - name: Assets
-    description: Aerial assets and history
+    description: Aerial firefighting assets and history (legacy).
   - name: Fires
-    description: Fire incident endpoints (legacy)
+    description: Legacy `/fires/*` and `/v1/*` incident endpoints.
   - name: Misc
-    description: Miscellaneous text-formatted endpoints used by social bots
+    description: Miscellaneous text-formatted endpoints used by social bots.
   - name: Stats
-    description: Statistics on fire incidents
+    description: Statistics on fire incidents.
   - name: Warnings
-    description: Weather and operational warnings
+    description: IPMA weather warnings and operational warnings.
   - name: RCM
-    description: Risco de Incêndio (fire risk) maps and parish lookups
+    description: Risco de Incêndio (fire risk) maps and parish lookups.
   - name: Weather
-    description: Weather stations and IPMA data
+    description: |
+      Weather stations, daily observations, IPMA data, and derived products
+      such as heat/cold wave detection.
   - name: Planes
-    description: Aerial firefighting asset tracking (ADS-B)
+    description: Aerial firefighting asset tracking (ADS-B).
+  - name: Moderation
+    description: |
+      User-submitted photo moderation queue. Protected by `PHOTO_MODERATION_KEY`.
   - name: V2
-    description: V2 incident endpoints
+    description: V2 incident endpoints — current generation.
 
 paths:
   # Assets
@@ -120,8 +125,20 @@ paths:
     $ref: './fires/paths/v2-incident-kml.yaml'
   /v2/incidents/{id}/kmlVost:
     $ref: './fires/paths/v2-incident-kmlvost.yaml'
+  /v2/incidents/{id}/kmlFirms:
+    $ref: './fires/paths/v2-incident-kmlfirms.yaml'
   /v2/incidents/{id}/posit:
     $ref: './fires/paths/v2-incident-posit.yaml'
+  /v2/incidents/{id}/photos:
+    $ref: './fires/paths/v2-incident-photos.yaml'
+
+  # V2 — Photo moderation
+  /v2/moderation/photos:
+    $ref: './fires/paths/v2-moderation-photos.yaml'
+  /v2/moderation/photos/{photoId}/approve:
+    $ref: './fires/paths/v2-moderation-photo-approve.yaml'
+  /v2/moderation/photos/{photoId}/reject:
+    $ref: './fires/paths/v2-moderation-photo-reject.yaml'
 
   # V2 — Weather
   /v2/weather/thunders:
@@ -144,6 +161,8 @@ paths:
     $ref: './rcm/paths/v2-rcm-after.yaml'
   /v2/rcm/parish:
     $ref: './rcm/paths/v2-rcm-parish.yaml'
+  /v2/rcm/update:
+    $ref: './rcm/paths/v2-rcm-update.yaml'
 
   # V2 — Planes
   /v2/planes/{icao}:

@@ -1,0 +1,14 @@
+get:
+  operationId: v2UpdateRCM
+  summary: Manually trigger an RCM refresh (operational endpoint)
+  description: |
+    Synchronously dispatches the `ProcessRCM` job for the current day.
+    Used for operational re-fetches; the scheduler normally handles this
+    hourly. Returns no body on success.
+  tags:
+    - RCM
+  responses:
+    200:
+      description: Job dispatched
+    500:
+      $ref: '../../common/responses/500.yaml'

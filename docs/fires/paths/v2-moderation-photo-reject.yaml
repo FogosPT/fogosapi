@@ -1,0 +1,36 @@
+post:
+  operationId: v2RejectPhoto
+  summary: Reject (delete) a photo pending moderation
+  description: |
+    Permanently removes the photo from MinIO and from the database.
+    Requires `key` header matching `PHOTO_MODERATION_KEY`.
+  tags:
+    - Moderation
+  parameters:
+    - name: key
+      in: header
+      required: true
+      schema:
+        type: string
+    - name: photoId
+      in: path
+      required: true
+      description: Mongo `_id` of the photo document.
+      schema:
+        type: string
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+    401:
+      $ref: '../../common/responses/401.yaml'
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

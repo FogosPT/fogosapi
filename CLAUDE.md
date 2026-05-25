@@ -35,6 +35,11 @@ php artisan tinker
 
 # List available artisan commands
 php artisan list
+
+# Import IPMA climate normals (one-shot, required before wave detection works)
+php artisan weather:import-normals
+php artisan weather:import-normals --period=1991-2020
+php artisan weather:import-normals --period=1971-2000
 ```
 
 ## Architecture
@@ -49,7 +54,7 @@ php artisan list
 ### Request Lifecycle
 All routes are defined in `routes/web.php`. The app has two versioned API families:
 - `v1/*` — legacy endpoints served by `LegacyController`, mostly reading from MongoDB with direct queries
-- `v2/*` — current endpoints: `IncidentController`, `WeatherController`, `RCMController`, `PlanesController`, `WarningsController`, `StatsController`
+- `v2/*` — current endpoints: `IncidentController`, `IncidentPhotoController`, `PhotoModerationController`, `WeatherController`, `RCMController`, `PlanesController`, `WarningsController`, `StatsController`, `OtherController`
 
 Write endpoints (`POST /v2/incidents/{id}/posit`, `POST /v2/incidents/{id}/kml`) are protected by an `API_WRITE_KEY` header check (validated inline in the controller, not via middleware).
 
@@ -57,6 +62,9 @@ Photo endpoints:
 - `POST /v2/incidents/{id}/photos` — public upload, rate-limited via `photo.ratelimit` middleware
 - `GET /v2/incidents/{id}/photos` — public listing of approved photos (no GPS exposed)
 - `GET|POST /v2/moderation/photos[/...]` — moderation queue, protected by `photo.modauth` middleware checking `PHOTO_MODERATION_KEY` header
+
+Weather extremes:
+- `GET /v2/weather/waves` — heat/cold wave detector (WMO 6-day rule). Reads `TemperatureWave` rows where `ongoing=true`, joined with `WeatherStation` for naming. Response is cached in Redis for 1h. See `docs/weather/paths/v2-weather-waves.yaml` for the schema.
 
 ### Jobs (Background Processing)
 The scheduler runs when `SCHEDULER_ENABLE=true`. Key jobs and their cadence:
@@ -68,6 +76,7 @@ The scheduler runs when `SCHEDULER_ENABLE=true`. Key jobs and their cadence:
 - `ProcessRCM` — hourly + daily twice; fetches fire danger (Risco de Combustão de Materiais) maps
 - `HourlySummary` / `DailySummary` — summary notifications
 - `HandleWeatherWarnings` — every 15 minutes; processes IPMA weather warnings
+- `DetectTemperatureWaves` — daily at 05:00 (after `UpdateWeatherDataDaily`); applies the WMO 6-day rule to detect heat waves (vs 1991-2020 normals) and cold waves (vs 1971-2000 normals) per station, persists `TemperatureWave` rows, and posts a Discord message on the first detection of each event
 
 ### Models (MongoDB)
 All models extend `MongoDB\Laravel\Eloquent\Model`. Key models:
@@ -76,6 +85,8 @@ All models extend `MongoDB\Laravel\Eloquent\Model`. Key models:
 - `IncidentPhoto` — collection `incident_photos`; user-submitted photos with moderation status (`pending`/`approved`). Stores GPS, EXIF, and storage key into the MinIO `incident-photos` bucket.
 - `Location` — geocoding lookup table (level 1 = district, level 2 = concelho)
 - `WeatherStation` / `WeatherData` / `WeatherDataDaily` — weather data
+- `WeatherNormal` — collection `weatherNormals`; monthly mean tmax/tmin per station, indexed by `(stationId, period)`. Populated by the `weather:import-normals` command, which scrapes the IPMA normals pages (`allstations` JS literal) — no PDF parsing.
+- `TemperatureWave` — collection `temperatureWaves`; detected heat/cold wave events. `(stationId, type, start_date)` is the upsert key; `ongoing` flags events whose window includes today/yesterday. Read by `GET /v2/weather/waves`.
 - `RCM` / `RCMForJS` — fire risk maps
 - `Warning` / `WarningMadeira` / `WarningSite` / `WeatherWarning` — various alert types
 
@@ -92,7 +103,13 @@ Stateless helper classes for external integrations:
 - `ImageProcessingTool` — extracts EXIF from PNG `eXIf` chunks (via `lsolesen/pel`), strips metadata, resizes and re-encodes to JPEG via Imagick
 
 ### Resources
-API responses use resource classes in `app/Resources/` (note: this project keeps them at `app/Resources/`, not the Laravel-default `app/Http/Resources/`). `IncidentResource` shapes the main incident payload.
+API responses use resource classes in `app/Resources/` (note: this project keeps them at `app/Resources/`, not the Laravel-default `app/Http/Resources/`). `IncidentResource` shapes the main incident payload; `IncidentPhotoResource` and `IncidentPhotoModerationResource` shape the public and moderator photo payloads respectively.
+
+### API Documentation
+OpenAPI 3.0 spec lives in `docs/api.yaml` with referenced path/model fragments under `docs/{fires,weather,rcm,...}/paths` and `docs/.../models`. When adding a new endpoint:
+1. Create the path file under the relevant group's `paths/` folder.
+2. Reference it from `docs/api.yaml` under the matching section comment.
+3. Reuse shared response fragments under `docs/common/responses/` (`401.yaml`, `404.yaml`, `422.yaml`, `500.yaml`).
 
 ### Feature Flags (env)
 Several features are toggled via `.env`:

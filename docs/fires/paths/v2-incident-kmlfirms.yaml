@@ -1,0 +1,30 @@
+get:
+  operationId: v2GetIncidentKMLFirms
+  summary: NASA FIRMS hotspots (VIIRS + MODIS) for an incident, as KML
+  description: |
+    Streams a KML file with all VIIRS and MODIS hotspots associated with the
+    incident, plus the incident's own coordinates as the first point. Useful
+    for plotting satellite-detected heat anomalies in mapping tools.
+  tags:
+    - V2
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Incident public ID
+      schema:
+        type: string
+  responses:
+    200:
+      description: KML file stream
+      content:
+        application/vnd.google-earth.kml+xml:
+          schema:
+            type: string
+            format: binary
+    404:
+      $ref: '../../common/responses/404.yaml'
+    422:
+      description: Incident has no coordinates
+    500:
+      $ref: '../../common/responses/500.yaml'

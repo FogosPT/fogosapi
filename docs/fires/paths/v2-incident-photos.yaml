@@ -1,0 +1,135 @@
+get:
+  operationId: v2ListIncidentPhotos
+  summary: List approved public photos for an incident
+  description: |
+    Returns paginated list of approved, public-visible photos uploaded for
+    the incident. GPS coordinates and raw EXIF are NOT exposed. Response
+    cached for 5 minutes (`Cache-Control: public, max-age=300`).
+  tags:
+    - V2
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Incident public ID
+      schema:
+        type: string
+    - name: per_page
+      in: query
+      required: false
+      description: Items per page (1–50, default 20).
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    url:
+                      type: string
+                      format: uri
+                    taken_at:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    captured_at:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    width:
+                      type: integer
+                    height:
+                      type: integer
+              meta:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'
+
+post:
+  operationId: v2UploadIncidentPhoto
+  summary: Upload a user-submitted photo to an incident
+  description: |
+    Public endpoint, rate-limited per IP and per incident. The upload MUST
+    be a PNG that carries an `eXIf` chunk with valid GPS coordinates close
+    to the incident — uploads without GPS are rejected. Server extracts
+    EXIF, strips metadata and re-encodes to JPEG for storage. Resulting
+    photos enter the moderation queue with status `pending`.
+
+    Limits (env-configurable):
+      - `PHOTO_UPLOAD_MAX_BYTES` (default 20 MB)
+      - `PHOTO_RATE_PER_IP_PER_MINUTE`
+      - `PHOTO_RATE_PER_INCIDENT_PER_IP_PER_HOUR`
+      - `PHOTO_RATE_PER_INCIDENT_GLOBAL_PER_HOUR`
+      - `PHOTO_PENDING_PER_INCIDENT_CAP`
+  tags:
+    - V2
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Incident public ID
+      schema:
+        type: string
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          required:
+            - photo
+          properties:
+            photo:
+              type: string
+              format: binary
+              description: PNG file with eXIf chunk containing GPS coordinates.
+  responses:
+    200:
+      description: Photo accepted into moderation queue
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: object
+    400:
+      description: |
+        Bad request — possible `error` values: `missing_photo`,
+        `invalid_format`, `invalid_mime`.
+    413:
+      description: Photo exceeds `PHOTO_UPLOAD_MAX_BYTES`.
+    422:
+      description: |
+        Unprocessable entity — possible `error` values: `missing_gps_exif`,
+        `gps_too_far`, `pending_cap_reached`.
+    429:
+      description: Rate limit exceeded.
+    500:
+      $ref: '../../common/responses/500.yaml'
