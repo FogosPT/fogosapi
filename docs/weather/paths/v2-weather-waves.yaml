@@ -1,0 +1,38 @@
+get:
+  operationId: v2GetWeatherWaves
+  summary: Active heat / cold waves (WMO definition)
+  description: |
+    Reports whether Portugal is currently experiencing a heat wave or a cold
+    wave according to the WMO definition: 6 consecutive days in which the
+    daily maximum (heat) or minimum (cold) temperature deviates by more than
+    +5°C / -5°C from the monthly mean of the reference period.
+
+    Reference periods:
+      - Heat waves: 1991-2020 (IPMA climate normals).
+      - Cold waves: 1971-2000 (IPMA climate normals, used as a proxy for the
+        WMO-recommended 1961-1990 which is not published by IPMA).
+
+    Detection runs daily after the IPMA daily-observations import. Each
+    station listed under an active wave includes the 6-day window with the
+    observed temperature, the monthly normal, and the delta — so consumers
+    can verify the wave by inspection.
+
+    The response is cached for 1 hour.
+  tags:
+    - Weather
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              heatwave:
+                $ref: '../models/Wave.yaml'
+              coldwave:
+                $ref: '../models/Wave.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

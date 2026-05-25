@@ -1,0 +1,75 @@
+type: object
+properties:
+  active:
+    type: boolean
+    description: True if at least one station is currently in a wave.
+  reference_period:
+    type: string
+    description: Climate normals period used as reference.
+    example: '1991-2020'
+  stations:
+    type: array
+    description: |
+      Stations currently inside a 6-day extreme window. Empty when `active`
+      is false.
+    items:
+      type: object
+      properties:
+        stationId:
+          type: integer
+          description: IPMA station id (NUM_AUT).
+          example: 1210535
+        name:
+          type: string
+          nullable: true
+          example: Lisboa, Geofísico
+        place:
+          type: string
+          nullable: true
+          enum: [Portugal, Madeira, Açores]
+        coordinates:
+          type: array
+          nullable: true
+          description: '[longitude, latitude]'
+          items:
+            type: number
+        start_date:
+          type: string
+          format: date
+          example: '2026-05-19'
+        end_date:
+          type: string
+          format: date
+          example: '2026-05-24'
+        ongoing:
+          type: boolean
+        peak_delta:
+          type: number
+          description: |
+            Largest deviation (in °C) observed in the window. Positive for
+            heat waves, negative for cold waves.
+          example: 7.4
+        month_normal_tmax:
+          type: number
+          description: Monthly mean of daily max temperatures (heat waves only).
+        month_normal_tmin:
+          type: number
+          description: Monthly mean of daily min temperatures (cold waves only).
+        days:
+          type: array
+          description: The 6 days that triggered the wave.
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              temp_max:
+                type: number
+                description: Observed daily max (heat waves only).
+              temp_min:
+                type: number
+                description: Observed daily min (cold waves only).
+              delta:
+                type: number
+                description: Observed value minus monthly normal.

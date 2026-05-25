@@ -130,6 +130,8 @@ paths:
     $ref: './weather/paths/v2-weather-stations.yaml'
   /v2/weather/daily:
     $ref: './weather/paths/v2-weather-daily.yaml'
+  /v2/weather/waves:
+    $ref: './weather/paths/v2-weather-waves.yaml'
   /v2/weather/ipma-services:
     $ref: './weather/paths/v2-weather-ipma-services.yaml'
 
