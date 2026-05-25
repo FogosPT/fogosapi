@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\CheckPendingPhotoModeration;
 use App\Jobs\DailySummary;
 use App\Jobs\ProcessFIRMSData;
 use App\Jobs\HandleWeatherWarnings;
@@ -56,6 +57,8 @@ return Application::configure(basePath: dirname(__DIR__))
             $schedule->job(new DailySummary())->daily()->at('09:30');
             $schedule->job(new SendRiskPSProject())->daily()->at('08:30');
             //$schedule->job(new SendRiskPRProject())->daily()->at('08:30');
+
+            $schedule->job(new CheckPendingPhotoModeration())->everyThirtyMinutes();
 
             $schedule->job(new HandleWeatherWarnings())->everyFifteenMinutes();
             $schedule->job(new ProcessFIRMSData())->everyFifteenMinutes();
