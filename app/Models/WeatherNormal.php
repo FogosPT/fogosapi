@@ -14,6 +14,7 @@ class WeatherNormal extends Model
     public const UPDATED_AT = 'updated';
 
     public const PERIOD_HEAT = '1991-2020';
+    public const PERIOD_MID  = '1981-2010';
     public const PERIOD_COLD = '1971-2000';
 
     protected $casts = [
