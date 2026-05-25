@@ -5,6 +5,8 @@ namespace App\Jobs;
 use App\Models\TemperatureWave;
 use App\Models\WeatherDataDaily;
 use App\Models\WeatherNormal;
+use App\Models\WeatherStation;
+use App\Tools\DiscordTool;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Log;
@@ -139,7 +141,7 @@ class DetectTemperatureWaves extends Job
 
         $ongoing = $bestWindow['end']->equalTo($today) || $bestWindow['end']->equalTo($today->subDay());
 
-        TemperatureWave::updateOrCreate(
+        $wave = TemperatureWave::updateOrCreate(
             [
                 'stationId'  => $stationId,
                 'type'       => $type,
@@ -154,5 +156,37 @@ class DetectTemperatureWaves extends Job
                 'days'             => $bestWindow['days'],
             ]
         );
+
+        if ($wave->wasRecentlyCreated) {
+            $this->notifyDiscord($stationId, $type, $bestWindow, $normal->period);
+        }
+    }
+
+    private function notifyDiscord(int $stationId, string $type, array $window, string $period): void
+    {
+        $station = WeatherStation::whereStationId($stationId)->first();
+        $stationName = $station->location ?? "estação {$stationId}";
+
+        $label = $type === TemperatureWave::TYPE_HEAT ? '🔥 Onda de calor detectada' : '🥶 Onda de frio detectada';
+        $tempLabel = $type === TemperatureWave::TYPE_HEAT ? 'máx' : 'mín';
+        $peak = round((float) $window['peak'], 1);
+        $sign = $peak > 0 ? '+' : '';
+        $start = $window['start']->format('Y-m-d');
+        $end = $window['end']->format('Y-m-d');
+
+        $daysLines = [];
+        foreach ($window['days'] as $d) {
+            $deltaSign = $d['delta'] > 0 ? '+' : '';
+            $daysLines[] = "  {$d['date']}: {$tempLabel} {$d['value']}°C ({$deltaSign}{$d['delta']}°C vs normal)";
+        }
+
+        $msg = "**{$label}**\n"
+            . "Estação: {$stationName} (id `{$stationId}`)\n"
+            . "Janela: {$start} → {$end}\n"
+            . "Desvio máximo: {$sign}{$peak}°C\n"
+            . "Normal mensal ({$period}): " . round((float) $window['normal'], 1) . "°C\n"
+            . "```\n" . implode("\n", $daysLines) . "\n```";
+
+        DiscordTool::post($msg);
     }
 }
