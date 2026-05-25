@@ -37,7 +37,6 @@ class HourlySummary extends Job
 
         if ($incidents->count() === 0) {
             $status = "{$date} - Sem registo de incêndios ativos.";
-            $statusf = $status;
         } else {
             $total = count($incidents);
             $man = 0;
@@ -52,12 +51,10 @@ class HourlySummary extends Job
             $incendio = ($total === 1) ? 'Incêndio' : 'Incêndios';
 
             $status = "{$date} - {$total} {$incendio} em curso. Meios Mobilizados:\r\n👩‍ {$man}\r\n🚒 {$cars}\r\n🚁 {$areal} \r\n";
-            $statusf = "{$date} - {$total} {$incendio} em curso. Meios Mobilizados:%0A👩‍ {$man}%0A🚒 {$cars}%0A🚁 {$areal} %0A";
         }
 
         if($incidentsNotActive->count() === 0){
             $status .= ' https://fogos.pt #FogosPT #Status';
-            $statusf .= ' https://fogos.pt #FogosPT #Status';
         } else {
             $total = count($incidentsNotActive);
             $man = 0;
@@ -72,7 +69,6 @@ class HourlySummary extends Job
             $incendio = ($total === 1) ? 'Incêndio' : 'Incêndios';
 
             $status .= "{$total} {$incendio} em resolução. Meios Mobilizados:\r\n👩‍ {$man}\r\n🚒 {$cars}\r\n🚁 {$areal} \r\n https://fogos.pt #FogosPT";
-            $statusf .= "{$total} {$incendio} em resolução. Meios Mobilizados:%0A👩‍ {$man}%0A🚒 {$cars}%0A🚁 {$areal} %0A https://fogos.pt #FogosPT";
         }
 
         $shot = Renderer::capture('estatisticas?phantom=1', 1200, 450);
@@ -82,7 +78,7 @@ class HourlySummary extends Job
             TwitterTool::tweet($status, false, $path);
             BlueskyTool::publish($status);
             if ($path) {
-                FacebookTool::publishWithImage($statusf, $path);
+                FacebookTool::publishWithImage($status, $path);
                 TelegramTool::publishImage($status, $path);
             } else {
                 TelegramTool::publish($status);
