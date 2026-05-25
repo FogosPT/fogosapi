@@ -47,7 +47,7 @@ class ImportWeatherNormals extends Command
             'headers' => ['User-Agent' => 'Fogos.pt/3.0'],
         ])->getBody();
 
-        if (!preg_match('/allstations\s*=\s*(\[[\s\S]*?\])\s*;/', $body, $m)) {
+        if (!preg_match('/allstations\s*=\s*(\[\s*\{[\s\S]*?\}\s*\])\s*;/', $body, $m)) {
             $this->error("Could not locate allstations array on {$url}");
             return;
         }
