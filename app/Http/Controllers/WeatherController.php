@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\TemperatureWave;
 use App\Models\WeatherDataDaily;
 use App\Models\WeatherStation;
 use Carbon\Carbon;
@@ -115,6 +116,64 @@ class WeatherController extends Controller
         $data = WeatherDataDaily::where('date', $date)->with('station')->get();
 
         return response()->json($data);
+    }
+
+    public function waves()
+    {
+        $cacheKey = 'weather:waves';
+        $cached = Redis::get($cacheKey);
+        if ($cached) {
+            return new JsonResponse(json_decode($cached, true));
+        }
+
+        $payload = [
+            'success'  => true,
+            'heatwave' => $this->buildWaveSection(TemperatureWave::TYPE_HEAT, '1991-2020'),
+            'coldwave' => $this->buildWaveSection(TemperatureWave::TYPE_COLD, '1971-2000'),
+        ];
+
+        Redis::set($cacheKey, json_encode($payload), 'EX', 3600);
+
+        return new JsonResponse($payload);
+    }
+
+    private function buildWaveSection(string $type, string $referencePeriod): array
+    {
+        $waves = TemperatureWave::where('type', $type)
+            ->where('ongoing', true)
+            ->get();
+
+        $stations = [];
+        foreach ($waves as $wave) {
+            $station = WeatherStation::whereStationId((int) $wave->stationId)->first();
+            $valueField = $type === TemperatureWave::TYPE_HEAT ? 'temp_max' : 'temp_min';
+            $normalLabel = $type === TemperatureWave::TYPE_HEAT ? 'month_normal_tmax' : 'month_normal_tmin';
+
+            $stations[] = [
+                'stationId'    => (int) $wave->stationId,
+                'name'         => $station->location ?? null,
+                'place'        => $station->place ?? null,
+                'coordinates'  => $station->coordinates ?? null,
+                'start_date'   => Carbon::parse($wave->start_date)->toDateString(),
+                'end_date'     => Carbon::parse($wave->end_date)->toDateString(),
+                'ongoing'      => (bool) $wave->ongoing,
+                'peak_delta'   => $wave->peak_delta,
+                $normalLabel   => $wave->month_normal,
+                'days'         => array_map(function ($d) use ($valueField) {
+                    return [
+                        'date'      => $d['date'],
+                        $valueField => $d['value'],
+                        'delta'     => $d['delta'],
+                    ];
+                }, $wave->days ?? []),
+            ];
+        }
+
+        return [
+            'active'           => !empty($stations),
+            'reference_period' => $referencePeriod,
+            'stations'         => $stations,
+        ];
     }
 
     public function ipmaServicesHTTPS()

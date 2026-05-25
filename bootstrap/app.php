@@ -2,6 +2,7 @@
 
 use App\Jobs\CheckPendingPhotoModeration;
 use App\Jobs\DailySummary;
+use App\Jobs\DetectTemperatureWaves;
 use App\Jobs\ProcessFIRMSData;
 use App\Jobs\HandleWeatherWarnings;
 use App\Jobs\HourlySummary;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         \App\Console\Commands\GetICNFBurnAreaLegacy::class,
         \App\Console\Commands\ImportLocations::class,
         \App\Console\Commands\AssignWeatherStations::class,
+        \App\Console\Commands\ImportWeatherNormals::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         if (env('SCHEDULER_ENABLE')) {
@@ -53,6 +55,7 @@ return Application::configure(basePath: dirname(__DIR__))
             $schedule->job(new UpdateWeatherData())->hourly();
 
             $schedule->job(new UpdateWeatherDataDaily())->daily()->at('04:21');
+            $schedule->job(new DetectTemperatureWaves())->daily()->at('05:00');
 
             $schedule->job(new DailySummary())->daily()->at('09:30');
             $schedule->job(new SendRiskPSProject())->daily()->at('08:30');
