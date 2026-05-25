@@ -16,6 +16,7 @@ class IncidentPhotoResource extends JsonResource
             'captured_at' => $this->taken_at,
             'width'       => $this->width,
             'height'      => $this->height,
+            'gps'         => $this->gps,
         ];
     }
 }

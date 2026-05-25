@@ -55,6 +55,27 @@ get:
                       type: integer
                     height:
                       type: integer
+                    gps:
+                      type: object
+                      nullable: true
+                      properties:
+                        lat:
+                          type: number
+                          format: float
+                          nullable: true
+                        lng:
+                          type: number
+                          format: float
+                          nullable: true
+                        altitude_m:
+                          type: number
+                          format: float
+                          nullable: true
+                        heading_deg:
+                          type: number
+                          format: float
+                          nullable: true
+                          description: Azimuth (compass direction) the camera was pointing when the photo was taken.
               meta:
                 type: object
                 properties:

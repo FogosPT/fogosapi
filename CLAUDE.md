@@ -60,7 +60,7 @@ Write endpoints (`POST /v2/incidents/{id}/posit`, `POST /v2/incidents/{id}/kml`)
 
 Photo endpoints:
 - `POST /v2/incidents/{id}/photos` — public upload, rate-limited via `photo.ratelimit` middleware
-- `GET /v2/incidents/{id}/photos` — public listing of approved photos (no GPS exposed)
+- `GET /v2/incidents/{id}/photos` — public listing of approved photos (includes GPS coordinates and heading/azimuth)
 - `GET|POST /v2/moderation/photos[/...]` — moderation queue, protected by `photo.modauth` middleware checking `PHOTO_MODERATION_KEY` header
 
 Weather extremes:
