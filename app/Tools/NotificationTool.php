@@ -333,6 +333,13 @@ class NotificationTool
         self::send($status, $incident->location, $incident->id, $topic);
     }
 
+    public static function sendNewPhotoNotification(Incident $incident)
+    {
+        $status = 'Foi publicada uma nova foto deste incêndio.';
+        $topic  = self::buildIncidentTopic($incident->id, false);
+        self::send($status, $incident->location, $incident->id, $topic);
+    }
+
     public static function sendNewStatusNotification(Incident $incident, $incidentStatusHistory)
     {
         $status = "Alteração de estado: de {$incidentStatusHistory['status']} para {$incident->status}";

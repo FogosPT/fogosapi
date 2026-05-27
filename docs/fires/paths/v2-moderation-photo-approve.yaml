@@ -4,6 +4,16 @@ post:
   description: |
     Marks the photo as approved and public-visible. Requires `key` header
     matching `PHOTO_MODERATION_KEY`.
+
+    On approval, the API also automatically publishes the photo to Twitter,
+    Facebook, Telegram and Discord, and sends a push notification to the
+    incident's topic (subject to the server-side feature flags
+    `TWITTER_ENABLE`, `FACEBOOK_ENABLE`, `TELEGRAM_ENABLE`, `DISCORD_ENABLE`
+    and `NOTIFICATIONS_ENABLE`). The message includes the incident location,
+    a link to `https://fogos.pt/pt/fogo/<id>/detalhe`, and — when available
+    — the photo capture time and distance from the incident's coordinates.
+    Failures on individual channels are logged but do not change the
+    response.
   tags:
     - Moderation
   parameters:
