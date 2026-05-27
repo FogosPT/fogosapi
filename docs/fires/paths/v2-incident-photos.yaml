@@ -3,8 +3,10 @@ get:
   summary: List approved public photos for an incident
   description: |
     Returns paginated list of approved, public-visible photos uploaded for
-    the incident. GPS coordinates and raw EXIF are NOT exposed. Response
-    cached for 5 minutes (`Cache-Control: public, max-age=300`).
+    the incident. Includes GPS coordinates (lat/lng/altitude) and the
+    camera heading/azimuth when present in the original EXIF; raw EXIF is
+    not exposed. Response cached for 5 minutes
+    (`Cache-Control: public, max-age=300`).
   tags:
     - V2
   parameters:
