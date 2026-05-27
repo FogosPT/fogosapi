@@ -5,15 +5,16 @@ post:
     Marks the photo as approved and public-visible. Requires `key` header
     matching `PHOTO_MODERATION_KEY`.
 
-    On approval, the API also automatically publishes the photo to Twitter,
-    Facebook, Telegram and Discord, and sends a push notification to the
-    incident's topic (subject to the server-side feature flags
-    `TWITTER_ENABLE`, `FACEBOOK_ENABLE`, `TELEGRAM_ENABLE`, `DISCORD_ENABLE`
-    and `NOTIFICATIONS_ENABLE`). The message includes the incident location,
-    a link to `https://fogos.pt/pt/fogo/<id>/detalhe`, and — when available
-    — the photo capture time and distance from the incident's coordinates.
-    Failures on individual channels are logged but do not change the
-    response.
+    If the request body sets `publish: true`, the API also publishes the
+    photo to Twitter, Facebook, Telegram and Discord and sends a push
+    notification to the incident's topic (subject to the server-side
+    feature flags `TWITTER_ENABLE`, `FACEBOOK_ENABLE`, `TELEGRAM_ENABLE`,
+    `DISCORD_ENABLE` and `NOTIFICATIONS_ENABLE`). The message includes the
+    incident location, a link to `https://fogos.pt/pt/fogo/<id>/detalhe`,
+    and — when available — the photo capture time and distance from the
+    incident's coordinates. Failures on individual channels are logged but
+    do not change the response. When `publish` is omitted or false, the
+    photo is only approved silently.
   tags:
     - Moderation
   parameters:
@@ -28,6 +29,21 @@ post:
       description: Mongo `_id` of the photo document.
       schema:
         type: string
+  requestBody:
+    required: false
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            publish:
+              type: boolean
+              default: false
+              description: |
+                When true, the photo is broadcast to Twitter, Facebook,
+                Telegram and Discord, and a push notification is sent to
+                the incident's topic. When false or omitted, the photo is
+                only approved without any external publication.
   responses:
     200:
       description: OK

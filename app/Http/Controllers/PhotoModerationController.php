@@ -39,7 +39,7 @@ class PhotoModerationController extends Controller
         ]);
     }
 
-    public function approve(string $photoId): JsonResponse
+    public function approve(Request $request, string $photoId): JsonResponse
     {
         $photo = IncidentPhoto::find($photoId);
         if ($photo === null) {
@@ -52,9 +52,13 @@ class PhotoModerationController extends Controller
         ]);
         $photo->save();
 
-        $incident = Incident::whereFireId($photo->fire_id)->first();
-        if ($incident !== null) {
-            $this->broadcastApprovedPhoto($photo, $incident);
+        $publish = filter_var($request->input('publish', false), FILTER_VALIDATE_BOOLEAN);
+
+        if ($publish) {
+            $incident = Incident::whereFireId($photo->fire_id)->first();
+            if ($incident !== null) {
+                $this->broadcastApprovedPhoto($photo, $incident);
+            }
         }
 
         return new JsonResponse(['success' => true]);
