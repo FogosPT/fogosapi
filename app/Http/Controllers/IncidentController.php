@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Concerns\CacheableResponse;
 use App\Http\Requests\IncidentSearchRequest;
 use App\Models\Hotspot;
 use App\Models\Incident;
@@ -22,6 +23,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class IncidentController extends Controller
 {
+    use CacheableResponse;
+
     public function active(Request $request): JsonResponse
     {
         $all = $request->get('all');
@@ -165,9 +168,13 @@ class IncidentController extends Controller
             // use exit to get rid of unexpected output afterward
             exit();
         } else if($geoJson){
-            return new JsonResponse($this->transformToGeoJSON(IncidentResource::collection($incidents)));
+            return $this->cacheable(
+                new JsonResponse($this->transformToGeoJSON(IncidentResource::collection($incidents))),
+                30
+            );
         } else {
 
+            $trollAdded = false;
             if(env('TROLL_MODE')){
                 $ua = $request->userAgent();
                 $ref = $request->headers->get('referer');
@@ -188,6 +195,7 @@ class IncidentController extends Controller
                 ];
 
                 if(!in_array($ua, $allowedUas) || !in_array($ref,$allowedRefs)){
+                    $trollAdded = true;
                     $troll = new Incident();
                     $troll->id = 123123123123;
                     $troll->coords = 1;
@@ -228,10 +236,17 @@ class IncidentController extends Controller
             }
 
 
-            return new JsonResponse([
+            $response = new JsonResponse([
                 'success' => true,
                 'data' => IncidentResource::collection($incidents),
             ]);
+
+            if ($trollAdded) {
+                $response->headers->set('Cache-Control', 'private, no-store');
+                return $response;
+            }
+
+            return $this->cacheable($response, 30);
         }
     }
 
@@ -288,6 +303,8 @@ class IncidentController extends Controller
         $r->endElement(); // kml
         $newxml = $r->outputMemory(true);
 
+        header('Content-Type: application/vnd.google-earth.kml+xml; charset=UTF-8');
+        header('Cache-Control: public, s-maxage=30, max-age=15, stale-while-revalidate=60');
 
         echo $newxml;
         die();

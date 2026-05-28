@@ -211,6 +211,6 @@ class IncidentPhotoController extends Controller
                 'page'     => $photos->currentPage(),
                 'per_page' => $photos->perPage(),
             ],
-        ], 200, ['Cache-Control' => 'public, max-age=300']);
+        ], 200, ['Cache-Control' => 'public, s-maxage=300, max-age=120, stale-while-revalidate=300']);
     }
 }

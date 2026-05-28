@@ -15,15 +15,19 @@ use App\Resources\IncidentResource;
 use App\Resources\V1\HistoryStatusResource;
 use App\Resources\V1\HistoryTotalResource;
 use App\Resources\V1\WarningResource;
+use App\Http\Concerns\CacheableResponse;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Cache;
 use voku\helper\UTF8;
 
 /** @deprecated */
 class LegacyController extends Controller
 {
+    use CacheableResponse;
+
     public function newFires(Request $request): JsonResponse
     {
         $concelho = $request->get('concelho');
@@ -106,15 +110,27 @@ class LegacyController extends Controller
     public function firesData(Request $request)
     {
         $id = $request->get('id');
+        $cacheKey = 'legacy.firesData.v1.' . md5((string) $id);
 
-        $incident = Incident::whereFireId($id)->get();
+        $payload = Cache::remember($cacheKey, 60, function () use ($id) {
+            $incident = Incident::whereFireId($id)->get();
 
-        if (isset($incident[0])) {
-            $incident = $incident[0];
-        } else {
-            abort(404);
+            if (!isset($incident[0])) {
+                return null;
+            }
+
+            return $this->buildFiresDataPayload($incident[0], $id);
+        });
+
+        if ($payload === null) {
+            return response()->json(['success' => false, 'data' => null], 404);
         }
 
+        return $this->cacheable(response()->json($payload), 60);
+    }
+
+    private function buildFiresDataPayload(Incident $incident, string $id): array
+    {
         $history = IncidentHistory::whereFireId($id)
             ->orderBy('created', 'asc')
             ->limit(2000)
@@ -154,12 +170,10 @@ class LegacyController extends Controller
 
         $return[] = $first;
 
-        $response = [
+        return [
             'success' => true,
             'data' => array_reverse($return),
         ];
-
-        return response()->json($response);
     }
 
     public function fires(Request $request)
@@ -193,16 +207,18 @@ class LegacyController extends Controller
 
     public function warningsSite()
     {
-        $warnings = WarningSite::orderBy('created', 'desc')
-            ->limit(50)
-            ->get();
+        $response = Cache::remember('legacy.warningsSite.v1', 300, function () {
+            $warnings = WarningSite::orderBy('created', 'desc')
+                ->limit(50)
+                ->get();
 
-        $response = [
-            'success' => true,
-            'data' => $warnings,
-        ];
+            return [
+                'success' => true,
+                'data' => $warnings,
+            ];
+        });
 
-        return response()->json($response);
+        return $this->cacheable(response()->json($response), 300);
     }
 
     public function warningsMadeira()
@@ -630,17 +646,19 @@ class LegacyController extends Controller
 
     public function active()
     {
-        $active = Incident::where('active', true)
-            ->where('isFire', true)
-            ->whereIn('statusCode', Incident::ACTIVE_STATUS_CODES)
-            ->get();
+        $response = Cache::remember('legacy.active.v1', 30, function () {
+            $active = Incident::where('active', true)
+                ->where('isFire', true)
+                ->whereIn('statusCode', Incident::ACTIVE_STATUS_CODES)
+                ->get();
 
-        $response = [
-            'success' => true,
-            'data' => $active,
-        ];
+            return [
+                'success' => true,
+                'data' => $active,
+            ];
+        });
 
-        return response()->json($response);
+        return $this->cacheable(response()->json($response), 30);
     }
 
     public function aerial()
@@ -728,68 +746,86 @@ class LegacyController extends Controller
 
     public function riskToday()
     {
-        $risk = RCMForJS::where('when', 'hoje')
-            ->orderBy('created', 'desc')
-            ->limit(1)
-            ->get();
+        $payload = Cache::remember('legacy.risk.hoje.v1', 900, function () {
+            $risk = RCMForJS::where('when', 'hoje')
+                ->orderBy('created', 'desc')
+                ->limit(1)
+                ->get();
 
-        if ($risk->isEmpty()) {
+            if ($risk->isEmpty()) {
+                return null;
+            }
+
+            $risk = $risk[0]->toArray();
+            unset($risk['created'], $risk['updated'], $risk['_id']);
+
+            return $risk;
+        });
+
+        if ($payload === null) {
             return response()->json(['success' => false, 'data' => null], 404);
         }
 
-        $risk = $risk[0]->toArray();
-        unset($risk['created'], $risk['updated'], $risk['_id']);
-
-        $response = [
-            'success' => true,
-            'data' => $risk,
-        ];
-
-        return response()->json($response);
+        return $this->cacheable(
+            response()->json(['success' => true, 'data' => $payload]),
+            900
+        );
     }
 
     public function riskTomorrow()
     {
-        $risk = RCMForJS::where('when', 'amanha')
-            ->orderBy('created', 'desc')
-            ->limit(1)
-            ->get();
+        $payload = Cache::remember('legacy.risk.amanha.v1', 900, function () {
+            $risk = RCMForJS::where('when', 'amanha')
+                ->orderBy('created', 'desc')
+                ->limit(1)
+                ->get();
 
-        if ($risk->isEmpty()) {
+            if ($risk->isEmpty()) {
+                return null;
+            }
+
+            $risk = $risk[0]->toArray();
+            unset($risk['created'], $risk['updated'], $risk['_id']);
+
+            return $risk;
+        });
+
+        if ($payload === null) {
             return response()->json(['success' => false, 'data' => null], 404);
         }
 
-        $risk = $risk[0]->toArray();
-        unset($risk['created'], $risk['updated'], $risk['_id']);
-
-        $response = [
-            'success' => true,
-            'data' => $risk,
-        ];
-
-        return response()->json($response);
+        return $this->cacheable(
+            response()->json(['success' => true, 'data' => $payload]),
+            900
+        );
     }
 
     public function riskAfter()
     {
-        $risk = RCMForJS::where('when', 'depois')
-            ->orderBy('created', 'desc')
-            ->limit(1)
-            ->get();
+        $payload = Cache::remember('legacy.risk.depois.v1', 900, function () {
+            $risk = RCMForJS::where('when', 'depois')
+                ->orderBy('created', 'desc')
+                ->limit(1)
+                ->get();
 
-        if ($risk->isEmpty()) {
+            if ($risk->isEmpty()) {
+                return null;
+            }
+
+            $risk = $risk[0]->toArray();
+            unset($risk['created'], $risk['updated'], $risk['_id']);
+
+            return $risk;
+        });
+
+        if ($payload === null) {
             return response()->json(['success' => false, 'data' => null], 404);
         }
 
-        $risk = $risk[0]->toArray();
-        unset($risk['created'], $risk['updated'], $risk['_id']);
-
-        $response = [
-            'success' => true,
-            'data' => $risk,
-        ];
-
-        return response()->json($response);
+        return $this->cacheable(
+            response()->json(['success' => true, 'data' => $payload]),
+            900
+        );
     }
 
     public function listConcelho(Request $request)

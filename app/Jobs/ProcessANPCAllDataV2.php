@@ -6,6 +6,7 @@ use App\Models\Incident;
 use App\Models\Location;
 use App\Tools\DiscordTool;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use voku\helper\UTF8;
@@ -65,6 +66,8 @@ class ProcessANPCAllDataV2 extends Job
         }
 
         $this->handleIncidents($incidents);
+
+        Cache::forget('legacy.active.v1');
 
         if($res->getStatusCode() === 200){
             dispatch(new CheckIsActive($incidents));

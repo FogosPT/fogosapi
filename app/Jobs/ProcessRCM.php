@@ -10,6 +10,7 @@ use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use voku\helper\UTF8;
 
@@ -360,6 +361,10 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
 
         $rcmJsDepois3 = new RCMForJS($riscoDepois3);
         $rcmJsDepois3->save();
+
+        Cache::forget('legacy.risk.hoje.v1');
+        Cache::forget('legacy.risk.amanha.v1');
+        Cache::forget('legacy.risk.depois.v1');
 
         $i = 0;
         $all = [];
