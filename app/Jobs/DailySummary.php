@@ -24,10 +24,10 @@ class DailySummary extends Job
     public function handle()
     {
         $start = Carbon::yesterday();
-        $end = Carbon::today()->endOfDay();
+        $end = Carbon::today();
 
         $incidents = Incident::where('isFire', true)
-            ->where([['dateTime', '>=', $start], ['dateTime', '<=', $end]])
+            ->where([['dateTime', '>=', $start], ['dateTime', '<', $end]])
             ->get();
 
 

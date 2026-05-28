@@ -256,7 +256,7 @@ class Incident extends Model
 
     public function history()
     {
-        return $this->hasMany(IncidentHistory::class, 'id', 'id');
+        return $this->hasMany(IncidentHistory::class, 'incidentId', 'id');
     }
 
     public function statusHistory()
