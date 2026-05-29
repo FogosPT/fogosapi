@@ -46,16 +46,19 @@ class DailySummary extends Job
 
             $history = $r->history()->get()->toArray();
             if(!empty($history)){
-                if(!empty(array_column($history, 'man'))){
-                    $maxMan += max(array_column($history, 'man')) ;
+                $manCol = array_filter(array_column($history, 'man'), fn($v) => $v >= 0);
+                if(!empty($manCol)){
+                    $maxMan += max($manCol);
                 }
 
-                if(!empty(array_column($history, 'terrain'))){
-                    $maxCars += max(array_column($history, 'terrain')) ;
+                $terrainCol = array_filter(array_column($history, 'terrain'), fn($v) => $v >= 0);
+                if(!empty($terrainCol)){
+                    $maxCars += max($terrainCol);
                 }
 
-                if(!empty(array_column($history, 'aerial'))){
-                    $maxPlanes += max(array_column($history, 'aerial')) ;
+                $aerialCol = array_filter(array_column($history, 'aerial'), fn($v) => $v >= 0);
+                if(!empty($aerialCol)){
+                    $maxPlanes += max($aerialCol);
                 }
             }
         }

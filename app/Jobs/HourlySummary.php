@@ -43,9 +43,9 @@ class HourlySummary extends Job
             $areal = 0;
             $cars = 0;
             foreach ($incidents as $f) {
-                $man += $f['man'];
-                $areal += $f['aerial'];
-                $cars += $f['terrain'];
+                if ($f['man'] > 0) $man += $f['man'];
+                if ($f['aerial'] > 0) $areal += $f['aerial'];
+                if ($f['terrain'] > 0) $cars += $f['terrain'];
             }
 
             $incendio = ($total === 1) ? 'Incêndio' : 'Incêndios';
@@ -61,9 +61,9 @@ class HourlySummary extends Job
             $areal = 0;
             $cars = 0;
             foreach ($incidentsNotActive as $f) {
-                $man += $f['man'];
-                $areal += $f['aerial'];
-                $cars += $f['terrain'];
+                if ($f['man'] > 0) $man += $f['man'];
+                if ($f['aerial'] > 0) $areal += $f['aerial'];
+                if ($f['terrain'] > 0) $cars += $f['terrain'];
             }
 
             $incendio = ($total === 1) ? 'Incêndio' : 'Incêndios';
