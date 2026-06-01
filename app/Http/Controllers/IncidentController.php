@@ -27,39 +27,21 @@ class IncidentController extends Controller
 
     public function active(Request $request): JsonResponse
     {
-        $all = $request->get('all');
-        $isFMA = $request->get('fma');
-        $isOtherFire = $request->get('otherfire');
         $concelho = $request->get('concelho');
+        $subRegion = $request->get('subRegion');
 
-        if($request->exists('limit')){
-            $limit = (int)$request->get('limit');
-        } else {
-            $limit = 1000;
-        }
+        $limit = $request->exists('limit') ? (int) $request->get('limit') : 1000;
 
-        $geoJson = filter_var($request->get('geojson'), FILTER_VALIDATE_BOOLEAN);;
+        $geoJson = $request->boolean('geojson');
 
         $csv = $request->get('csv');
         $csv2 = $request->get('csv2');
 
-        $subRegion = $request->get('subRegion');
-
-
-        $incidents = Incident::isActive()
-                            ->when(!$all, function ($query, $all){
-                                return $query->isFire();
-                            })->when($isFMA, function ($query, $isFMA){
-                                return $query->isFMA();
-                            })->when($isOtherFire, function ($query, $isOtherFire){
-                                return $query->isOtherFire();
-                            })->when($concelho, function ($query, $concelho){
-                                return $query->where('concelho', $concelho);
-                            })->when($subRegion, function ($query, $subRegion){
-                                return $query->where('sub_regiao', $subRegion);
-                            })
-                            ->orderBy('created_at', 'desc')
-                            ->paginate($limit);
+        $incidents = $this->buildActiveQuery($request)
+            ->when($concelho, fn ($q) => $q->where('concelho', $concelho))
+            ->when($subRegion, fn ($q) => $q->where('sub_regiao', $subRegion))
+            ->orderBy('created_at', 'desc')
+            ->paginate($limit);
 
         if($csv) {
             $csv = 'incendios.csv';
@@ -100,16 +82,8 @@ class IncidentController extends Controller
             if(empty($incidents)){
                 Log::debug(json_encode($incidents));
 
-                $incidents = Incident::isActive()
-                    ->when(!$all, function ($query, $all){
-                        return $query->isFire();
-                    })->when($isFMA, function ($query, $isFMA){
-                        return $query->isFMA();
-                    })->when($isOtherFire, function ($query, $isOtherFire){
-                        return $query->isOtherFire();
-                    })->when($concelho, function ($query, $concelho){
-                        return $query->where('concelho', $concelho);
-                    })
+                $incidents = $this->buildActiveQuery($request)
+                    ->when($concelho, fn ($q) => $q->where('concelho', $concelho))
                     ->orderBy('created_at', 'desc')
                     ->paginate($limit);
             }
@@ -252,29 +226,12 @@ class IncidentController extends Controller
 
     public function activeKML(Request $request): JsonResponse
     {
-        $all = $request->get('all');
-        $isFMA = $request->get('fma');
-        $isOtherFire = $request->get('otherfire');
         $concelho = $request->get('concelho');
 
-        if($request->exists('limit')){
-            $limit = (int)$request->get('limit');
-        } else {
-            $limit = 300;
-        }
+        $limit = $request->exists('limit') ? (int) $request->get('limit') : 300;
 
-        $geoJson = $request->get('geojson');
-
-        $incidents = Incident::isActive()
-            ->when(!$all, function ($query, $all){
-                return $query->isFire();
-            })->when($isFMA, function ($query, $isFMA){
-                return $query->isFMA();
-            })->when($isOtherFire, function ($query, $isOtherFire){
-                return $query->isOtherFire();
-            })->when($concelho, function ($query, $concelho){
-                return $query->where('concelho', $concelho);
-            })
+        $incidents = $this->buildActiveQuery($request)
+            ->when($concelho, fn ($q) => $q->where('concelho', $concelho))
             ->orderBy('created_at', 'desc')
             ->paginate($limit);
 
@@ -308,6 +265,48 @@ class IncidentController extends Controller
 
         echo $newxml;
         die();
+    }
+
+    /**
+     * Build the base active-incidents query with category filters (fire / fma / otherfire).
+     *
+     * Categories are mutually exclusive on the document side (driven by codigo_natureza),
+     * so combining them must be OR'd, never AND'd. Default category is fire; `all=1`
+     * removes the category filter entirely.
+     */
+    private function buildActiveQuery(Request $request)
+    {
+        $all = $request->boolean('all');
+        $wantFire = $request->boolean('fire');
+        $wantFMA = $request->boolean('fma');
+        $wantOther = $request->boolean('otherfire');
+
+        $query = Incident::isActive();
+
+        if ($all) {
+            return $query;
+        }
+
+        // Default to fire-only when no category flag is set.
+        if (!$wantFMA && !$wantOther) {
+            $wantFire = true;
+        }
+
+        return $query->where(function ($q) use ($wantFire, $wantFMA, $wantOther) {
+            if ($wantFire) {
+                $q->orWhere('isFire', true);
+            }
+            if ($wantFMA) {
+                $q->orWhere('isFMA', true);
+            }
+            if ($wantOther) {
+                $q->orWhere(function ($sub) {
+                    $sub->where('isOtherFire', true)
+                        ->orWhere('isTransporteFire', true)
+                        ->orWhere('isUrbanFire', true);
+                });
+            }
+        });
     }
 
     private function transformToGeoJSON($data)

@@ -230,7 +230,11 @@ class Incident extends Model
 
     public function scopeIsOtherFire(Builder $query): Builder
     {
-        return $query->where('isOtherFire', true)->orWhere('isTransporteFire', true)->orWhere('isUrbanFire', true);
+        return $query->where(function (Builder $q) {
+            $q->where('isOtherFire', true)
+                ->orWhere('isTransporteFire', true)
+                ->orWhere('isUrbanFire', true);
+        });
     }
 
     public function getDateTimeObjectAttribute(): array
