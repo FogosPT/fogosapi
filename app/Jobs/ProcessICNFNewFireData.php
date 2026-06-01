@@ -51,7 +51,13 @@ class ProcessICNFNewFireData extends Job
             ++$i;
 
             $rr = explode("',", $r);
-            if(isset($rr[12]) && $rr[12] === "'Extinto"){
+            $icnfEstado = isset($rr[12]) ? ltrim($rr[12], "'") : '';
+
+            if ($icnfEstado === 'Extinto') {
+                $status = 'Conclusão';
+                $statusCode = 8;
+                $statusColor = '8e7e7d';
+            } elseif ($icnfEstado === 'Dominado') {
                 $status = 'Em Resolução';
                 $statusCode = 7;
                 $statusColor = '65C4ED';
@@ -127,7 +133,17 @@ class ProcessICNFNewFireData extends Job
                 $incidentDb->save();
             } else {
                 $incident = $incident[0];
-                if($incident->status === 'Em curso' && $status === 'Em Resolução'){
+
+                // Only mirror ICNF state on incidents we have no ANEPC data for
+                // (man/terrain/aerial all sentinel -1). Otherwise ANEPC remains
+                // the source of truth for status.
+                $icnfOnly = (int) $incident->man === -1
+                    && (int) $incident->terrain === -1
+                    && (int) $incident->aerial === -1;
+
+                if ($icnfOnly
+                    && $incident->statusCode !== $statusCode
+                    && $statusCode > (int) $incident->statusCode) {
                     $incident->statusCode = $statusCode;
                     $incident->status = $status;
                     $incident->statusColor = $statusColor;
