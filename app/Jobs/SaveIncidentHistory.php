@@ -133,6 +133,9 @@ class SaveIncidentHistory extends Job
 
             if ($this->incident->man >= env('BIG_INCIDENT_MAN') && !$this->incident['notifyBig']) {
                 if($this->incident->isFire){
+                    $this->incident->notifyBig = true;
+                    $this->incident->save();
+
                     $date = date('H:i');
 
                     $notification = "ℹ🚨 {$this->incident->location} - Grande mobilização de meios:  👩‍🚒 {$this->incident->man} 🚒 {$this->incident->terrain} 🚁 {$this->incident->aerial} 🚨ℹ";
@@ -146,14 +149,12 @@ class SaveIncidentHistory extends Job
                     TwitterTool::retweetVost($lastTweetId);
 
                     $this->incident->lastTweetId = $lastTweetId;
+                    $this->incident->save();
 
                     $statusf = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:%0A  👩‍🚒 {$this->incident->man}%0A 🚒 {$this->incident->terrain}%0A 🚁 {$this->incident->aerial}%0A https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT 🚨ℹ";
                     FacebookTool::publish($statusf);
 
                     TelegramTool::publish($status);
-
-                    $this->incident->notifyBig = true;
-                    $this->incident->save();
                 }
             }
         } else {
