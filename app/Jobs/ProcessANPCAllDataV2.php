@@ -48,6 +48,7 @@ class ProcessANPCAllDataV2 extends Job
 
         try{
             $client = new \GuzzleHttp\Client();
+            Log::debug('Getting ANEPC data');
             $res = $client->request('GET', $url, $options);
         } catch (ClientException $e) {
             $response = $e->getResponse();
