@@ -6,7 +6,7 @@ use App\Jobs\DetectTemperatureWaves;
 use App\Jobs\ProcessFIRMSData;
 use App\Jobs\HandleWeatherWarnings;
 use App\Jobs\HourlySummary;
-use App\Jobs\ProcessANPCAllDataV2;
+use App\Jobs\ProcessOcorrenciasSite;
 use App\Jobs\ProcessDataForHistoryTotal;
 use App\Jobs\ProcessICNFNewFireData;
 use App\Jobs\ProcessRCM;
@@ -35,7 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule) {
         if (env('SCHEDULER_ENABLE')) {
             $schedule->job(new HourlySummary())->hourlyAt(0);
-            $schedule->job(new ProcessANPCAllDataV2())->everyFiveMinutes();
+            $schedule->job(new ProcessOcorrenciasSite())->everyFiveMinutes();
             $schedule->job(new ProcessDataForHistoryTotal())->everyTwoMinutes();
             //$schedule->job(new ProcessMadeiraWarnings())->everyTenMinutes();
             //$schedule->job(new ProcessPlanes())->everyFiveMinutes();
