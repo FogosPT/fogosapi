@@ -17,9 +17,13 @@ class ProcessOcorrenciasSite extends Job
 
     private const PAGE_SIZE = 1000;
 
-    private const STATUS_ALIASES = [
+    private const STATUS_LOOKUP_ALIASES = [
         'Despacho de 1º Alerta' => 'Despacho de 1.º Alerta',
         'Em Conclusão' => 'Conclusão',
+    ];
+
+    private const STATUS_DISPLAY_FIXES = [
+        'Despacho de 1.º Alerta' => 'Despacho de 1º Alerta',
     ];
 
     public function __construct()
@@ -156,9 +160,10 @@ class ProcessOcorrenciasSite extends Job
         $date = $this->parseDateTime($data);
 
         $rawStatus = (string) ($data['EstadoOcorrencia'] ?? '');
-        $status = self::STATUS_ALIASES[$rawStatus] ?? $rawStatus;
-        $statusCode = Incident::STATUS_ID[$status] ?? null;
-        $statusColor = Incident::STATUS_COLORS[$status] ?? null;
+        $lookupKey = self::STATUS_LOOKUP_ALIASES[$rawStatus] ?? $rawStatus;
+        $statusCode = Incident::STATUS_ID[$lookupKey] ?? null;
+        $statusColor = Incident::STATUS_COLORS[$lookupKey] ?? null;
+        $status = self::STATUS_DISPLAY_FIXES[$lookupKey] ?? $lookupKey;
 
         if ($statusCode === null) {
             DiscordTool::postError('Unknown EstadoOcorrencia => ' . $rawStatus . ' => ' . $numero);
