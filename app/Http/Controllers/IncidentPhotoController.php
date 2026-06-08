@@ -217,7 +217,7 @@ class IncidentPhotoController extends Controller
 
     public function listAll(Request $request, string $id): JsonResponse
     {
-        if (env('API_WRITE_KEY') !== $request->header('key')) {
+        if (env('PHOTO_MODERATION_KEY') !== $request->header('key')) {
             abort(401);
         }
 
