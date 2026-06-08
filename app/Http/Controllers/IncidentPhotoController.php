@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Incident;
 use App\Models\IncidentPhoto;
+use App\Resources\IncidentPhotoModerationResource;
 use App\Resources\IncidentPhotoResource;
 use App\Tools\ImageProcessingTool;
 use App\Tools\PhotoStorageTool;
@@ -212,5 +213,29 @@ class IncidentPhotoController extends Controller
                 'per_page' => $photos->perPage(),
             ],
         ], 200, ['Cache-Control' => 'public, s-maxage=300, max-age=120, stale-while-revalidate=300']);
+    }
+
+    public function listAll(Request $request, string $id): JsonResponse
+    {
+        if (env('API_WRITE_KEY') !== $request->header('key')) {
+            abort(401);
+        }
+
+        Incident::whereFireId($id)->firstOrFail();
+
+        $perPage = min(200, max(1, (int) $request->get('per_page', 50)));
+        $photos  = IncidentPhoto::where('fire_id', $id)
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+
+        return new JsonResponse([
+            'success' => true,
+            'data'    => IncidentPhotoModerationResource::collection($photos)->resolve(),
+            'meta'    => [
+                'total'    => $photos->total(),
+                'page'     => $photos->currentPage(),
+                'per_page' => $photos->perPage(),
+            ],
+        ]);
     }
 }
