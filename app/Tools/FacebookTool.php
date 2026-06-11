@@ -29,25 +29,28 @@ class FacebookTool
     public static function publish($status)
     {
         if (!env('FACEBOOK_ENABLE')) {
-            return;
+            return null;
         }
         try{
             $client = new \GuzzleHttp\Client();
-            $client->request('POST', self::getUrl($status));
+            $response = $client->request('POST', self::getUrl($status));
+            $body = json_decode((string) $response->getBody(), true);
+            return $body['id'] ?? null;
         } catch (\Exception $e){
             Log::error($e->getMessage());
+            return null;
         }
     }
 
     public static function publishWithImage($status, $imagePath)
     {
         if (!env('FACEBOOK_ENABLE')) {
-            return;
+            return null;
         }
 
         if (!$imagePath || !file_exists($imagePath)) {
             Log::error('FacebookTool::publishWithImage missing file: ' . $imagePath);
-            return;
+            return null;
         }
 
         $pageId = env('FACEBOOK_PAGE_ID');
@@ -55,15 +58,42 @@ class FacebookTool
 
         try {
             $client = new \GuzzleHttp\Client();
-            $client->request('POST', "https://graph.facebook.com/{$pageId}/photos", [
+            $response = $client->request('POST', "https://graph.facebook.com/{$pageId}/photos", [
                 'multipart' => [
                     ['name' => 'access_token', 'contents' => $accessCode],
                     ['name' => 'caption', 'contents' => $status],
                     ['name' => 'source', 'contents' => fopen($imagePath, 'r'), 'filename' => basename($imagePath)],
                 ],
             ]);
+            $body = json_decode((string) $response->getBody(), true);
+            return $body['post_id'] ?? null;
         } catch (\Exception $e) {
             Log::error('FacebookTool::publishWithImage failed: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public static function commentOnPost($postId, $message)
+    {
+        if (!env('FACEBOOK_ENABLE') || !$postId) {
+            return null;
+        }
+
+        $accessCode = env('FACEBOOK_ACCESS_CODE');
+
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->request('POST', "https://graph.facebook.com/{$postId}/comments", [
+                'form_params' => [
+                    'access_token' => $accessCode,
+                    'message' => $message,
+                ],
+            ]);
+            $body = json_decode((string) $response->getBody(), true);
+            return $body['id'] ?? null;
+        } catch (\Exception $e) {
+            Log::error('FacebookTool::commentOnPost failed: ' . $e->getMessage());
+            return null;
         }
     }
 

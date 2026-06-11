@@ -39,7 +39,11 @@ class HandleNewIncidentSocialMedia extends Job
             $this->incident->save();
 
             if ($path) {
-                FacebookTool::publishWithImage($status, $path);
+                $facebookPostId = FacebookTool::publishWithImage($status, $path);
+                if ($facebookPostId) {
+                    $this->incident->facebookPostId = $facebookPostId;
+                    $this->incident->save();
+                }
                 TelegramTool::publishImage($status, $path);
             } else {
                 TelegramTool::publish($status);

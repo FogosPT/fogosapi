@@ -42,6 +42,14 @@ class SaveIncidentStatusHistory extends Job
                 return;
             }
 
+            if ($this->incident->facebookPostId) {
+                $now = date('H:i');
+                FacebookTool::commentOnPost(
+                    $this->incident->facebookPostId,
+                    "🔄 Alteração de estado às {$now}: {$last['status']} → {$this->incident->status}"
+                );
+            }
+
             // Não faço ideia porquê, mas isto estava assim antes.. deve ser preciso!
             /*if ($this->incident->status === 'Despacho de 1º Alerta' || $this->incident->status === 'Despacho' || $this->incident->status === 'Chegada ao TO') {
                 if ($last['status'] === 'Conclusão') {
