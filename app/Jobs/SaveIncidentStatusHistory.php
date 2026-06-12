@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Incident;
 use App\Models\IncidentStatusHistory;
+use App\Tools\DiscordTool;
 use App\Tools\FacebookTool;
 use App\Tools\HashTagTool;
 use App\Tools\NotificationTool;
@@ -83,6 +84,7 @@ class SaveIncidentStatusHistory extends Job
 
                             FacebookTool::publish($status);
                             TelegramTool::publish($status);
+                            DiscordTool::post($status);
                         } finally {
                             if ($shot) {
                                 $shot->cleanup();
