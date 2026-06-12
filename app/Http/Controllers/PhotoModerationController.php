@@ -53,11 +53,12 @@ class PhotoModerationController extends Controller
         $photo->save();
 
         $publish = filter_var($request->input('publish', false), FILTER_VALIDATE_BOOLEAN);
+        $twitter = filter_var($request->input('twitter', false), FILTER_VALIDATE_BOOLEAN);
 
         if ($publish) {
             $incident = Incident::whereFireId($photo->fire_id)->first();
             if ($incident !== null) {
-                $this->broadcastApprovedPhoto($photo, $incident);
+                $this->broadcastApprovedPhoto($photo, $incident, $twitter);
             }
         }
 
@@ -82,7 +83,7 @@ class PhotoModerationController extends Controller
         return new JsonResponse(['success' => true]);
     }
 
-    private function broadcastApprovedPhoto(IncidentPhoto $photo, Incident $incident): void
+    private function broadcastApprovedPhoto(IncidentPhoto $photo, Incident $incident, bool $twitter = false): void
     {
         $text = $this->buildPublicationText($photo, $incident);
 
@@ -98,10 +99,12 @@ class PhotoModerationController extends Controller
             $tmp = null;
         }
 
-        try {
-            TwitterTool::tweet($text, false, $tmp ?: false);
-        } catch (\Throwable $e) {
-            DiscordTool::postError('Photo approve: Twitter failed — ' . $e->getMessage());
+        if ($twitter) {
+            try {
+                TwitterTool::tweet($text, false, $tmp ?: false);
+            } catch (\Throwable $e) {
+                DiscordTool::postError('Photo approve: Twitter failed — ' . $e->getMessage());
+            }
         }
 
         try {
