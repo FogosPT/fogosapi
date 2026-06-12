@@ -128,7 +128,11 @@ class IncidentPhotoController extends Controller
         $photo->moderation = ['reviewed_at' => null, 'reason' => null];
         $photo->save();
 
-        dispatch(new CheckPendingPhotoModeration(cooldownSeconds: 600));
+        try {
+            (new CheckPendingPhotoModeration(cooldownSeconds: 600))->handle();
+        } catch (\Throwable $e) {
+            Log::warning('photo moderation notify failed: '.$e->getMessage());
+        }
 
         return new JsonResponse([
             'success' => true,
