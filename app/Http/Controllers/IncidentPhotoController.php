@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\CheckPendingPhotoModeration;
 use App\Models\Incident;
 use App\Models\IncidentPhoto;
 use App\Resources\IncidentPhotoModerationResource;
@@ -126,6 +127,8 @@ class IncidentPhotoController extends Controller
         ];
         $photo->moderation = ['reviewed_at' => null, 'reason' => null];
         $photo->save();
+
+        dispatch(new CheckPendingPhotoModeration(cooldownSeconds: 600));
 
         return new JsonResponse([
             'success' => true,
