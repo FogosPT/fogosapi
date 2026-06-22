@@ -31,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         \App\Console\Commands\ImportLocations::class,
         \App\Console\Commands\AssignWeatherStations::class,
         \App\Console\Commands\ImportWeatherNormals::class,
+        \App\Console\Commands\DumpFireStatuses::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         if (env('SCHEDULER_ENABLE')) {
