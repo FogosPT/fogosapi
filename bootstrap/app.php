@@ -88,9 +88,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
             $schedule->job(new ProcessICNFNewFireData())->everyFiveMinutes();
 
-            $schedule->job(new ProcessFR24Planes())->everyThreeMinutes();
-            $schedule->job(new ProcessAirplanesLivePlanes())->everyMinute();
-            $schedule->job(new ProcessAdsbfiPlanes())->everyMinute();
+            $schedule->job(new ProcessFR24Planes())->cron('*/3 * * * *');
+            $schedule->job(new ProcessAirplanesLivePlanes())->cron('1-59/3 * * * *');
+            $schedule->job(new ProcessAdsbfiPlanes())->cron('2-59/3 * * * *');
             // $schedule->job(new CleanICNFFires())->everyFiveMinutes();
 
             // $schedule->job(new HandleANEPCImportantData())->everyTenMinutes();

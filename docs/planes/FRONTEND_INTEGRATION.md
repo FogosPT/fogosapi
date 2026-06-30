@@ -218,12 +218,13 @@ setInterval(refreshPlanes, REFRESH_MS);
 
 O backend ingere posições de **três fontes em paralelo**, todas a escrever para a mesma coleção `flight_positions` (campo `source` distingue):
 
-| Source | Cadência | Quando corre | Notas |
-|---|---|---|---|
-| `fr24` | cada 3 min | janela diurna + incêndios aéreos ativos + budget OK | Premium, mais fiável; cobertura completa |
-| `airplanes.live` | cada 1 min | janela diurna | Grátis, depende de cobertura ADS-B comunitária |
-| `adsb.fi` | cada 1 min | janela diurna | Grátis, depende de cobertura ADS-B comunitária |
+| Source | Cadência | Minutos | Quando corre | Notas |
+|---|---|---|---|---|
+| `fr24` | cada 3 min | 0, 3, 6… | janela diurna + incêndios aéreos ativos + budget OK | Premium, mais fiável; cobertura completa |
+| `airplanes.live` | cada 3 min | 1, 4, 7… | janela diurna | Grátis, depende de cobertura ADS-B comunitária |
+| `adsb.fi` | cada 3 min | 2, 5, 8… | janela diurna | Grátis, depende de cobertura ADS-B comunitária |
 
+- As três fontes estão **desfasadas em 1 min** entre si. Combinadas dão 1 fetch por minuto, alternando entre fontes — sem bursts de pedidos simultâneos.
 - **Janela diurna:** entre `sunrise + 1h` e `sunset − 1h` em Lisboa (calculado dinamicamente).
 - **Resultado prático:** durante o dia, com aviões a voar, esperar **~1 posição nova por minuto** por avião (união das três fontes).
 - **Fora da janela diurna ou sem fogos aéreos ativos:** sem posições novas. Apresentar como "última posição há X minutos" no UI.
