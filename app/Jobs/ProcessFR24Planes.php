@@ -21,11 +21,13 @@ class ProcessFR24Planes extends Job
     private const REG_BATCH_SIZE = 100;
     private const BUDGET_GUARD_RATIO = 0.95;
 
+    public bool $force = false;
     public ?string $lastSkipReason = null;
     public int $positionsWritten = 0;
 
-    public function __construct(private bool $force = false)
+    public function __construct(bool $force = false)
     {
+        $this->force = $force;
     }
 
     public function handle()

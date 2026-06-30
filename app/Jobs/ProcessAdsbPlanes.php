@@ -14,11 +14,13 @@ abstract class ProcessAdsbPlanes extends Job
     private const LISBON_LON = -9.1393;
     private const HEX_BATCH_SIZE = 100;
 
+    public bool $force = false;
     public ?string $lastSkipReason = null;
     public int $positionsWritten = 0;
 
-    public function __construct(private bool $force = false)
+    public function __construct(bool $force = false)
     {
+        $this->force = $force;
     }
 
     abstract protected function sourceName(): string;
