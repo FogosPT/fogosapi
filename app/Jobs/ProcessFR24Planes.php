@@ -21,17 +21,30 @@ class ProcessFR24Planes extends Job
     private const REG_BATCH_SIZE = 100;
     private const BUDGET_GUARD_RATIO = 0.95;
 
+    public ?string $lastSkipReason = null;
+    public int $positionsWritten = 0;
+
+    public function __construct(private bool $force = false)
+    {
+    }
+
     public function handle()
     {
+        $this->lastSkipReason = null;
+        $this->positionsWritten = 0;
+
         if (!env('FR24_ENABLE')) {
+            $this->lastSkipReason = 'FR24_ENABLE is false';
             return;
         }
 
-        if (!$this->isWithinDaylightWindow()) {
+        if (!$this->force && !$this->isWithinDaylightWindow()) {
+            $this->lastSkipReason = 'outside daylight window (sunrise+1h to sunset-1h, Lisbon)';
             return;
         }
 
-        if (!Incident::isActive()->where('aerial', '>', 0)->exists()) {
+        if (!$this->force && !Incident::isActive()->where('aerial', '>', 0)->exists()) {
+            $this->lastSkipReason = 'no active incidents with aerial assets';
             return;
         }
 
@@ -41,12 +54,14 @@ class ProcessFR24Planes extends Job
             DiscordTool::postError(
                 'FR24 monthly credit budget at '.round($used).' / '.round($limit).' — pausing polling.'
             );
+            $this->lastSkipReason = sprintf('monthly credit budget reached (%d / %d)', round($used), round($limit));
 
             return;
         }
 
         $tracked = TrackedAircraft::where('active', true)->get();
         if ($tracked->isEmpty()) {
+            $this->lastSkipReason = 'no active tracked aircraft';
             return;
         }
 
@@ -86,6 +101,7 @@ class ProcessFR24Planes extends Job
         }
 
         $position = FlightPosition::create($mapped);
+        $this->positionsWritten++;
 
         if ($aircraft && $aircraft->notify) {
             $this->maybeNotifyFirstSighting($aircraft, $position);

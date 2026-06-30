@@ -28,6 +28,7 @@ use App\Console\Commands\GetICNFBurnAreaLegacy;
 use App\Console\Commands\ImportLocations;
 use App\Console\Commands\ImportWeatherNormals;
 use App\Console\Commands\SaveWarningAndSendNotificationAndSocial;
+use App\Console\Commands\SyncFR24Planes;
 use App\Console\Commands\TestStuff;
 use App\Http\Middleware\PhotoModerationAuth;
 use App\Http\Middleware\PhotoUploadRateLimit;
@@ -45,6 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
         AssignWeatherStations::class,
         ImportWeatherNormals::class,
         DumpFireStatuses::class,
+        SyncFR24Planes::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         if (env('SCHEDULER_ENABLE')) {
