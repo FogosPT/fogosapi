@@ -26,6 +26,7 @@ class PlaneResource extends JsonResource
             'registration' => $this->registration,
             'name' => $this->name,
             'aircraft_type' => $this->type,
+            'kind' => $this->kind,
             'base' => $this->base,
             'operator' => $this->operator,
             'is_flying' => $isFlying,

@@ -157,7 +157,8 @@ Endpoint antigo, mantém-se por retrocompatibilidade. **Lê de outra coleção**
 | `icao` | string | 6 hex chars, lowercase | ICAO 24-bit transponder address |
 | `registration` | string | ex. `CS-INM` | Matrícula |
 | `callsign` | string \| null | ex. `BMB01` | Pode mudar entre voos |
-| `aircraft_type` | string | ICAO type designator (`AS50`, `CL41`, `B412`, …) | Usar para escolher ícone |
+| `aircraft_type` | string | Type code livre (`AS350B3`, `AT-802A`, `CL215`, …) | Não usar como classificador — usa `kind` |
+| `kind` | string | `"airplane"` ou `"helicopter"` | **Usa este campo para escolher o ícone no mapa.** Default: `"airplane"` quando não classificado |
 | `base` | string \| null | ICAO airfield code (`LPMT`, `LPCO`, …) | Base operacional |
 | `operator` | string \| null | Nome do operador | Texto livre |
 | `lat`, `lon` | number | WGS84 graus decimais | Lat/Lng directo para Leaflet, Mapbox, Google Maps |
@@ -190,7 +191,7 @@ async function refreshPlanes() {
       lat: last.lat,
       lng: last.lon,
       rotation: last.track,
-      icon: iconFor(plane.aircraft_type),
+      icon: plane.kind === 'helicopter' ? heliIcon : airplaneIcon,
       popup: `${plane.name} (${plane.registration}) — ${last.altitude} ft, ${last.ground_speed} kt`,
     });
 

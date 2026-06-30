@@ -39,8 +39,15 @@ class TrackedAircraftModelTest extends TestCase
     public function it_has_required_fillable_fields(): void
     {
         $fillable = $this->model->getFillable();
-        foreach (['icao', 'registration', 'name', 'type', 'base', 'operator', 'notify', 'active', 'notes'] as $field) {
+        foreach (['icao', 'registration', 'name', 'type', 'kind', 'base', 'operator', 'notify', 'active', 'notes'] as $field) {
             self::assertContains($field, $fillable);
         }
+    }
+
+    /** @test */
+    public function it_defaults_kind_to_airplane(): void
+    {
+        $fresh = new \App\Models\TrackedAircraft();
+        self::assertEquals('airplane', $fresh->kind);
     }
 }
