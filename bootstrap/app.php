@@ -8,6 +8,8 @@ use App\Jobs\HandleWeatherWarnings;
 use App\Jobs\HourlySummary;
 use App\Jobs\ProcessOcorrenciasSite;
 use App\Jobs\ProcessDataForHistoryTotal;
+use App\Jobs\ProcessAdsbfiPlanes;
+use App\Jobs\ProcessAirplanesLivePlanes;
 use App\Jobs\ProcessFR24Planes;
 use App\Jobs\ProcessICNFNewFireData;
 use App\Jobs\ProcessRCM;
@@ -28,6 +30,7 @@ use App\Console\Commands\GetICNFBurnAreaLegacy;
 use App\Console\Commands\ImportLocations;
 use App\Console\Commands\ImportWeatherNormals;
 use App\Console\Commands\SaveWarningAndSendNotificationAndSocial;
+use App\Console\Commands\SyncAdsbPlanes;
 use App\Console\Commands\SyncFR24Planes;
 use App\Console\Commands\TestStuff;
 use App\Http\Middleware\PhotoModerationAuth;
@@ -47,6 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ImportWeatherNormals::class,
         DumpFireStatuses::class,
         SyncFR24Planes::class,
+        SyncAdsbPlanes::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         if (env('SCHEDULER_ENABLE')) {
@@ -85,6 +89,8 @@ return Application::configure(basePath: dirname(__DIR__))
             $schedule->job(new ProcessICNFNewFireData())->everyFiveMinutes();
 
             $schedule->job(new ProcessFR24Planes())->everyThreeMinutes();
+            $schedule->job(new ProcessAirplanesLivePlanes())->everyMinute();
+            $schedule->job(new ProcessAdsbfiPlanes())->everyMinute();
             // $schedule->job(new CleanICNFFires())->everyFiveMinutes();
 
             // $schedule->job(new HandleANEPCImportantData())->everyTenMinutes();
