@@ -1,0 +1,21 @@
+get:
+  operationId: v2ListActivePlanes
+  summary: Tracked firefighting aircraft currently airborne (last position seen in the last 10 minutes)
+  tags:
+    - Planes
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: array
+                items:
+                  $ref: '../models/TrackedAircraftWithPosition.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

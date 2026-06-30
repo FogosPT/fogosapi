@@ -165,6 +165,14 @@ paths:
     $ref: './rcm/paths/v2-rcm-update.yaml'
 
   # V2 — Planes
+  /v2/planes:
+    $ref: './planes/paths/v2-planes.yaml'
+  /v2/planes/active:
+    $ref: './planes/paths/v2-planes-active.yaml'
+  /v2/planes/recent:
+    $ref: './planes/paths/v2-planes-recent.yaml'
+  /v2/planes/{icao}/track:
+    $ref: './planes/paths/v2-planes-icao-track.yaml'
   /v2/planes/{icao}:
     $ref: './planes/paths/v2-planes-icao.yaml'
 

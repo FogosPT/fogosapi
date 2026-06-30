@@ -8,6 +8,7 @@ use App\Jobs\HandleWeatherWarnings;
 use App\Jobs\HourlySummary;
 use App\Jobs\ProcessOcorrenciasSite;
 use App\Jobs\ProcessDataForHistoryTotal;
+use App\Jobs\ProcessFR24Planes;
 use App\Jobs\ProcessICNFNewFireData;
 use App\Jobs\ProcessRCM;
 use App\Jobs\SendRiskPSProject;
@@ -19,27 +20,39 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Console\Commands\AssignWeatherStations;
+use App\Console\Commands\DumpFireStatuses;
+use App\Console\Commands\FixFMA;
+use App\Console\Commands\FixKMLData;
+use App\Console\Commands\GetICNFBurnAreaLegacy;
+use App\Console\Commands\ImportLocations;
+use App\Console\Commands\ImportWeatherNormals;
+use App\Console\Commands\SaveWarningAndSendNotificationAndSocial;
+use App\Console\Commands\TestStuff;
+use App\Http\Middleware\PhotoModerationAuth;
+use App\Http\Middleware\PhotoUploadRateLimit;
+use Illuminate\Http\Middleware\HandleCors;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(web: __DIR__.'/../routes/web.php')
     ->withCommands([
-        \App\Console\Commands\TestStuff::class,
-        \App\Console\Commands\FixKMLData::class,
-        \App\Console\Commands\FixFMA::class,
-        \App\Console\Commands\SaveWarningAndSendNotificationAndSocial::class,
-        \App\Console\Commands\GetICNFBurnAreaLegacy::class,
-        \App\Console\Commands\ImportLocations::class,
-        \App\Console\Commands\AssignWeatherStations::class,
-        \App\Console\Commands\ImportWeatherNormals::class,
-        \App\Console\Commands\DumpFireStatuses::class,
+        TestStuff::class,
+        FixKMLData::class,
+        FixFMA::class,
+        SaveWarningAndSendNotificationAndSocial::class,
+        GetICNFBurnAreaLegacy::class,
+        ImportLocations::class,
+        AssignWeatherStations::class,
+        ImportWeatherNormals::class,
+        DumpFireStatuses::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         if (env('SCHEDULER_ENABLE')) {
             $schedule->job(new HourlySummary())->hourlyAt(0);
             $schedule->job(new ProcessOcorrenciasSite())->everyFiveMinutes();
             $schedule->job(new ProcessDataForHistoryTotal())->everyTwoMinutes();
-            //$schedule->job(new ProcessMadeiraWarnings())->everyTenMinutes();
-            //$schedule->job(new ProcessPlanes())->everyFiveMinutes();
+            // $schedule->job(new ProcessMadeiraWarnings())->everyTenMinutes();
+            // $schedule->job(new ProcessPlanes())->everyFiveMinutes();
             $schedule->job(new ProcessRCM(true))->daily()->at('09:00');
             $schedule->job(new ProcessRCM(false))->hourly();
             $schedule->job(new ProcessRCM(true, true))->daily()->at('18:00');
@@ -60,7 +73,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             $schedule->job(new DailySummary())->daily()->at('09:30');
             $schedule->job(new SendRiskPSProject())->daily()->at('08:30');
-            //$schedule->job(new SendRiskPRProject())->daily()->at('08:30');
+            // $schedule->job(new SendRiskPRProject())->daily()->at('08:30');
 
             $schedule->job(new CheckPendingPhotoModeration())->everyFifteenMinutes();
 
@@ -68,22 +81,22 @@ return Application::configure(basePath: dirname(__DIR__))
             $schedule->job(new ProcessFIRMSData())->everyFifteenMinutes();
 
             $schedule->job(new ProcessICNFNewFireData())->everyFiveMinutes();
-            //$schedule->job(new CleanICNFFires())->everyFiveMinutes();
 
-            //$schedule->job(new HandleANEPCImportantData())->everyTenMinutes();
-            //$schedule->job(new HandleANEPCPositEmail())->everyTenMinutes();
+            $schedule->job(new ProcessFR24Planes())->everyThreeMinutes();
+            // $schedule->job(new CleanICNFFires())->everyFiveMinutes();
+
+            // $schedule->job(new HandleANEPCImportantData())->everyTenMinutes();
+            // $schedule->job(new HandleANEPCPositEmail())->everyTenMinutes();
         }
     })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->validateCsrfTokens(except: ['*']);
         $middleware->trustProxies(at: '*');
-        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
+        $middleware->append(HandleCors::class);
         $middleware->alias([
-            'photo.ratelimit' => \App\Http\Middleware\PhotoUploadRateLimit::class,
-            'photo.modauth'   => \App\Http\Middleware\PhotoModerationAuth::class,
+            'photo.ratelimit' => PhotoUploadRateLimit::class,
+            'photo.modauth'   => PhotoModerationAuth::class,
         ]);
     })
-    ->withExceptions(function (Exceptions $exceptions) {
-        //
-    })
+    ->withExceptions(function (Exceptions $exceptions) {})
     ->create();

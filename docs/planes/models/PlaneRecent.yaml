@@ -1,0 +1,40 @@
+title: PlaneRecent
+description: Firefighting aircraft with its position history over the requested window
+type: object
+properties:
+  icao:
+    type: string
+  registration:
+    type: string
+  name:
+    type: string
+  aircraft_type:
+    type: string
+  base:
+    type: string
+  operator:
+    type: string
+  positions:
+    type: array
+    description: Position samples ordered chronologically (oldest first)
+    items:
+      type: object
+      properties:
+        lat:
+          type: number
+        lon:
+          type: number
+        altitude:
+          type: integer
+        ground_speed:
+          type: integer
+        track:
+          type: integer
+        on_ground:
+          type: boolean
+        sampled_at:
+          type: string
+          format: date-time
+        created:
+          type: string
+          format: date-time

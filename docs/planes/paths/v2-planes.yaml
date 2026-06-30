@@ -1,0 +1,21 @@
+get:
+  operationId: v2ListTrackedPlanes
+  summary: List all tracked firefighting aircraft with their latest known position
+  tags:
+    - Planes
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: array
+                items:
+                  $ref: '../models/TrackedAircraftWithPosition.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

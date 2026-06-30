@@ -1,0 +1,32 @@
+get:
+  operationId: v2GetRecentPlanePositions
+  summary: Position history for all tracked firefighting aircraft over the last N hours, grouped by aircraft
+  description: Primary endpoint for web and mobile clients drawing aircraft tracks on a map.
+  tags:
+    - Planes
+  parameters:
+    - name: hours
+      in: query
+      required: false
+      description: Time window in hours (default 6, min 1, max 24)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 24
+        default: 6
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: array
+                items:
+                  $ref: '../models/PlaneRecent.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

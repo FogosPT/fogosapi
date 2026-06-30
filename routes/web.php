@@ -93,6 +93,10 @@ Route::group(['prefix' => 'v2'], function () {
     });
 
     Route::group(['prefix' => 'planes'], function () {
+        Route::get('/', '\App\Http\Controllers\PlanesController@index');
+        Route::get('active', '\App\Http\Controllers\PlanesController@active');
+        Route::get('recent', '\App\Http\Controllers\PlanesController@recent');
+        Route::get('{icao}/track', '\App\Http\Controllers\PlanesController@track');
         Route::get('{icao}', '\App\Http\Controllers\PlanesController@icao');
     });
 

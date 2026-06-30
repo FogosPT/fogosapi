@@ -1,0 +1,56 @@
+title: TrackedAircraftWithPosition
+description: Firefighting aircraft from the tracked fleet, with its last known position (if any)
+type: object
+properties:
+  icao:
+    type: string
+    description: ICAO 24-bit transponder address (hex, lowercase)
+  registration:
+    type: string
+    description: Aircraft registration (e.g. CS-INM)
+  name:
+    type: string
+    description: Operational name (e.g. "Helibombeiro 1")
+  aircraft_type:
+    type: string
+    description: Aircraft type code (ICAO designator)
+  base:
+    type: string
+    description: Base airfield (ICAO code)
+  operator:
+    type: string
+    description: Operator name
+  is_flying:
+    type: boolean
+    description: True when the latest position was recorded in the last 10 minutes
+  last_seen_minutes_ago:
+    type: integer
+    nullable: true
+    description: Minutes since the latest position was recorded (null if never seen)
+  last_position:
+    type: object
+    nullable: true
+    properties:
+      lat:
+        type: number
+      lon:
+        type: number
+      altitude:
+        type: integer
+        description: Barometric altitude (feet)
+      ground_speed:
+        type: integer
+        description: Ground speed (knots)
+      track:
+        type: integer
+        description: Track angle (degrees, 0-359)
+      on_ground:
+        type: boolean
+      sampled_at:
+        type: string
+        format: date-time
+        description: When FR24 observed the position
+      created:
+        type: string
+        format: date-time
+        description: When the position was persisted in FogosPT
