@@ -63,6 +63,7 @@ class CheckImportantFireIncident extends Job implements ShouldQueue, ShouldBeUni
                     $status = "ℹ🔥 Segundo os critérios da @ProteccaoCivil o incêndio em {$incident->location} é considerado importante. https://{$domain}/fogo/{$incident->id} {$hashTag} #FogosPT 🔥ℹ";
                     if(env('TWITTER_ENABLE')){
                         $lastTweetId = TwitterTool::tweet($status, false,false,false,false,true);
+                        $incident->lastTweetId = $lastTweetId;
                     }
 
                     TelegramTool::publish($status);
@@ -71,7 +72,6 @@ class CheckImportantFireIncident extends Job implements ShouldQueue, ShouldBeUni
                     $facebookStatus = "ℹ🔥 Segundo os critérios da ANEPC o incêndio em {$incident->location} é considerado importante. https://{$domain}/fogo/{$incident->id} {$hashTag} #FogosPT 🔥ℹ";
                     FacebookTool::publish($facebookStatus);
 
-                    $incident->lastTweetId = $lastTweetId;
                     $incident->sentCheckImportant = true;
                     $incident->save();
                 }
