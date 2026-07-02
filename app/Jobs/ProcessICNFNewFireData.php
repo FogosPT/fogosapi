@@ -69,11 +69,20 @@ class ProcessICNFNewFireData extends Job
 
             $id = strip_tags(str_replace("'", '', $rr[0]));
 
+            if (!ctype_digit($id)) {
+                Log::debug('ICNF: skipping non-numeric id', ['id' => $id]);
+                continue;
+            }
+
             $incident = Incident::whereFireId($id)
                 ->get();
 
             if (!isset($incident[0])) {
                 $d = $this->getData($id);
+
+                if (!$d) {
+                    continue;
+                }
 
                 $date = new Carbon($d->DATAALERTA->__toString() . ' ' . $d->HORAALERTA->__toString(), 'Europe/lisbon');
                 $distrito = UTF8::ucwords(mb_strtolower($d->DISTRITO->__toString()));
@@ -175,7 +184,12 @@ class ProcessICNFNewFireData extends Job
            return;
        }
 
-       $xml = new \SimpleXMLElement($data);
+       try {
+           $xml = new \SimpleXMLElement($data);
+       } catch (\Throwable $e) {
+           Log::error('ICNF: failed to parse XML response.', ['url' => $url, 'message' => $e->getMessage()]);
+           return;
+       }
 
        $data = $xml->CODIGO;
 
