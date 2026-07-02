@@ -61,8 +61,8 @@ class CheckImportantFireIncident extends Job implements ShouldQueue, ShouldBeUni
                     $domain = env('SOCIAL_LINK_DOMAIN');
 
                     $status = "ℹ🔥 Segundo os critérios da @ProteccaoCivil o incêndio em {$incident->location} é considerado importante. https://{$domain}/fogo/{$incident->id} {$hashTag} #FogosPT 🔥ℹ";
-                    if(env('TWITTER_ENABLE')){
-                        $lastTweetId = TwitterTool::tweet($status, false,false,false,false,true);
+                    $lastTweetId = TwitterTool::tweet($status);
+                    if ($lastTweetId) {
                         $incident->lastTweetId = $lastTweetId;
                     }
 

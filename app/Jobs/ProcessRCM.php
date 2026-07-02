@@ -501,7 +501,7 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
             $statusFacebook .= 'Nos dias de perigo “muito elevado” ou “máximo” é PROIBIDO fazer Queimadas. Nos restantes dias apenas é PERMITIDO fazer com AUTORIZAÇÃO do município. Faça o registo na APLICAÇÃO, é OBRIGATÓRIO. Aplicável nos territórios rurais e urbanos';
             $status .= 'Nos dias de perigo “muito elevado” ou “máximo” é PROIBIDO fazer Queimadas. Nos restantes dias apenas é PERMITIDO fazer com AUTORIZAÇÃO do município. Faça o registo na APLICAÇÃO, é OBRIGATÓRIO. Aplicável nos territórios rurais e urbanos';
             
-            TwitterTool::tweet($status, false, false, false, false, true);
+            TwitterTool::tweet($status);
             FacebookTool::publish($statusFacebook);
         }
 
@@ -512,7 +512,7 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
         $path = $shot ? $shot->path() : false;
 
         try {
-            $id = TwitterTool::tweet($status, false, $path, false, false, true);
+            $id = TwitterTool::tweet($status, false, $path);
 //            TwitterTool::retweetVost($id);
 //            if ($path) {
 //                FacebookTool::publishWithImage($status, $path);

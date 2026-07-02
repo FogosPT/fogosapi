@@ -144,7 +144,7 @@ class SaveIncidentHistory extends Job
 
                     $status = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:\r\n 👩‍🚒 {$this->incident->man}\r\n 🚒 {$this->incident->terrain}\r\n 🚁 {$this->incident->aerial}\r\n https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT 🚨ℹ";
 
-                    $lastTweetId = TwitterTool::tweet($status, false, false,false,false,true);
+                    $lastTweetId = TwitterTool::tweet($status);
 
                     TwitterTool::retweetVost($lastTweetId);
 

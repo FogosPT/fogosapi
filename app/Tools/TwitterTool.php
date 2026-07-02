@@ -106,7 +106,7 @@ class TwitterTool
 
     public static function tweet($text, $lastId = false, $imagePath = false, $emergencias = false, $vost = false, $bypassEnable = false)
     {
-        if (!env('TWITTER_ENABLE') && !$bypassEnable) {
+        if (!env('TWITTER_ENABLE')) {
             return false;
         }
 
@@ -159,6 +159,10 @@ class TwitterTool
 
     public static function retweetVost($id)
     {
+        if (!env('TWITTER_ENABLE')) {
+            return;
+        }
+
         $client = self::getVOSTClient();
 
         $url = 'https://api.twitter.com/1.1/statuses/retweet/' . $id . '.json';

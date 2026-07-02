@@ -52,7 +52,7 @@ class SaveWarningAndSendNotificationAndSocial extends Command
         NotificationTool::sendWarningNotification($status);
 
         $text = "ALERTA: \r\n" . $status;
-        TwitterTool::tweet($text,false,false,false, false, true);
+        TwitterTool::tweet($text);
         TelegramTool::publish($text);
         BlueskyTool::publish($text);
 
