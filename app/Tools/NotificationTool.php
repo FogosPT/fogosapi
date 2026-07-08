@@ -200,7 +200,13 @@ class NotificationTool
             ],
             'apns' => [
                 'headers' => [
-                    'apns-priority' => '5',
+                    'apns-priority' => '10',
+                    'apns-push-type' => 'alert',
+                ],
+                'payload' => [
+                    'aps' => [
+                        'sound' => 'default',
+                    ],
                 ],
             ],
         ];
@@ -228,7 +234,13 @@ class NotificationTool
             ],
             'apns' => [
                 'headers' => [
-                    'apns-priority' => '5',
+                    'apns-priority' => '10',
+                    'apns-push-type' => 'alert',
+                ],
+                'payload' => [
+                    'aps' => [
+                        'sound' => 'default',
+                    ],
                 ],
             ],
         ];
