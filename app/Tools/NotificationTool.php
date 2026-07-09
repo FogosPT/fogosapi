@@ -206,6 +206,7 @@ class NotificationTool
                 'payload' => [
                     'aps' => [
                         'sound' => 'default',
+                        'category' => 'fogos-fire',
                     ],
                 ],
             ],
@@ -240,6 +241,7 @@ class NotificationTool
                 'payload' => [
                     'aps' => [
                         'sound' => 'default',
+                        'category' => 'fogos-fire',
                     ],
                 ],
             ],
