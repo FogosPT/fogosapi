@@ -431,4 +431,59 @@ class NotificationTool
             'isFire'   => $incident->isFire ? '1' : '0',
         ]);
     }
+
+    /**
+     * Data-only FCM to `follow-fire-<id>` for Android "follow this fire".
+     * Delivered without delay — LA/ongoing-notification should reflect
+     * state changes as soon as ingestion detects them.
+     */
+    public static function sendFollowFireUpdate(Incident $incident): void
+    {
+        $p     = self::prefix();
+        $topic = "{$p}follow-fire-{$incident->id}";
+
+        $statusColor = trim((string) ($incident->statusColor ?? ''));
+        if ($statusColor !== '' && !str_starts_with($statusColor, '#')) {
+            $statusColor = '#' . $statusColor;
+        }
+
+        self::dispatchFollowFire($topic, [
+            'type'        => 'follow-fire-update',
+            'fireId'      => (string) $incident->id,
+            'title'       => '🔥 ' . (string) ($incident->concelho ?? $incident->district ?? ''),
+            'location'    => (string) ($incident->location ?? ''),
+            'statusText'  => (string) ($incident->status ?? ''),
+            'statusColor' => $statusColor !== '' ? $statusColor : '#000000',
+            'human'       => (string) ((int) ($incident->man ?? 0)),
+            'terrain'     => (string) ((int) ($incident->terrain ?? 0)),
+            'aerial'      => (string) ((int) ($incident->aerial ?? 0)),
+            'isFire'      => $incident->isFire ? 'true' : 'false',
+            'event'       => 'update',
+        ]);
+    }
+
+    public static function sendFollowFireEnd(Incident $incident): void
+    {
+        $p     = self::prefix();
+        $topic = "{$p}follow-fire-{$incident->id}";
+
+        self::dispatchFollowFire($topic, [
+            'type'   => 'follow-fire-update',
+            'fireId' => (string) $incident->id,
+            'event'  => 'end',
+        ]);
+    }
+
+    private static function dispatchFollowFire(string $topic, array $data): void
+    {
+        if (!env('NOTIFICATIONS_ENABLE')) {
+            return;
+        }
+
+        dispatch(new SendFcmNotification([
+            'topic'   => $topic,
+            'data'    => $data,
+            'android' => ['priority' => 'high'],
+        ]));
+    }
 }

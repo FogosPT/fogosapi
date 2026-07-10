@@ -5,6 +5,7 @@ namespace App\Tools;
 use App\Jobs\SendLiveActivityPush;
 use App\Models\Incident;
 use App\Models\LiveActivityToken;
+use App\Tools\NotificationTool;
 use Illuminate\Support\Facades\Cache;
 
 class LiveActivityTool
@@ -19,6 +20,8 @@ class LiveActivityTool
         if (!env('LIVE_ACTIVITY_ENABLE')) {
             return;
         }
+
+        NotificationTool::sendFollowFireUpdate($incident);
 
         $tokens = self::tokensFor($incident);
         if ($tokens->isEmpty()) {
@@ -45,6 +48,8 @@ class LiveActivityTool
         if (!env('LIVE_ACTIVITY_ENABLE')) {
             return;
         }
+
+        NotificationTool::sendFollowFireEnd($incident);
 
         $tokens = self::tokensFor($incident);
         if ($tokens->isEmpty()) {
