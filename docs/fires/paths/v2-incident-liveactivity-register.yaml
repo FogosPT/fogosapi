@@ -1,0 +1,61 @@
+post:
+  operationId: v2LiveActivityRegister
+  summary: Register an iOS Live Activity push token for an incident
+  description: |
+    Called by the iOS app when it captures a fresh APNs Live Activity
+    push token (initial start, or when Apple rotates the token). The
+    backend upserts on `(fireId, pushToken)` and refreshes `updated_at`.
+    Rate-limited per IP and per incident.
+  tags:
+    - V2
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Incident public ID
+      schema:
+        type: string
+  requestBody:
+    required: true
+    content:
+      application/x-www-form-urlencoded:
+        schema:
+          type: object
+          required:
+            - pushToken
+            - env
+          properties:
+            pushToken:
+              type: string
+              description: Hex-encoded APNs push token (≥ 64 chars)
+            env:
+              type: string
+              enum: [sandbox, production]
+              description: APNs environment the token was issued in
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+    404:
+      $ref: '../../common/responses/404.yaml'
+    422:
+      $ref: '../../common/responses/422.yaml'
+    429:
+      description: Rate limited
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              error:
+                type: string
+    500:
+      $ref: '../../common/responses/500.yaml'

@@ -131,6 +131,10 @@ paths:
     $ref: './fires/paths/v2-incident-posit.yaml'
   /v2/incidents/{id}/photos:
     $ref: './fires/paths/v2-incident-photos.yaml'
+  /v2/incidents/{id}/live-activity/register:
+    $ref: './fires/paths/v2-incident-liveactivity-register.yaml'
+  /v2/incidents/{id}/live-activity/unregister:
+    $ref: './fires/paths/v2-incident-liveactivity-unregister.yaml'
 
   # V2 — Photo moderation
   /v2/moderation/photos:

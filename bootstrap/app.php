@@ -33,6 +33,7 @@ use App\Console\Commands\SaveWarningAndSendNotificationAndSocial;
 use App\Console\Commands\SyncAdsbPlanes;
 use App\Console\Commands\SyncFR24Planes;
 use App\Console\Commands\TestStuff;
+use App\Http\Middleware\LiveActivityRateLimit;
 use App\Http\Middleware\PhotoModerationAuth;
 use App\Http\Middleware\PhotoUploadRateLimit;
 use Illuminate\Http\Middleware\HandleCors;
@@ -102,8 +103,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->append(HandleCors::class);
         $middleware->alias([
-            'photo.ratelimit' => PhotoUploadRateLimit::class,
-            'photo.modauth'   => PhotoModerationAuth::class,
+            'photo.ratelimit'        => PhotoUploadRateLimit::class,
+            'photo.modauth'          => PhotoModerationAuth::class,
+            'liveactivity.ratelimit' => LiveActivityRateLimit::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {})

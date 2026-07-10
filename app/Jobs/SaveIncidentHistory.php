@@ -6,6 +6,7 @@ use App\Models\Incident;
 use App\Models\IncidentHistory;
 use App\Tools\FacebookTool;
 use App\Tools\HashTagTool;
+use App\Tools\LiveActivityTool;
 use App\Tools\NotificationTool;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
@@ -129,6 +130,8 @@ class SaveIncidentHistory extends Job
                 $status .= $diffAerial.')';
 
 //                NotificationTool::send($status, $this->incident->location, $this->incident->id);
+
+                LiveActivityTool::pushUpdate($this->incident);
             }
 
             if ($this->incident->man >= env('BIG_INCIDENT_MAN') && !$this->incident['notifyBig']) {

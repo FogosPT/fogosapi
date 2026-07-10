@@ -68,6 +68,10 @@ Route::group(['prefix' => 'v2'], function () {
         Route::post('{id}/photos/all', '\App\Http\Controllers\IncidentPhotoController@listAll');
         Route::post('{id}/photos', '\App\Http\Controllers\IncidentPhotoController@upload')
             ->middleware('photo.ratelimit');
+
+        Route::post('{id}/live-activity/register', '\App\Http\Controllers\LiveActivityController@register')
+            ->middleware('liveactivity.ratelimit');
+        Route::post('{id}/live-activity/unregister', '\App\Http\Controllers\LiveActivityController@unregister');
     });
 
     Route::group(['prefix' => 'moderation/photos', 'middleware' => 'photo.modauth'], function () {

@@ -82,6 +82,13 @@ return new class extends Migration
                 [['status' => 1, 'created_at' => 1], 'status_created_idx'],
             ],
 
+            // live_activity_tokens — upsert on (fire_id, push_token);
+            // per-fire lookup drives the APNs fanout.
+            'live_activity_tokens' => [
+                [['fire_id' => 1, 'push_token' => 1], 'fireid_pushtoken_uidx', ['unique' => true]],
+                [['fire_id' => 1], 'fireid_idx'],
+            ],
+
             // rcm — danger lookup by concelho, latest first.
             'rcm' => [
                 [['concelho' => 1, 'created' => 1], 'concelho_created_idx'],

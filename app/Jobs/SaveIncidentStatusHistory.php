@@ -7,6 +7,7 @@ use App\Models\IncidentStatusHistory;
 use App\Tools\DiscordTool;
 use App\Tools\FacebookTool;
 use App\Tools\HashTagTool;
+use App\Tools\LiveActivityTool;
 use App\Tools\NotificationTool;
 use App\Tools\Renderer;
 use App\Tools\TelegramTool;
@@ -120,6 +121,11 @@ class SaveIncidentStatusHistory extends Job
 
             NotificationTool::sendNewStatusNotification($this->incident, $last);
 
+            if (in_array((int) $this->incident->statusCode, [10, 11, 12], true)) {
+                LiveActivityTool::pushEnd($this->incident);
+            } else {
+                LiveActivityTool::pushUpdate($this->incident);
+            }
         }
 
         $incidentStatusHistory = new IncidentStatusHistory();
