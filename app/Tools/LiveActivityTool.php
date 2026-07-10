@@ -5,7 +5,6 @@ namespace App\Tools;
 use App\Jobs\SendLiveActivityPush;
 use App\Models\Incident;
 use App\Models\LiveActivityToken;
-use Firebase\JWT\JWT;
 use Illuminate\Support\Facades\Cache;
 
 class LiveActivityTool
@@ -72,22 +71,72 @@ class LiveActivityTool
     public static function apnsJwt(): string
     {
         return Cache::remember('apns:jwt', self::JWT_TTL_SECONDS, function () {
-            $teamId = config('apns.team_id');
-            $keyId  = config('apns.key_id');
-            $keyPath = config('apns.private_key');
-
-            $key = file_get_contents($keyPath);
-            if ($key === false) {
-                throw new \RuntimeException("APNs private key not readable at {$keyPath}");
-            }
-
-            return JWT::encode(
-                ['iss' => $teamId, 'iat' => time()],
-                $key,
-                'ES256',
-                $keyId
-            );
+            return self::signJwt();
         });
+    }
+
+    private static function signJwt(): string
+    {
+        $keyId  = (string) config('apns.key_id');
+        $teamId = (string) config('apns.team_id');
+        $keyPath = (string) config('apns.private_key');
+
+        $keyPem = file_get_contents($keyPath);
+        if ($keyPem === false) {
+            throw new \RuntimeException("APNs private key not readable at {$keyPath}");
+        }
+
+        $key = openssl_pkey_get_private($keyPem);
+        if ($key === false) {
+            throw new \RuntimeException('APNs private key could not be parsed');
+        }
+
+        $header  = ['alg' => 'ES256', 'kid' => $keyId, 'typ' => 'JWT'];
+        $claims  = ['iss' => $teamId, 'iat' => time()];
+        $signing = self::b64u((string) json_encode($header)) . '.' . self::b64u((string) json_encode($claims));
+
+        $derSignature = '';
+        if (!openssl_sign($signing, $derSignature, $key, OPENSSL_ALGO_SHA256)) {
+            throw new \RuntimeException('Failed to sign APNs JWT');
+        }
+
+        return $signing . '.' . self::b64u(self::derToJose($derSignature));
+    }
+
+    private static function b64u(string $data): string
+    {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+    }
+
+    /**
+     * ECDSA P-256 signatures come out of openssl_sign in DER form.
+     * APNs (JOSE) expects raw R||S — 32 bytes each, big-endian. DER wraps
+     * each integer with a leading 0x00 if the high bit is set, which we
+     * strip before left-padding to 32 bytes.
+     */
+    private static function derToJose(string $der): string
+    {
+        $offset = 2; // skip SEQUENCE header (0x30 <len>)
+
+        if (($der[$offset] ?? '') !== "\x02") {
+            throw new \RuntimeException('Malformed DER signature: expected INTEGER for R');
+        }
+        $offset++;
+        $rLen = ord($der[$offset++]);
+        $r    = substr($der, $offset, $rLen);
+        $offset += $rLen;
+
+        if (($der[$offset] ?? '') !== "\x02") {
+            throw new \RuntimeException('Malformed DER signature: expected INTEGER for S');
+        }
+        $offset++;
+        $sLen = ord($der[$offset++]);
+        $s    = substr($der, $offset, $sLen);
+
+        $r = ltrim($r, "\x00");
+        $s = ltrim($s, "\x00");
+
+        return str_pad($r, 32, "\x00", STR_PAD_LEFT) . str_pad($s, 32, "\x00", STR_PAD_LEFT);
     }
 
     public static function expirationTimestamp(): int

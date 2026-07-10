@@ -12,7 +12,7 @@
         "ext-curl": "*",
         "ext-json": "*",
         "ext-mongodb": "*",
-        "firebase/php-jwt": "^6.10",
+        "ext-openssl": "*",
         "google/auth": "^1.40",
         "guzzlehttp/guzzle": "^7.0",
         "intervention/image": "^3.7",
