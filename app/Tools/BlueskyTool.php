@@ -6,7 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use phpDocumentor\Reflection\Types\Self_;
 
-class BlueskyTool
+    class BlueskyTool
 {
     private static function getToken()
     {
@@ -25,32 +25,29 @@ class BlueskyTool
     }
     public static function publish($status)
     {
-	    return;
-        $session = self::getToken();
+        try {
+            $session = self::getToken();
 
-        var_dump($session);
+            $data = [
+                'repo' => $session['did'],
+                'collection' => 'app.bsky.feed.post',
+                'record' => [
+                    '$type' => 'app.bsky.feed.post',
+                    'text' => $status,
+                    'createdAt' => Carbon::now()
+                ]
+            ];
 
-        $data = [
-            'repo' => $session['did'],
-            'collection' => 'app.bsky.feed.post',
-            'record' => [
-                '$type' => 'app.bsky.feed.post',
-                'text' => $status,
-                'createdAt' => Carbon::now()
-            ]
-        ];
+            $headers = [
+                'json' => $data,
+                'headers' => [
+                    'Authorization' => "Bearer " . $session['accessJwt']
+                ]
+            ];
 
-        $headers = [
-            'json' => $data,
-            'headers' => [
-                'Authorization' => "Bearer " . $session['accessJwt']
-            ]
-        ];
-
-        try{
             $client = new \GuzzleHttp\Client();
             $client->request('POST', 'https://bsky.social/xrpc/com.atproto.repo.createRecord', $headers);
-        } catch (\Exception $e){
+        } catch (\Throwable $e) {
             Log::error($e->getMessage());
         }
     }
