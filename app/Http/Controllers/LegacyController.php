@@ -180,6 +180,10 @@ class LegacyController extends Controller
     {
         $id = $request->get('id');
 
+        if (! is_string($id) || $id === '') {
+            abort(404);
+        }
+
         $incident = Incident::whereFireId($id)->get();
 
         if (isset($incident[0])) {
