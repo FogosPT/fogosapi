@@ -109,7 +109,7 @@ class ProcessFIRMSData extends Job
             $response = $client->get($url);
             $body     = $response->getBody()->getContents();
         } catch (\Throwable $e) {
-            Log::error("[ProcessFIRMSData] {$source} request failed: " . $e->getMessage());
+            Log::warning("[ProcessFIRMSData] {$source} request failed: " . $e->getMessage());
             return null;
         }
 
