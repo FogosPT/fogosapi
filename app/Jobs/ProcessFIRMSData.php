@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Log;
 
 class ProcessFIRMSData extends Job
 {
-    public $queue = 'default';
+    public $queue = 'firms';
+
+    public $timeout = 600;
 
     // Bounding box half-size in decimal degrees (~0.1 deg ≈ 11 km)
     private const BBOX_DELTA = 0.10;
