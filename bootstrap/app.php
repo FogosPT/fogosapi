@@ -31,6 +31,7 @@ use App\Console\Commands\ImportLocations;
 use App\Console\Commands\ImportWeatherNormals;
 use App\Console\Commands\SaveWarningAndSendNotificationAndSocial;
 use App\Console\Commands\SyncAdsbPlanes;
+use App\Console\Commands\SyncANEPCIncidents;
 use App\Console\Commands\SyncFR24Planes;
 use App\Console\Commands\TestStuff;
 use App\Http\Middleware\LiveActivityRateLimit;
@@ -52,6 +53,7 @@ return Application::configure(basePath: dirname(__DIR__))
         DumpFireStatuses::class,
         SyncFR24Planes::class,
         SyncAdsbPlanes::class,
+        SyncANEPCIncidents::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         if (env('SCHEDULER_ENABLE')) {
