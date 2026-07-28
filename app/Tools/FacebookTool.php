@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Log;
 
 class FacebookTool
 {
+    private const APP_PROMO_COMMENT = 'Agradecemos que captem e submetam as fotografias através da Aplicação disponivel para Android e iOS. Dessa forma, as fotos ficam com localização e hora, podendo mais facilmente ser usadas em termos operacionais pela ANEPC.';
+
     private static function getUrl($message)
     {
         $pageId = env('FACEBOOK_PAGE_ID');
@@ -35,7 +37,9 @@ class FacebookTool
             $client = new \GuzzleHttp\Client();
             $response = $client->request('POST', self::getUrl($status));
             $body = json_decode((string) $response->getBody(), true);
-            return $body['id'] ?? null;
+            $postId = $body['id'] ?? null;
+            self::commentOnPost($postId, self::APP_PROMO_COMMENT);
+            return $postId;
         } catch (\Exception $e){
             Log::error($e->getMessage());
             return null;
@@ -66,7 +70,9 @@ class FacebookTool
                 ],
             ]);
             $body = json_decode((string) $response->getBody(), true);
-            return $body['post_id'] ?? null;
+            $postId = $body['post_id'] ?? null;
+            self::commentOnPost($postId, self::APP_PROMO_COMMENT);
+            return $postId;
         } catch (\Exception $e) {
             Log::error('FacebookTool::publishWithImage failed: ' . $e->getMessage());
             return null;
