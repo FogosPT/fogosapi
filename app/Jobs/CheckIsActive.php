@@ -41,7 +41,7 @@ class CheckIsActive extends Job
             $incident->save();
         }
 
-        $extintoIds = $this->fetchIcnfExtintoIds();
+        $extintoIds = array_diff($this->fetchIcnfExtintoIds(), $this->activeIds);
 
         if (!empty($extintoIds)) {
             $incidents = Incident::where('active', true)->whereIn('id', $extintoIds)->get();
