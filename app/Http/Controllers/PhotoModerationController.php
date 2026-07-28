@@ -116,7 +116,7 @@ class PhotoModerationController extends Controller
                 try {
                     FacebookTool::commentOnPost(
                         $facebookPostId,
-                        'Agradecemos que captem e submetam as fotografias através da Aplicação disponivel para Android e iOS. Dessa forma, as fotos ficam com localização e hora, podendo mais facilemente ser usadas em termos operacionais pela ANEPC.'
+                        'Agradecemos que captem e submetam as fotografias através da Aplicação disponivel para Android e iOS. Dessa forma, as fotos ficam com localização e hora, podendo mais facilmente ser usadas em termos operacionais pela ANEPC.'
                     );
                 } catch (\Throwable $e) {
                     DiscordTool::postError('Photo approve: Facebook comment failed — ' . $e->getMessage());
