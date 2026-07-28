@@ -33,6 +33,7 @@ use App\Console\Commands\SaveWarningAndSendNotificationAndSocial;
 use App\Console\Commands\SyncAdsbPlanes;
 use App\Console\Commands\SyncANEPCIncidents;
 use App\Console\Commands\SyncFR24Planes;
+use App\Console\Commands\SyncOcorrenciasSite;
 use App\Console\Commands\TestStuff;
 use App\Http\Middleware\LiveActivityRateLimit;
 use App\Http\Middleware\PhotoModerationAuth;
@@ -54,6 +55,7 @@ return Application::configure(basePath: dirname(__DIR__))
         SyncFR24Planes::class,
         SyncAdsbPlanes::class,
         SyncANEPCIncidents::class,
+        SyncOcorrenciasSite::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         if (env('SCHEDULER_ENABLE')) {
