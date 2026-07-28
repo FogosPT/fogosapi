@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Log;
 
 class FacebookTool
 {
-    private const APP_PROMO_COMMENT = 'Se tiveres fotos do incêndio, pedimos que captem e submetam as fotografias através da Aplicação disponivel para Android e iOS. Dessa forma, as fotos ficam com localização e hora, podendo mais facilmente ser usadas em termos operacionais pelas entidades oficiais.';
+    private const APP_PROMO_COMMENT = 'Se tirares fotos de incêndios, pedimos que as captes e submetas através da Aplicação fogos.pt disponível para Android e iOS. Dessa forma, as fotos ficam com localização e hora, podendo mais facilmente ser usadas em termos operacionais pelas entidades oficiais.';
 
     private static function getUrl($message)
     {
