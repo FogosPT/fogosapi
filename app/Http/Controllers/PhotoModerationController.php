@@ -108,10 +108,19 @@ class PhotoModerationController extends Controller
         }
 
         try {
-            if ($tmp) {
-                FacebookTool::publishWithImage($text, $tmp);
-            } else {
-                FacebookTool::publish($text);
+            $facebookPostId = $tmp
+                ? FacebookTool::publishWithImage($text, $tmp)
+                : FacebookTool::publish($text);
+
+            if ($facebookPostId) {
+                try {
+                    FacebookTool::commentOnPost(
+                        $facebookPostId,
+                        'Agradecemos que captem e submetam as fotografias através da Aplicação disponivel para Android e iOS. Dessa forma, as fotos ficam com localização e hora, podendo mais facilemente ser usadas em termos operacionais pela ANEPC.'
+                    );
+                } catch (\Throwable $e) {
+                    DiscordTool::postError('Photo approve: Facebook comment failed — ' . $e->getMessage());
+                }
             }
         } catch (\Throwable $e) {
             DiscordTool::postError('Photo approve: Facebook failed — ' . $e->getMessage());
