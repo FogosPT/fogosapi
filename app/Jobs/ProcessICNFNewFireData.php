@@ -84,7 +84,15 @@ class ProcessICNFNewFireData extends Job
                     continue;
                 }
 
-                $date = new Carbon($d->DATAALERTA->__toString() . ' ' . $d->HORAALERTA->__toString(), 'Europe/lisbon');
+                $date = $this->parseIcnfDate($d->DATAALERTA->__toString(), $d->HORAALERTA->__toString());
+                if ($date === null) {
+                    Log::warning('ICNF: skipping incident with unparseable date', [
+                        'id' => $id,
+                        'date' => $d->DATAALERTA->__toString(),
+                        'hour' => $d->HORAALERTA->__toString(),
+                    ]);
+                    continue;
+                }
                 $distrito = UTF8::ucwords(mb_strtolower($d->DISTRITO->__toString()));
                 $concelho = UTF8::ucwords(mb_strtolower($d->CONCELHO->__toString()));
                 $freguesia = UTF8::ucwords(mb_strtolower($d->FREGUESIA->__toString()));
@@ -159,6 +167,34 @@ class ProcessICNFNewFireData extends Job
                     $incident->save();
                 }
             }
+        }
+    }
+
+    private function parseIcnfDate(string $date, string $hour): ?Carbon
+    {
+        $raw = trim($date . ' ' . $hour);
+
+        $formats = [
+            'd/m/Y H:i',
+            'd/m/Y H:i:s',
+            'd-m-Y H:i',
+            'd-m-Y H:i:s',
+            'Y-m-d H:i',
+            'Y-m-d H:i:s',
+            'Y-m-d\TH:i:s',
+        ];
+
+        foreach ($formats as $format) {
+            $parsed = Carbon::createFromFormat($format, $raw, 'Europe/lisbon');
+            if ($parsed !== false) {
+                return $parsed;
+            }
+        }
+
+        try {
+            return new Carbon($raw, 'Europe/lisbon');
+        } catch (\Throwable $e) {
+            return null;
         }
     }
 
