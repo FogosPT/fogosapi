@@ -6,6 +6,8 @@ use App\Jobs\DetectTemperatureWaves;
 use App\Jobs\ProcessFIRMSData;
 use App\Jobs\HandleWeatherWarnings;
 use App\Jobs\HourlySummary;
+use App\Jobs\ProcessMTGPerimeters;
+use App\Jobs\ProcessMTGSimulation;
 use App\Jobs\ProcessOcorrenciasSite;
 use App\Jobs\ProcessDataForHistoryTotal;
 use App\Jobs\ProcessAdsbfiPlanes;
@@ -33,6 +35,7 @@ use App\Console\Commands\SaveWarningAndSendNotificationAndSocial;
 use App\Console\Commands\SyncAdsbPlanes;
 use App\Console\Commands\SyncANEPCIncidents;
 use App\Console\Commands\SyncFR24Planes;
+use App\Console\Commands\SyncMTGFireData;
 use App\Console\Commands\SyncOcorrenciasSite;
 use App\Console\Commands\TestStuff;
 use App\Http\Middleware\LiveActivityRateLimit;
@@ -56,6 +59,7 @@ return Application::configure(basePath: dirname(__DIR__))
         SyncAdsbPlanes::class,
         SyncANEPCIncidents::class,
         SyncOcorrenciasSite::class,
+        SyncMTGFireData::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         if (env('SCHEDULER_ENABLE')) {
@@ -90,6 +94,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
             $schedule->job(new HandleWeatherWarnings())->everyFifteenMinutes();
             $schedule->job(new ProcessFIRMSData())->everyFifteenMinutes();
+
+            $schedule->job(new ProcessMTGPerimeters())->everyFifteenMinutes();
+            $schedule->job(new ProcessMTGSimulation())->everyFifteenMinutes();
 
             $schedule->job(new ProcessICNFNewFireData())->everyFiveMinutes();
 

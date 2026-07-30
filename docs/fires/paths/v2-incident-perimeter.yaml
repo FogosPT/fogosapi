@@ -1,0 +1,33 @@
+get:
+  operationId: v2GetIncidentPerimeter
+  summary: Latest satellite-derived perimeter for a specific incident
+  description: |
+    Returns the most recent burned-area perimeter recorded for a specific
+    fogos.pt incident, as a GeoJSON `FeatureCollection` containing at
+    most one `Feature`. The `fetched_at` field (ISO 8601) indicates the
+    poll timestamp of the underlying MTG FRP snapshot.
+
+    Perimeters are ingested every 15 minutes from the MTG FRP Processor
+    and each poll is persisted as a history row — this endpoint always
+    returns the latest snapshot.
+
+    If the incident has no correlated perimeter yet, an empty
+    FeatureCollection is returned (HTTP 200).
+  tags:
+    - V2
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Incident public ID (ANEPC/SADO).
+      schema:
+        type: string
+  responses:
+    200:
+      description: GeoJSON FeatureCollection
+      content:
+        application/json:
+          schema:
+            type: object
+    500:
+      $ref: '../../common/responses/500.yaml'

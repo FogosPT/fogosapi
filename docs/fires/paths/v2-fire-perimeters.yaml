@@ -1,0 +1,34 @@
+get:
+  operationId: v2GetFirePerimeters
+  summary: Active fire perimeters (satellite-derived)
+  description: |
+    Returns a GeoJSON `FeatureCollection` with the current burned-area
+    perimeter estimates for all active fires in Portugal, derived from
+    satellite hot-spot clustering (FRP detections).
+
+    Each `Feature` is a `Polygon` or `MultiPolygon`. Features correlated
+    with a fogos.pt incident include a `properties.fogospt_incident` object
+    (`id`, `url`, `concelho`, `freguesia`, `natureza`, `status`) — the
+    frontend can filter client-side by `fogospt_incident.id`.
+
+    Data is fetched from the MTG FRP Processor every 15 minutes and cached
+    in Redis. Response includes an `X-Fetched-At` header (ISO 8601) with
+    the poll timestamp of the last successful ingestion. If the upstream
+    service is unavailable, the last known snapshot is served (up to 1h).
+  tags:
+    - V2
+  responses:
+    200:
+      description: GeoJSON FeatureCollection
+      headers:
+        X-Fetched-At:
+          description: ISO 8601 timestamp of the last successful upstream fetch.
+          schema:
+            type: string
+            format: date-time
+      content:
+        application/json:
+          schema:
+            type: object
+    500:
+      $ref: '../../common/responses/500.yaml'

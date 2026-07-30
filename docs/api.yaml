@@ -127,6 +127,10 @@ paths:
     $ref: './fires/paths/v2-incident-kmlvost.yaml'
   /v2/incidents/{id}/kmlFirms:
     $ref: './fires/paths/v2-incident-kmlfirms.yaml'
+  /v2/incidents/{id}/perimeter:
+    $ref: './fires/paths/v2-incident-perimeter.yaml'
+  /v2/incidents/{id}/simulation:
+    $ref: './fires/paths/v2-incident-simulation.yaml'
   /v2/incidents/{id}/posit:
     $ref: './fires/paths/v2-incident-posit.yaml'
   /v2/incidents/{id}/photos:
@@ -155,6 +159,12 @@ paths:
     $ref: './weather/paths/v2-weather-waves.yaml'
   /v2/weather/ipma-services:
     $ref: './weather/paths/v2-weather-ipma-services.yaml'
+
+  # V2 — Fire perimeters and spread simulations (MTG FRP Processor)
+  /v2/fire/perimeters:
+    $ref: './fires/paths/v2-fire-perimeters.yaml'
+  /v2/fire/simulation:
+    $ref: './fires/paths/v2-fire-simulation.yaml'
 
   # V2 — RCM (fire risk maps)
   /v2/rcm/today:

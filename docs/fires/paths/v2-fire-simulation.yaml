@@ -1,0 +1,35 @@
+get:
+  operationId: v2GetFireSimulation
+  summary: Latest fire spread simulation (isochrones up to +6h)
+  description: |
+    Returns a GeoJSON `FeatureCollection` with the most recent fire spread
+    simulation computed by the MTG FRP Processor. Only one simulation
+    exists at a time (system-wide) — the response's
+    `properties.fogos_id` identifies which fogos.pt incident it refers to.
+
+    Each `Feature` represents a nested isochrone polygon at hour offset
+    `properties.hour` (1 through 6). Isochrones are cumulative: hour 6
+    contains hour 5, which contains hour 4, etc. Render in reverse order
+    or with a colour gradient keyed on `hour`.
+
+    Data is fetched every 15 minutes and cached in Redis. Response
+    includes an `X-Fetched-At` header (ISO 8601) with the poll timestamp
+    of the last successful ingestion. If the upstream service is
+    unavailable, the last known snapshot is served (up to 1h).
+  tags:
+    - V2
+  responses:
+    200:
+      description: GeoJSON FeatureCollection
+      headers:
+        X-Fetched-At:
+          description: ISO 8601 timestamp of the last successful upstream fetch.
+          schema:
+            type: string
+            format: date-time
+      content:
+        application/json:
+          schema:
+            type: object
+    500:
+      $ref: '../../common/responses/500.yaml'

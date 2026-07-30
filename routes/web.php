@@ -61,6 +61,9 @@ Route::group(['prefix' => 'v2'], function () {
         Route::get('{id}/kmlVost', '\App\Http\Controllers\IncidentController@kmlVost');
         Route::get('{id}/kmlFirms', '\App\Http\Controllers\IncidentController@kmlFIRMS');
 
+        Route::get('{id}/perimeter', '\App\Http\Controllers\FirePerimetersController@perimeterByIncident');
+        Route::get('{id}/simulation', '\App\Http\Controllers\FirePerimetersController@simulationByIncident');
+
         Route::post('{id}/posit', '\App\Http\Controllers\IncidentController@addPosit');
         Route::post('{id}/kml', '\App\Http\Controllers\IncidentController@addKML');
 
@@ -86,6 +89,11 @@ Route::group(['prefix' => 'v2'], function () {
         Route::get('daily', '\App\Http\Controllers\WeatherController@daily');
         Route::get('waves', '\App\Http\Controllers\WeatherController@waves');
         Route::get('ipma-services', '\App\Http\Controllers\WeatherController@ipmaServicesHTTPS');
+    });
+
+    Route::group(['prefix' => 'fire'], function () {
+        Route::get('perimeters', '\App\Http\Controllers\FirePerimetersController@perimeters');
+        Route::get('simulation', '\App\Http\Controllers\FirePerimetersController@simulation');
     });
 
     Route::group(['prefix' => 'rcm'], function () {

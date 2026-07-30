@@ -1,0 +1,31 @@
+get:
+  operationId: v2GetIncidentSimulation
+  summary: Latest fire spread simulation for a specific incident
+  description: |
+    Returns the most recent fire spread simulation stored for a specific
+    fogos.pt incident, as a GeoJSON `FeatureCollection` containing
+    isochrone polygons at hour offsets +1h through +6h. The `fetched_at`
+    field (ISO 8601) indicates the poll timestamp of the underlying MTG
+    FRP snapshot.
+
+    Because only one simulation exists globally at a time, most incidents
+    will not have a stored simulation. If none is available, an empty
+    FeatureCollection is returned (HTTP 200).
+  tags:
+    - V2
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Incident public ID (ANEPC/SADO).
+      schema:
+        type: string
+  responses:
+    200:
+      description: GeoJSON FeatureCollection
+      content:
+        application/json:
+          schema:
+            type: object
+    500:
+      $ref: '../../common/responses/500.yaml'
