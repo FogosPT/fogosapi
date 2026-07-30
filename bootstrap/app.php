@@ -96,7 +96,7 @@ return Application::configure(basePath: dirname(__DIR__))
             $schedule->job(new ProcessFIRMSData())->everyFifteenMinutes();
 
             $schedule->job(new ProcessMTGPerimeters())->everyFifteenMinutes();
-            $schedule->job(new ProcessMTGSimulation())->everyFifteenMinutes();
+            $schedule->job(new ProcessMTGSimulation())->hourly();
 
             $schedule->job(new ProcessICNFNewFireData())->everyFiveMinutes();
 
