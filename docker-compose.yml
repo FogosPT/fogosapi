@@ -133,6 +133,19 @@ services:
       - fogos
     command: php artisan queue:work --queue=firms --sleep=3 --tries=1 --max-time=3600
 
+  fogos.worker-mtg:
+    image: ghcr.io/fogospt/fogosapi
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/html
+    expose:
+      - 9000
+    depends_on:
+      - fogos.mongodb
+    networks:
+      - fogos
+    command: php artisan queue:work --queue=mtg-frp --sleep=3 --tries=2 --max-time=3600
+
 volumes:
   mongodb_data:
 
