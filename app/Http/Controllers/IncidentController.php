@@ -6,6 +6,7 @@ use App\Http\Concerns\CacheableResponse;
 use App\Http\Requests\IncidentSearchRequest;
 use App\Models\Hotspot;
 use App\Models\Incident;
+use App\Models\IncidentKmlHistory;
 use App\Resources\IncidentResource;
 use App\Tools\ConvexHullTool;
 use App\Tools\FacebookTool;
@@ -548,12 +549,21 @@ class IncidentController extends Controller
 
         $incident = Incident::whereFireId($id)->firstOrFail();
 
-        $incident->kmlVost = $request->post('kml');
+        $kml    = (string) $request->post('kml');
+        $status = $request->post('status');
 
+        $incident->kmlVost = $kml;
         $incident->save();
 
+        if ($kml !== '') {
+            IncidentKmlHistory::create([
+                'incident_id' => (string) $incident->id,
+                'kml'         => $kml,
+                'status'      => is_string($status) ? $status : null,
+            ]);
+        }
+
         $urlPath = "fogo/{$incident->id}/detalhe?aasd=" . rand(0,255);
-        $status = $request->post('status');
 
         if ($status) {
             $shot = Renderer::capture($urlPath, 1200, 450, '.leaflet-tile-loaded');
@@ -586,6 +596,60 @@ class IncidentController extends Controller
         return new JsonResponse([
             'success' => true,
         ]);
+    }
+
+    public function kmlHistory(Request $request, string $id): JsonResponse
+    {
+        $incident = Incident::whereFireId($id)->first();
+        if (!$incident) {
+            abort(404);
+        }
+
+        $items = IncidentKmlHistory::whereIncidentId((string) $incident->id)
+            ->orderBy('created', 'desc')
+            ->get()
+            ->map(function (IncidentKmlHistory $row) {
+                return [
+                    'id'         => (string) $row->_id,
+                    'created_at' => optional($row->created)->toIso8601String(),
+                    'status'     => $row->status,
+                    'size_bytes' => strlen((string) $row->kml),
+                ];
+            });
+
+        return new JsonResponse([
+            'success' => true,
+            'data'    => $items,
+        ]);
+    }
+
+    public function kmlHistoryDetail(Request $request, string $id, string $historyId): StreamedResponse
+    {
+        $incident = Incident::whereFireId($id)->first();
+        if (!$incident) {
+            abort(404);
+        }
+
+        $entry = IncidentKmlHistory::whereIncidentId((string) $incident->id)
+            ->where('_id', $historyId)
+            ->first();
+
+        if (!$entry) {
+            abort(404);
+        }
+
+        $kml      = (string) $entry->kml;
+        $filename = $incident->id . '-' . $historyId . '.kml';
+
+        $response = new StreamedResponse();
+        $response->setCallBack(function () use ($kml) {
+            echo $kml;
+        });
+        $response->headers->set('Content-Type', 'application/vnd.google-earth.kml+xml');
+        $disposition = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $filename);
+        $response->headers->set('Content-Disposition', $disposition);
+
+        return $response;
     }
 
     public function kmlFIRMS(Request $request, string $id): StreamedResponse

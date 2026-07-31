@@ -1,0 +1,48 @@
+get:
+  operationId: v2GetIncidentKMLHistory
+  summary: List KML upload history for an incident
+  description: |
+    Returns a chronological list (most recent first) of KMLs that have been
+    submitted for this incident via `POST /v2/incidents/{id}/kml`. Each item
+    exposes only metadata (id, timestamp, status message, size); use the
+    detail endpoint to fetch the raw KML content of a specific snapshot.
+  tags:
+    - V2
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Incident public ID.
+      schema:
+        type: string
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: History entry identifier.
+                    created_at:
+                      type: string
+                      format: date-time
+                    status:
+                      type: string
+                      nullable: true
+                      description: Optional social-post status that accompanied the upload.
+                    size_bytes:
+                      type: integer
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

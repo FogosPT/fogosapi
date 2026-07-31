@@ -60,6 +60,8 @@ Route::group(['prefix' => 'v2'], function () {
         Route::get('{id}/kml', '\App\Http\Controllers\IncidentController@kml');
         Route::get('{id}/kmlVost', '\App\Http\Controllers\IncidentController@kmlVost');
         Route::get('{id}/kmlFirms', '\App\Http\Controllers\IncidentController@kmlFIRMS');
+        Route::get('{id}/kml/history', '\App\Http\Controllers\IncidentController@kmlHistory');
+        Route::get('{id}/kml/history/{historyId}', '\App\Http\Controllers\IncidentController@kmlHistoryDetail');
 
         Route::get('{id}/perimeter', '\App\Http\Controllers\FirePerimetersController@perimeterByIncident');
         Route::get('{id}/simulation', '\App\Http\Controllers\FirePerimetersController@simulationByIncident');

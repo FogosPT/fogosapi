@@ -1,0 +1,34 @@
+get:
+  operationId: v2GetIncidentKMLHistoryDetail
+  summary: Download a specific KML snapshot from the incident history
+  description: |
+    Streams the raw KML XML for a single history entry as an attachment,
+    same content type as `GET /v2/incidents/{id}/kml`. The history entry
+    id comes from `GET /v2/incidents/{id}/kml/history`.
+  tags:
+    - V2
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Incident public ID.
+      schema:
+        type: string
+    - name: historyId
+      in: path
+      required: true
+      description: History entry identifier from the listing endpoint.
+      schema:
+        type: string
+  responses:
+    200:
+      description: KML file stream
+      content:
+        application/vnd.google-earth.kml+xml:
+          schema:
+            type: string
+            format: binary
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

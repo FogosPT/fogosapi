@@ -127,6 +127,10 @@ paths:
     $ref: './fires/paths/v2-incident-kmlvost.yaml'
   /v2/incidents/{id}/kmlFirms:
     $ref: './fires/paths/v2-incident-kmlfirms.yaml'
+  /v2/incidents/{id}/kml/history:
+    $ref: './fires/paths/v2-incident-kml-history.yaml'
+  /v2/incidents/{id}/kml/history/{historyId}:
+    $ref: './fires/paths/v2-incident-kml-history-detail.yaml'
   /v2/incidents/{id}/perimeter:
     $ref: './fires/paths/v2-incident-perimeter.yaml'
   /v2/incidents/{id}/simulation:
