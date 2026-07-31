@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\FirePerimeterHistory;
+use App\Models\Incident;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
@@ -52,8 +53,26 @@ class ProcessMTGPerimeters extends Job
 
         $client = new Client($options);
 
+        $hoursParam  = 24;
+        $oldestStart = Incident::isActive()
+            ->isFire()
+            ->whereNotNull('dateTime')
+            ->min('dateTime');
+
+        if ($oldestStart) {
+            $diff = Carbon::parse($oldestStart)->diffInHours(Carbon::now());
+            $hoursParam = max(24, (int) ceil($diff));
+        }
+
+        $requestOpts = [];
+        if ($hoursParam > 24) {
+            $requestOpts['query'] = ['hours' => $hoursParam];
+        }
+
+        Log::debug("[ProcessMTGPerimeters] fetching events with hours={$hoursParam}");
+
         try {
-            $response = $client->get($baseUrl . '/api/external/v1/events');
+            $response = $client->get($baseUrl . '/api/external/v1/events', $requestOpts);
             $body     = $response->getBody()->getContents();
         } catch (\Throwable $e) {
             Log::warning('[ProcessMTGPerimeters] request failed: ' . $e->getMessage());
