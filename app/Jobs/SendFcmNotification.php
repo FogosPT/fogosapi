@@ -26,6 +26,8 @@ class SendFcmNotification extends Job
 
         $client = new Client([
             'base_uri' => 'https://fcm.googleapis.com',
+            'connect_timeout' => 10,
+            'timeout' => 30,
         ]);
 
         $headers = [

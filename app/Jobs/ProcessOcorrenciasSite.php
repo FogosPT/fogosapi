@@ -62,6 +62,7 @@ class ProcessOcorrenciasSite extends Job
         $client = new \GuzzleHttp\Client();
         $options = [
             'headers' => ['User-Agent' => 'Fogos.pt/3.0'],
+            'connect_timeout' => 10,
             'timeout' => 30,
         ];
 

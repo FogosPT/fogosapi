@@ -40,7 +40,10 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
         $url = 'https://www.ipma.pt/pt/riscoincendio/rcm.pt/index.jsp';
 
         $client = new \GuzzleHttp\Client();
-        $res = $client->request('GET', $url);
+        $res = $client->request('GET', $url, [
+            'connect_timeout' => 10,
+            'timeout' => 30,
+        ]);
 
         $data = $res->getBody()->getContents();
 

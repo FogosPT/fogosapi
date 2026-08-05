@@ -33,6 +33,8 @@ class HandleANEPCImportantData extends Job
                 'Accept' => 'application/json; odata=verbose'
             ],
             'verify' => false,
+            'connect_timeout' => 10,
+            'timeout' => 30,
         ];
 
         try{

@@ -35,6 +35,8 @@ class ProcessICNFPDFData extends Job implements ShouldQueue, ShouldBeUnique
                 //    'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
             ],
             'verify' => false,
+            'connect_timeout' => 10,
+            'timeout' => 30,
         ];
 
         $client = new \GuzzleHttp\Client();
@@ -72,7 +74,11 @@ class ProcessICNFPDFData extends Job implements ShouldQueue, ShouldBeUnique
                         $fileName = $fileId.'.kml';
 
                         try {
-                            $client = new Client(['base_uri' => 'http://fogos.icnf.pt/sgif2010/ficheiroskml/']);
+                            $client = new Client([
+                                'base_uri' => 'http://fogos.icnf.pt/sgif2010/ficheiroskml/',
+                                'connect_timeout' => 10,
+                                'timeout' => 30,
+                            ]);
                             $res = $client->request('GET', $fileName, ['allow_redirects' => true]);
                             $res = $res->getBody()->getContents();
 

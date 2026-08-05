@@ -33,6 +33,8 @@ class UpdateWeatherDataDaily extends Job
                 'User-Agent' => 'Fogos.pt/3.0',
             ],
             'verify' => false,
+            'connect_timeout' => 10,
+            'timeout' => 30,
         ];
 
         try{

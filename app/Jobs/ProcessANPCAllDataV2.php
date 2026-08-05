@@ -39,7 +39,8 @@ class ProcessANPCAllDataV2 extends Job
                 'User-Agent' => 'Fogos.pt/3.0',
                 'Authorization' => 'Basic ' . base64_encode(env('ANEPC_API_USERNAME') . ':' .env('ANEPC_API_PASSWORD'))
             ],
-
+            'connect_timeout' => 10,
+            'timeout' => 30,
         ];
 
         if(env('PROXY_ENABLE')){

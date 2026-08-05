@@ -30,6 +30,8 @@ class ProcessMadeiraWarnings extends Job implements ShouldQueue, ShouldBeUnique
             'headers' => [
                 'User-Agent' => 'Fogos.pt/3.0',
             ],
+            'connect_timeout' => 10,
+            'timeout' => 30,
         ];
 
         $client = new \GuzzleHttp\Client();
