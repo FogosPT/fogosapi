@@ -1,0 +1,55 @@
+get:
+  operationId: v2GetWeatherObservations
+  summary: Hourly weather station observations (last 24h)
+  description: |
+    Returns the last 24 hours of hourly weather observations ingested by the
+    `UpdateWeatherData` job (collection `weatherData`), reshaped to match the
+    payload of the upstream IPMA endpoint
+    `https://api.ipma.pt/open-data/observation/meteorology/stations/observations.json`.
+
+    The top-level keys are UTC hour buckets formatted as `YYYY-MM-DDTHH:mm`.
+    Each bucket maps station IDs (as strings) to an observation object.
+    Missing numeric fields are reported as `-99` to preserve IPMA parity.
+
+    The response is cached in Redis for 10 minutes.
+  tags:
+    - Weather
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties:
+              type: object
+              description: Map of station ID to observation.
+              additionalProperties:
+                type: object
+                properties:
+                  intensidadeVentoKM:
+                    type: number
+                    description: Wind speed (km/h). `-99` when missing.
+                  temperatura:
+                    type: number
+                    description: Temperature (°C). `-99` when missing.
+                  radiacao:
+                    type: number
+                    description: Solar radiation (kJ/m²). `-99` when missing.
+                  idDireccVento:
+                    type: integer
+                    description: Wind direction ID (0–9). `-99` when missing.
+                  precAcumulada:
+                    type: number
+                    description: Accumulated precipitation (mm). `-99` when missing.
+                  intensidadeVento:
+                    type: number
+                    description: Wind speed (m/s). `-99` when missing.
+                  humidade:
+                    type: number
+                    description: Relative humidity (%). `-99` when missing.
+                  pressao:
+                    type: number
+                    description: Atmospheric pressure (hPa). `-99` when missing.
+    500:
+      $ref: '../../common/responses/500.yaml'

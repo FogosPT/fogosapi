@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\TemperatureWave;
+use App\Models\WeatherData;
 use App\Models\WeatherDataDaily;
 use App\Models\WeatherStation;
 use Carbon\Carbon;
@@ -116,6 +117,50 @@ class WeatherController extends Controller
         $data = WeatherDataDaily::where('date', $date)->with('station')->get();
 
         return response()->json($data);
+    }
+
+    public function observations()
+    {
+        $cacheKey = 'weather:observations';
+        $cached = Redis::get($cacheKey);
+        if ($cached) {
+            return new JsonResponse(json_decode($cached, true));
+        }
+
+        $since = Carbon::now('UTC')->subDay();
+
+        $rows = WeatherData::where('date', '>=', $since)
+            ->orderBy('date', 'asc')
+            ->get();
+
+        $fields = [
+            'intensidadeVentoKM',
+            'temperatura',
+            'radiacao',
+            'idDireccVento',
+            'precAcumulada',
+            'intensidadeVento',
+            'humidade',
+            'pressao',
+        ];
+
+        $buckets = [];
+        foreach ($rows as $row) {
+            $bucket = Carbon::parse($row->date)->setTimezone('UTC')->format('Y-m-d\TH:i');
+
+            $obs = [];
+            foreach ($fields as $f) {
+                $obs[$f] = $row->{$f} ?? -99;
+            }
+
+            $buckets[$bucket][(string) $row->stationId] = $obs;
+        }
+
+        ksort($buckets);
+
+        Redis::set($cacheKey, json_encode($buckets), 'EX', 600);
+
+        return new JsonResponse($buckets);
     }
 
     public function waves()

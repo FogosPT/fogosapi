@@ -89,6 +89,7 @@ Route::group(['prefix' => 'v2'], function () {
         Route::get('thunders', '\App\Http\Controllers\WeatherController@thunders');
         Route::get('stations', '\App\Http\Controllers\WeatherController@stations');
         Route::get('daily', '\App\Http\Controllers\WeatherController@daily');
+        Route::get('observations', '\App\Http\Controllers\WeatherController@observations');
         Route::get('waves', '\App\Http\Controllers\WeatherController@waves');
         Route::get('ipma-services', '\App\Http\Controllers\WeatherController@ipmaServicesHTTPS');
     });
