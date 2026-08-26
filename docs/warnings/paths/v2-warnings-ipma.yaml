@@ -1,0 +1,44 @@
+get:
+  operationId: v2GetWarningsIpma
+  summary: Active IPMA weather warnings
+  description: |
+    Returns the currently-active IPMA weather warnings ingested by the
+    `HandleWeatherWarnings` job (collection `weather_warnings`), reshaped to
+    match the payload of the upstream IPMA endpoint
+    `https://api.ipma.pt/open-data/forecast/warnings/warnings_www.json`.
+
+    Only warnings whose `endTime` is in the future are returned; green-level
+    warnings are never persisted upstream of this endpoint. Results are
+    ordered by `startTime` ascending.
+  tags:
+    - Warnings
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                text:
+                  type: string
+                  description: Human-readable warning text (Portuguese).
+                awarenessTypeName:
+                  type: string
+                  description: IPMA awareness type (e.g. `Precipitação`, `Vento`).
+                idAreaAviso:
+                  type: string
+                  description: IPMA warning area code (e.g. `BGC`, `AVR`).
+                awarenessLevelID:
+                  type: string
+                  enum: [yellow, orange, red]
+                startTime:
+                  type: string
+                  format: date-time
+                endTime:
+                  type: string
+                  format: date-time
+    500:
+      $ref: '../../common/responses/500.yaml'

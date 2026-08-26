@@ -115,6 +115,7 @@ Route::group(['prefix' => 'v2'], function () {
     });
 
     Route::group(['prefix' => 'warnings'], function () {
+        Route::get('ipma', '\App\Http\Controllers\WarningsController@ipma');
         Route::post('add', '\App\Http\Controllers\WarningsController@add');
         Route::post('add/agif', '\App\Http\Controllers\WarningsController@addAgif');
     });

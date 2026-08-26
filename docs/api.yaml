@@ -195,6 +195,8 @@ paths:
     $ref: './planes/paths/v2-planes-icao.yaml'
 
   # V2 — Warnings
+  /v2/warnings/ipma:
+    $ref: './warnings/paths/v2-warnings-ipma.yaml'
   /v2/warnings/add:
     $ref: './warnings/paths/v2-warnings-add.yaml'
   /v2/warnings/add/agif:

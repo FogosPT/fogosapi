@@ -5,22 +5,40 @@ namespace App\Http\Controllers;
 use App\Models\Warning;
 use App\Models\WarningAgif;
 use App\Models\WeatherStation;
+use App\Models\WeatherWarning;
 use App\Tools\BlueskyTool;
 use App\Tools\FacebookTool;
 use App\Tools\NotificationTool;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\RequestException;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 
 
 class WarningsController extends Controller
 {
+    public function ipma()
+    {
+        $warnings = WeatherWarning::where('endTime', '>=', Carbon::now())
+            ->orderBy('startTime', 'asc')
+            ->get();
+
+        $data = $warnings->map(function (WeatherWarning $w) {
+            return [
+                'text'              => $w->text,
+                'awarenessTypeName' => $w->type,
+                'idAreaAviso'       => $w->district,
+                'startTime'         => Carbon::parse($w->startTime)->format('Y-m-d\TH:i:s'),
+                'awarenessLevelID'  => $w->level,
+                'endTime'           => Carbon::parse($w->endTime)->format('Y-m-d\TH:i:s'),
+            ];
+        })->values();
+
+        return new JsonResponse($data);
+    }
+
     public function add(Request $request)
     {
         $key = $request->header('key');
