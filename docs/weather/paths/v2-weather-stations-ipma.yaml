@@ -1,0 +1,49 @@
+get:
+  operationId: v2GetWeatherStationsIpma
+  summary: Weather stations (IPMA-compatible GeoJSON Features)
+  description: |
+    Returns the ingested IPMA weather stations (collection `weatherStations`)
+    reshaped to match the payload of the upstream IPMA endpoint
+    `https://api.ipma.pt/open-data/observation/meteorology/stations/stations.json`.
+
+    Each entry is a GeoJSON Feature with `properties.idEstacao` and
+    `properties.localEstacao`; coordinates follow the GeoJSON `[lng, lat]`
+    convention.
+
+    The response is cached in Redis for 1 hour.
+  tags:
+    - Weather
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [Feature]
+                geometry:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [Point]
+                    coordinates:
+                      type: array
+                      minItems: 2
+                      maxItems: 2
+                      items:
+                        type: number
+                properties:
+                  type: object
+                  properties:
+                    idEstacao:
+                      type: integer
+                    localEstacao:
+                      type: string
+    500:
+      $ref: '../../common/responses/500.yaml'

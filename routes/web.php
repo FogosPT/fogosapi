@@ -88,6 +88,7 @@ Route::group(['prefix' => 'v2'], function () {
     Route::group(['prefix' => 'weather'], function () {
         Route::get('thunders', '\App\Http\Controllers\WeatherController@thunders');
         Route::get('stations', '\App\Http\Controllers\WeatherController@stations');
+        Route::get('stations/ipma', '\App\Http\Controllers\WeatherController@stationsIpma');
         Route::get('daily', '\App\Http\Controllers\WeatherController@daily');
         Route::get('observations', '\App\Http\Controllers\WeatherController@observations');
         Route::get('waves', '\App\Http\Controllers\WeatherController@waves');
@@ -105,6 +106,7 @@ Route::group(['prefix' => 'v2'], function () {
         Route::get('tomorrow', '\App\Http\Controllers\RCMController@tomorrow');
         Route::get('after', '\App\Http\Controllers\RCMController@after');
         Route::get('parish', '\App\Http\Controllers\RCMController@parish');
+        Route::get('ipma/d{day}', '\App\Http\Controllers\RCMController@ipma')->where('day', '[0-4]');
     });
 
     Route::group(['prefix' => 'planes'], function () {

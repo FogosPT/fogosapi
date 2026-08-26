@@ -157,6 +157,8 @@ paths:
     $ref: './weather/paths/v2-weather-thunders.yaml'
   /v2/weather/stations:
     $ref: './weather/paths/v2-weather-stations.yaml'
+  /v2/weather/stations/ipma:
+    $ref: './weather/paths/v2-weather-stations-ipma.yaml'
   /v2/weather/daily:
     $ref: './weather/paths/v2-weather-daily.yaml'
   /v2/weather/observations:
@@ -183,6 +185,8 @@ paths:
     $ref: './rcm/paths/v2-rcm-parish.yaml'
   /v2/rcm/update:
     $ref: './rcm/paths/v2-rcm-update.yaml'
+  /v2/rcm/ipma/d{day}:
+    $ref: './rcm/paths/v2-rcm-ipma.yaml'
 
   # V2 — Planes
   /v2/planes:

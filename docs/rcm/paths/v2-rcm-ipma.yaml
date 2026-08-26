@@ -1,0 +1,71 @@
+get:
+  operationId: v2GetRCMIpma
+  summary: Fire risk (RCM) forecast — IPMA-compatible payload
+  description: |
+    Returns the ingested IPMA RCM forecast (collection `rcmJS`) reshaped to
+    match the payload of the upstream IPMA endpoint
+    `https://api.ipma.pt/open-data/forecast/meteorology/rcm/rcm-d{day}.json`.
+
+    `{day}` selects the forecast horizon:
+      - `d0` — today (`hoje`)
+      - `d1` — tomorrow (`amanha`)
+      - `d2` — day after tomorrow (`depois`)
+      - `d3` — `depois2`
+      - `d4` — `depois3`
+
+    The IPMA upstream only publishes `d0` and `d1`; the extra horizons are
+    exposed because we ingest them from the IPMA site anyway.
+
+    The response is cached in Redis for 10 minutes.
+  tags:
+    - RCM
+  parameters:
+    - name: day
+      in: path
+      required: true
+      description: Forecast horizon (0–4).
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 4
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              dataPrev:
+                type: string
+                format: date
+                description: Date the forecast targets (YYYY-MM-DD).
+              dataRun:
+                type: string
+                format: date
+                description: Date the forecast was produced (YYYY-MM-DD).
+              fileDate:
+                type: string
+                description: Upstream file timestamp (YYYY-MM-DD HH:mm:ss).
+              local:
+                type: object
+                description: Map of DICO code → risk cell.
+                additionalProperties:
+                  type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        rcm:
+                          type: integer
+                          description: Risk level (1 = Reduzido … 5 = Máximo).
+                    dico:
+                      type: string
+                    latitude:
+                      type: number
+                    longitude:
+                      type: number
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

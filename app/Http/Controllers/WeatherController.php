@@ -102,6 +102,35 @@ class WeatherController extends Controller
         }
     }
 
+    public function stationsIpma()
+    {
+        $cacheKey = 'weather:stations:ipma';
+        $cached = Redis::get($cacheKey);
+        if ($cached) {
+            return new JsonResponse(json_decode($cached, true));
+        }
+
+        $stations = WeatherStation::all();
+
+        $features = $stations->map(function (WeatherStation $s) {
+            return [
+                'geometry' => [
+                    'type' => 'Point',
+                    'coordinates' => $s->coordinates,
+                ],
+                'type' => 'Feature',
+                'properties' => [
+                    'idEstacao' => (int) ($s->stationId ?? $s->id),
+                    'localEstacao' => $s->location,
+                ],
+            ];
+        })->values();
+
+        Redis::set($cacheKey, json_encode($features), 'EX', 3600);
+
+        return new JsonResponse($features);
+    }
+
     public function daily(Request $request)
     {
         if(!$request->exists('date')){
