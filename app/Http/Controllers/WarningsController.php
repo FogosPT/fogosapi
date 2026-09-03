@@ -34,6 +34,15 @@ class WarningsController extends Controller
                 'awarenessLevelID'  => $w->level,
                 'endTime'           => Carbon::parse($w->endTime)->format('Y-m-d\TH:i:s'),
             ];
+        })->unique(function (array $row) {
+            return implode('|', [
+                $row['idAreaAviso'],
+                $row['awarenessTypeName'],
+                $row['awarenessLevelID'],
+                $row['startTime'],
+                $row['endTime'],
+                $row['text'],
+            ]);
         })->values();
 
         return new JsonResponse($data);

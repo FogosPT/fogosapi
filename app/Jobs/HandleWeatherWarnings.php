@@ -31,7 +31,14 @@ class HandleWeatherWarnings extends Job
         foreach($data->data as $d){
             if($d->awarenessLevelID !== 'green'){
 
-                $control = md5(json_encode($d));
+                $control = md5(implode('|', [
+                    $d->idAreaAviso,
+                    $d->awarenessTypeName,
+                    $d->awarenessLevelID,
+                    $d->startTime,
+                    $d->endTime,
+                    $d->text,
+                ]));
                 $exists = WeatherWarning::where('control',$control)
                     ->first();
 
