@@ -81,7 +81,8 @@ Route::group(['prefix' => 'v2'], function () {
 
     Route::group(['prefix' => 'photos'], function () {
         Route::get('latest', '\App\Http\Controllers\IncidentPhotoController@latest');
-        Route::post('{photoId}/delete', '\App\Http\Controllers\IncidentPhotoController@destroy');
+        Route::post('{photoId}/delete', '\App\Http\Controllers\IncidentPhotoController@destroy')
+            ->middleware('photo.modauth');
     });
 
     Route::group(['prefix' => 'moderation/photos', 'middleware' => 'photo.modauth'], function () {

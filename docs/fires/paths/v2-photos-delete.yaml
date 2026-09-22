@@ -1,12 +1,12 @@
 post:
   operationId: v2DeletePhoto
-  summary: Delete a photo (write-key protected)
+  summary: Delete a photo (moderation-key protected)
   description: |
     Permanently removes a photo. Deletes the underlying object from MinIO
     (best-effort — DB cleanup proceeds even if storage removal fails) and
     the `incident_photos` document.
 
-    Protected by the `key` header (`API_WRITE_KEY`).
+    Protected by the `key` header (`PHOTO_MODERATION_KEY`).
   tags:
     - V2
   parameters:
@@ -19,7 +19,7 @@ post:
     - name: key
       in: header
       required: true
-      description: Write key (`API_WRITE_KEY`).
+      description: Moderation key (`PHOTO_MODERATION_KEY`).
       schema:
         type: string
   responses:

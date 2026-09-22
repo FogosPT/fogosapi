@@ -202,10 +202,6 @@ class IncidentPhotoController extends Controller
 
     public function destroy(Request $request, string $photoId): JsonResponse
     {
-        if (env('API_WRITE_KEY') !== $request->header('key')) {
-            abort(401);
-        }
-
         $photo = IncidentPhoto::find($photoId);
         if ($photo === null) {
             abort(404);

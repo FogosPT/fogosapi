@@ -3,7 +3,7 @@
 Dois endpoints em `v2/photos` para consumir e gerir o feed transversal de fotos submetidas pelos utilizadores.
 
 - `GET  /v2/photos/latest` — feed público paginado das últimas fotos aprovadas.
-- `POST /v2/photos/{photoId}/delete` — eliminação de foto, protegida por `API_WRITE_KEY`.
+- `POST /v2/photos/{photoId}/delete` — eliminação de foto, protegida por `PHOTO_MODERATION_KEY`.
 
 Base URL de produção: `https://api.fogos.pt`
 
@@ -78,10 +78,10 @@ Remove uma foto de forma permanente. Apaga o objeto no MinIO (best-effort — se
 Header obrigatório:
 
 ```
-key: <API_WRITE_KEY>
+key: <PHOTO_MODERATION_KEY>
 ```
 
-Sem o header, ou com valor diferente do `API_WRITE_KEY` no `.env`, responde `401`.
+Sem o header, ou com valor diferente do `PHOTO_MODERATION_KEY` no `.env`, responde `401`.
 
 ### Path params
 
@@ -93,7 +93,7 @@ Sem o header, ou com valor diferente do `API_WRITE_KEY` no `.env`, responde `401
 
 ```bash
 curl -X POST "https://api.fogos.pt/v2/photos/6712aabbccddeeff00112233/delete" \
-  -H "key: $API_WRITE_KEY"
+  -H "key: $PHOTO_MODERATION_KEY"
 ```
 
 ### Respostas
@@ -108,4 +108,4 @@ curl -X POST "https://api.fogos.pt/v2/photos/6712aabbccddeeff00112233/delete" \
 
 - A operação é **irreversível** — não há soft-delete nem lixeira.
 - Falhas na remoção do MinIO ficam registadas em log (`photo delete: storage cleanup failed`) mas não bloqueiam o `delete` na BD, para evitar registos órfãos.
-- Para rejeitar fotos em fila de moderação (workflow normal), continua a usar-se `POST /v2/moderation/photos/{photoId}/reject`, protegido pelo `PHOTO_MODERATION_KEY`. Este endpoint aqui é a via administrativa, com a mesma key de escrita usada em `posit` / `kml`.
+- Para rejeitar fotos em fila de moderação (workflow normal), continua a usar-se `POST /v2/moderation/photos/{photoId}/reject`, que faz soft-reject (mantém o registo com `status = rejected`). Este endpoint aqui é a via administrativa para apagar de vez, usando a mesma `PHOTO_MODERATION_KEY`.
