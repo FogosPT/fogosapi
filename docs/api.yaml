@@ -144,6 +144,12 @@ paths:
   /v2/incidents/{id}/live-activity/unregister:
     $ref: './fires/paths/v2-incident-liveactivity-unregister.yaml'
 
+  # V2 — Photos (cross-incident feed)
+  /v2/photos/latest:
+    $ref: './fires/paths/v2-photos-latest.yaml'
+  /v2/photos/{photoId}/delete:
+    $ref: './fires/paths/v2-photos-delete.yaml'
+
   # V2 — Photo moderation
   /v2/moderation/photos:
     $ref: './fires/paths/v2-moderation-photos.yaml'

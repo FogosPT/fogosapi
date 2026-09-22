@@ -1,0 +1,99 @@
+get:
+  operationId: v2ListLatestPhotos
+  summary: List the most recent approved public photos across all incidents
+  description: |
+    Returns a paginated list of the most recent approved, public-visible
+    photos uploaded to any incident, ordered by upload time (newest first).
+    Includes the `fire_id` so clients can link back to the parent incident.
+    Response cached briefly
+    (`Cache-Control: public, s-maxage=120, max-age=60, stale-while-revalidate=300`).
+  tags:
+    - V2
+  parameters:
+    - name: per_page
+      in: query
+      required: false
+      description: Items per page (1–100, default 30).
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 30
+    - name: page
+      in: query
+      required: false
+      description: Page number (default 1).
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    fire_id:
+                      type: string
+                      description: Public incident ID this photo belongs to.
+                    url:
+                      type: string
+                      format: uri
+                    taken_at:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    captured_at:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    created_at:
+                      type: string
+                      format: date-time
+                    width:
+                      type: integer
+                    height:
+                      type: integer
+                    gps:
+                      type: object
+                      nullable: true
+                      properties:
+                        lat:
+                          type: number
+                          format: float
+                          nullable: true
+                        lng:
+                          type: number
+                          format: float
+                          nullable: true
+                        altitude_m:
+                          type: number
+                          format: float
+                          nullable: true
+                        heading_deg:
+                          type: number
+                          format: float
+                          nullable: true
+                          description: Azimuth (compass direction) the camera was pointing when the photo was taken.
+              meta:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  per_page:
+                    type: integer
+    500:
+      $ref: '../../common/responses/500.yaml'

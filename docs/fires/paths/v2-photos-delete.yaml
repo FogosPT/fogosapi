@@ -1,0 +1,40 @@
+post:
+  operationId: v2DeletePhoto
+  summary: Delete a photo (write-key protected)
+  description: |
+    Permanently removes a photo. Deletes the underlying object from MinIO
+    (best-effort — DB cleanup proceeds even if storage removal fails) and
+    the `incident_photos` document.
+
+    Protected by the `key` header (`API_WRITE_KEY`).
+  tags:
+    - V2
+  parameters:
+    - name: photoId
+      in: path
+      required: true
+      description: Photo `_id`.
+      schema:
+        type: string
+    - name: key
+      in: header
+      required: true
+      description: Write key (`API_WRITE_KEY`).
+      schema:
+        type: string
+  responses:
+    200:
+      description: Photo deleted.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+    401:
+      $ref: '../../common/responses/401.yaml'
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

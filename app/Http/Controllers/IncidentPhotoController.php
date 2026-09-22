@@ -200,6 +200,49 @@ class IncidentPhotoController extends Controller
         return $chunks;
     }
 
+    public function destroy(Request $request, string $photoId): JsonResponse
+    {
+        if (env('API_WRITE_KEY') !== $request->header('key')) {
+            abort(401);
+        }
+
+        $photo = IncidentPhoto::find($photoId);
+        if ($photo === null) {
+            abort(404);
+        }
+
+        try {
+            PhotoStorageTool::delete($photo->storage_key);
+        } catch (\Throwable $e) {
+            Log::warning('photo delete: storage cleanup failed: '.$e->getMessage(), [
+                'photo_id' => $photoId,
+            ]);
+        }
+
+        $photo->delete();
+
+        return new JsonResponse(['success' => true]);
+    }
+
+    public function latest(Request $request): JsonResponse
+    {
+        $perPage = min(100, max(1, (int) $request->get('per_page', 30)));
+        $photos  = IncidentPhoto::where('status', IncidentPhoto::STATUS_APPROVED)
+            ->where('public', true)
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+
+        return new JsonResponse([
+            'success' => true,
+            'data'    => IncidentPhotoResource::collection($photos)->resolve(),
+            'meta'    => [
+                'total'    => $photos->total(),
+                'page'     => $photos->currentPage(),
+                'per_page' => $photos->perPage(),
+            ],
+        ], 200, ['Cache-Control' => 'public, s-maxage=120, max-age=60, stale-while-revalidate=300']);
+    }
+
     public function publicList(Request $request, string $id): JsonResponse
     {
         Incident::whereFireId($id)->firstOrFail();

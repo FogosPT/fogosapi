@@ -79,6 +79,11 @@ Route::group(['prefix' => 'v2'], function () {
         Route::post('{id}/live-activity/unregister', '\App\Http\Controllers\LiveActivityController@unregister');
     });
 
+    Route::group(['prefix' => 'photos'], function () {
+        Route::get('latest', '\App\Http\Controllers\IncidentPhotoController@latest');
+        Route::post('{photoId}/delete', '\App\Http\Controllers\IncidentPhotoController@destroy');
+    });
+
     Route::group(['prefix' => 'moderation/photos', 'middleware' => 'photo.modauth'], function () {
         Route::get('/', '\App\Http\Controllers\PhotoModerationController@index');
         Route::post('{photoId}/approve', '\App\Http\Controllers\PhotoModerationController@approve');
