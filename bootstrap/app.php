@@ -25,6 +25,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Console\Commands\AssignWeatherStations;
+use App\Console\Commands\CollapseWeatherWarnings;
 use App\Console\Commands\DumpFireStatuses;
 use App\Console\Commands\FixFMA;
 use App\Console\Commands\FixKMLData;
@@ -60,6 +61,7 @@ return Application::configure(basePath: dirname(__DIR__))
         SyncANEPCIncidents::class,
         SyncOcorrenciasSite::class,
         SyncMTGFireData::class,
+        CollapseWeatherWarnings::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         if (env('SCHEDULER_ENABLE')) {

@@ -2,59 +2,79 @@
 
 namespace App\Jobs;
 
-use App\Models\Incident;
 use App\Models\WeatherWarning;
-use Illuminate\Support\Facades\Log;
-use PhpImap\Mailbox;
-use voku\helper\UTF8;
+use Carbon\Carbon;
 
 class HandleWeatherWarnings extends Job
 {
-    /**
-     * Create a new job instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
     }
 
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
-    public function handle()
+    public function handle(): void
     {
         $data = $this->getFromIPMA();
 
-        foreach($data->data as $d){
-            if($d->awarenessLevelID !== 'green'){
+        if (!isset($data->data) || !is_array($data->data)) {
+            return;
+        }
 
-                $control = md5(implode('|', [
-                    $d->idAreaAviso,
-                    $d->awarenessTypeName,
-                    $d->awarenessLevelID,
-                    $d->startTime,
-                    $d->endTime,
-                    $d->text,
-                ]));
-                $exists = WeatherWarning::where('control',$control)
-                    ->first();
-
-                if(!$exists){
-                    $warning = new WeatherWarning();
-                    $warning->control = $control;
-                    $warning->reportDate = $d->reportDate;
-                    $warning->text = $d->text;
-                    $warning->type = $d->awarenessTypeName;
-                    $warning->district = $d->idAreaAviso;
-                    $warning->level = $d->awarenessLevelID;
-                    $warning->startTime = $d->startTime;
-                    $warning->endTime = $d->endTime;
-                    $warning->save();
-                }
+        foreach ($data->data as $d) {
+            if ($d->awarenessLevelID === 'green') {
+                continue;
             }
+
+            $warning = WeatherWarning::where('district', $d->idAreaAviso)
+                ->where('type', $d->awarenessTypeName)
+                ->where('level', $d->awarenessLevelID)
+                ->first();
+
+            $isNew = $warning === null;
+
+            if ($isNew) {
+                $warning = new WeatherWarning();
+                $warning->district = $d->idAreaAviso;
+                $warning->type     = $d->awarenessTypeName;
+                $warning->level    = $d->awarenessLevelID;
+            } elseif (!$this->isNewerVersion($d, $warning)) {
+                continue;
+            }
+
+            $warning->reportDate = $d->reportDate;
+            $warning->text       = $d->text;
+            $warning->startTime  = $d->startTime;
+            $warning->endTime    = $d->endTime;
+            $warning->control    = md5(implode('|', [$d->idAreaAviso, $d->awarenessTypeName, $d->awarenessLevelID]));
+            $warning->save();
+        }
+    }
+
+    private function isNewerVersion(object $incoming, WeatherWarning $existing): bool
+    {
+        $incomingReport = $this->timestamp($incoming->reportDate ?? null);
+        $existingReport = $this->timestamp($existing->reportDate ?? null);
+
+        if ($incomingReport === null) {
+            return false;
+        }
+
+        if ($existingReport === null) {
+            return true;
+        }
+
+        return $incomingReport > $existingReport;
+    }
+
+    private function timestamp(?string $value): ?int
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->timestamp;
+        } catch (\Throwable) {
+            return null;
         }
     }
 
@@ -62,14 +82,14 @@ class HandleWeatherWarnings extends Job
     {
         $html = file_get_contents('https://www.ipma.pt/pt/index.html');
 
-        $inicio = explode("var result_warnings = ", $html);
+        $inicio = explode('var result_warnings = ', $html);
 
-        $fim = explode("//GET SEA DATA", $inicio[1]);
+        $fim = explode('//GET SEA DATA', $inicio[1]);
 
         $final = str_split($fim[0], strlen($fim[0]) - 3);
 
         $converted = preg_replace('/%u([0-9A-F]+)/', '&#x$1;', $final);
 
-        return json_decode(substr(trim($converted[0]),0,-1));
+        return json_decode(substr(trim($converted[0]), 0, -1));
     }
 }

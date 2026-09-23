@@ -40,6 +40,10 @@ php artisan list
 php artisan weather:import-normals
 php artisan weather:import-normals --period=1991-2020
 php artisan weather:import-normals --period=1971-2000
+
+# Collapse historical duplicate weather warnings (idempotent; --dry-run to preview)
+php artisan weather:collapse-warnings --dry-run
+php artisan weather:collapse-warnings
 ```
 
 ## Architecture
@@ -75,7 +79,7 @@ The scheduler runs when `SCHEDULER_ENABLE=true`. Key jobs and their cadence:
 - `UpdateWeatherDataDaily` — daily; aggregates daily weather summaries
 - `ProcessRCM` — hourly + daily twice; fetches fire danger (Risco de Combustão de Materiais) maps
 - `HourlySummary` / `DailySummary` — summary notifications
-- `HandleWeatherWarnings` — every 15 minutes; processes IPMA weather warnings
+- `HandleWeatherWarnings` — every 15 minutes; scrapes IPMA warnings from the homepage and upserts into `weather_warnings` keyed on `(district, type, level)` — one row per active event, updated in place when IPMA republishes with a newer `reportDate`. Use `weather:collapse-warnings` to clean up rows created before the upsert switch.
 - `DetectTemperatureWaves` — daily at 05:00 (after `UpdateWeatherDataDaily`); applies the WMO 6-day rule to detect heat waves (vs 1991-2020 normals) and cold waves (vs 1971-2000 normals) per station, persists `TemperatureWave` rows, and posts a Discord message on the first detection of each event
 
 ### Models (MongoDB)
