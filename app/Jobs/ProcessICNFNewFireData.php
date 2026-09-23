@@ -44,6 +44,7 @@ class ProcessICNFNewFireData extends Job
         preg_match_all('/\[(.*?)\]/', $data, $result);
 
         $i = 0;
+        $skippedIds = [];
         foreach ($result[1] as $r) {
             if ($i === 0 || $i === 1) {
                 ++$i;
@@ -72,7 +73,7 @@ class ProcessICNFNewFireData extends Job
             $id = strip_tags(str_replace("'", '', $rr[0]));
 
             if (!ctype_digit($id)) {
-                Log::debug('ICNF: skipping non-numeric id', ['id' => $id]);
+                $skippedIds[$id] = ($skippedIds[$id] ?? 0) + 1;
                 continue;
             }
 
@@ -169,6 +170,13 @@ class ProcessICNFNewFireData extends Job
                     $incident->save();
                 }
             }
+        }
+
+        if (!empty($skippedIds)) {
+            Log::debug('ICNF: skipped non-numeric ids', [
+                'total' => array_sum($skippedIds),
+                'unique' => $skippedIds,
+            ]);
         }
     }
 
