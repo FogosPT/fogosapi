@@ -6,6 +6,7 @@ use App\Models\WeatherData;
 use App\Models\WeatherStation;
 use App\Models\WeatherWarning;
 use App\Support\IpmaDistrict;
+use App\Support\WeatherWarningCollapse;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -91,39 +92,11 @@ class IncidentResource extends JsonResource
         if (self::$activeWeatherWarningsByArea === null) {
             self::$activeWeatherWarningsByArea = [];
 
-            $warnings = WeatherWarning::where('endTime', '>=', Carbon::now())
-                ->orderBy('startTime', 'asc')
-                ->get();
+            $warnings = WeatherWarning::where('endTime', '>=', Carbon::now())->get();
+            $collapsed = WeatherWarningCollapse::collapse($warnings);
 
-            foreach ($warnings as $w) {
-                $row = [
-                    'text'              => $w->text,
-                    'awarenessTypeName' => $w->type,
-                    'idAreaAviso'       => $w->district,
-                    'awarenessLevelID'  => $w->level,
-                    'startTime'         => Carbon::parse($w->startTime)->format('Y-m-d\TH:i:s'),
-                    'endTime'           => Carbon::parse($w->endTime)->format('Y-m-d\TH:i:s'),
-                ];
-                self::$activeWeatherWarningsByArea[$w->district][] = $row;
-            }
-
-            foreach (self::$activeWeatherWarningsByArea as $code => $rows) {
-                $seen = [];
-                self::$activeWeatherWarningsByArea[$code] = array_values(array_filter($rows, function ($row) use (&$seen) {
-                    $key = implode('|', [
-                        $row['idAreaAviso'],
-                        $row['awarenessTypeName'],
-                        $row['awarenessLevelID'],
-                        $row['startTime'],
-                        $row['endTime'],
-                        $row['text'],
-                    ]);
-                    if (isset($seen[$key])) {
-                        return false;
-                    }
-                    $seen[$key] = true;
-                    return true;
-                }));
+            foreach ($collapsed as $row) {
+                self::$activeWeatherWarningsByArea[$row['idAreaAviso']][] = $row;
             }
         }
 

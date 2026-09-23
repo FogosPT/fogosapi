@@ -65,7 +65,7 @@ Todos os endpoints listados em §3 devolvem, para cada incidente, um novo campo:
 ### Garantias
 
 - **Ordenação:** ascendente por `startTime`.
-- **Dedup:** o backend aplica dedup por `(idAreaAviso, awarenessTypeName, awarenessLevelID, startTime, endTime, text)` — o frontend não precisa de o repetir.
+- **Dedup / collapse:** um aviso IPMA re-publicado (mesmo distrito/tipo/nível, `startTime`/`endTime` estendidos) só aparece **uma vez** — o backend colapsa por `(idAreaAviso, awarenessTypeName, awarenessLevelID)` e devolve a versão mais recente (a com maior `reportDate`, fallback `startTime`). O frontend nunca vê duplicados nem versões antigas do mesmo aviso.
 - **Frescura:** o job `HandleWeatherWarnings` corre a cada 15 minutos, portanto os dados têm no máximo ~15 min de latência.
 - **Array vazio:** `[]` é o valor devolvido quando:
   - o distrito do incidente não tem avisos activos, ou
