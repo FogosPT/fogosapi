@@ -112,6 +112,32 @@ properties:
   kmlVost:
     type: string
     description: KML of the burn area from Vost.pt
+  weatherWarnings:
+    type: array
+    description: |
+      Currently-active IPMA weather warnings for the incident's continental
+      district (payload shape mirrors `/v2/warnings/ipma`). Empty array when
+      the district has no active warnings, is unknown, or belongs to Madeira/Açores
+      (island sub-areas don't map 1:1 from an ANEPC district name).
+    items:
+      type: object
+      properties:
+        text:
+          type: string
+        awarenessTypeName:
+          type: string
+        idAreaAviso:
+          type: string
+          description: IPMA warning area code (e.g. `BGC`, `AVR`).
+        awarenessLevelID:
+          type: string
+          enum: [yellow, orange, red]
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
   created:
     type: object
     properties:

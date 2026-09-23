@@ -4,11 +4,27 @@ namespace App\Resources;
 
 use App\Models\WeatherData;
 use App\Models\WeatherStation;
+use App\Models\WeatherWarning;
+use App\Support\IpmaDistrict;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class IncidentResource extends JsonResource
 {
+    /**
+     * Per-request cache of active IPMA weather warnings, grouped by area code.
+     * Loaded once per PHP request so a collection of N incidents costs one query.
+     * Reset with IncidentResource::flushWeatherWarningsCache() in tests.
+     *
+     * @var array<string, array<int, array<string, mixed>>>|null
+     */
+    private static ?array $activeWeatherWarningsByArea = null;
+
+    public static function flushWeatherWarningsCache(): void
+    {
+        self::$activeWeatherWarningsByArea = null;
+    }
+
     private function haversineDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
     {
         $earthRadius = 6371;
@@ -62,6 +78,58 @@ class IncidentResource extends JsonResource
         ];
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function getActiveWeatherWarnings(): array
+    {
+        $areaCode = IpmaDistrict::areaCode($this->district);
+        if (!$areaCode) {
+            return [];
+        }
+
+        if (self::$activeWeatherWarningsByArea === null) {
+            self::$activeWeatherWarningsByArea = [];
+
+            $warnings = WeatherWarning::where('endTime', '>=', Carbon::now())
+                ->orderBy('startTime', 'asc')
+                ->get();
+
+            foreach ($warnings as $w) {
+                $row = [
+                    'text'              => $w->text,
+                    'awarenessTypeName' => $w->type,
+                    'idAreaAviso'       => $w->district,
+                    'awarenessLevelID'  => $w->level,
+                    'startTime'         => Carbon::parse($w->startTime)->format('Y-m-d\TH:i:s'),
+                    'endTime'           => Carbon::parse($w->endTime)->format('Y-m-d\TH:i:s'),
+                ];
+                self::$activeWeatherWarningsByArea[$w->district][] = $row;
+            }
+
+            foreach (self::$activeWeatherWarningsByArea as $code => $rows) {
+                $seen = [];
+                self::$activeWeatherWarningsByArea[$code] = array_values(array_filter($rows, function ($row) use (&$seen) {
+                    $key = implode('|', [
+                        $row['idAreaAviso'],
+                        $row['awarenessTypeName'],
+                        $row['awarenessLevelID'],
+                        $row['startTime'],
+                        $row['endTime'],
+                        $row['text'],
+                    ]);
+                    if (isset($seen[$key])) {
+                        return false;
+                    }
+                    $seen[$key] = true;
+                    return true;
+                }));
+            }
+        }
+
+        return self::$activeWeatherWarningsByArea[$areaCode] ?? [];
+    }
+
     public function toArray($request): array
     {
         $ob = [
@@ -111,6 +179,7 @@ class IncidentResource extends JsonResource
             'nearestWeatherStationId' => $this->nearestWeatherStationId,
             'isFire' => $this->isFire,
             'weather' => $this->getLatestWeather(),
+            'weatherWarnings' => $this->getActiveWeatherWarnings(),
             'created' => $this->createdObject,
             'updated' => $this->updatedObject,
 
