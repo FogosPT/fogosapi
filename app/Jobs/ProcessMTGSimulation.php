@@ -22,6 +22,8 @@ class ProcessMTGSimulation extends Job
     private const SIMULATE_HOURS          = 6;
     private const SIMULATE_WEATHER_SOURCE = 'ipma';
 
+    private const SIMULATE_INTERVAL_SECONDS = 7;
+
     public function __construct() {}
 
     public function handle(): void
@@ -67,12 +69,18 @@ class ProcessMTGSimulation extends Job
         $lastBody      = null;
         $lastFetchedAt = null;
         $stored        = 0;
+        $requestCount  = 0;
 
         foreach ($incidents as $incident) {
             $fogosId = (string) $incident->id;
             if ($fogosId === '') {
                 continue;
             }
+
+            if ($requestCount > 0) {
+                sleep(self::SIMULATE_INTERVAL_SECONDS);
+            }
+            $requestCount++;
 
             try {
                 $response = $client->post($baseUrl . '/api/external/v1/simulate', [
