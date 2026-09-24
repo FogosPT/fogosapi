@@ -1,31 +1,46 @@
 get:
   operationId: v2GetFirePerimeters
-  summary: Active fire perimeters (satellite-derived)
+  summary: Active fire perimeters (satellite-derived, correlated with fogos.pt incidents)
   description: |
-    Returns a GeoJSON `FeatureCollection` with the current burned-area
-    perimeter estimates for all active fires in Portugal, derived from
-    satellite hot-spot clustering (FRP detections).
+    Returns a GeoJSON `FeatureCollection` with the current satellite-derived
+    perimeter for every active fogos.pt incident visible in the MTG FRP
+    product. Each perimeter is one polygon per incident, since ignition, with
+    4 km flood-fill isolation to prevent neighbouring fires from merging.
 
-    Each `Feature` is a `Polygon` or `MultiPolygon`. Features correlated
-    with a fogos.pt incident include a `properties.fogospt_incident` object
-    (`id`, `url`, `concelho`, `freguesia`, `natureza`, `status`) — the
-    frontend can filter client-side by `fogospt_incident.id`.
+    **What this is NOT.** Not an official ANEPC perimeter and not a measured
+    burned-area figure. Each feature is evidence-of-fire from MTG pixels
+    (2-4 km resolution) — the `properties.disclaimer` field on the response
+    and on every feature repeats this caveat verbatim so the frontend can
+    surface it.
 
-    Data is fetched from the MTG FRP Processor every 15 minutes and cached
-    in Redis. Response includes an `X-Fetched-At` header (ISO 8601) with
-    the poll timestamp of the last successful ingestion. If the upstream
-    service is unavailable, the last known snapshot is served (up to 1h).
+    Each `Feature` is a `Polygon` or `MultiPolygon`. Features carry
+    `properties.fogospt_incident` (`id`, `url`, `concelho`, `freguesia`,
+    `natureza`, `status`) — the frontend can filter client-side by
+    `fogospt_incident.id`. Uncorrelated clusters (satellite saw a fire the
+    ANEPC has not opened as an incident) are served separately by
+    `GET /v2/fire/perimeters/uncorrelated`.
+
+    Data is fetched from the MTG FRP Processor every 10 minutes (matching
+    the MTG slot cadence) and cached in Redis for 24 h. Response includes
+    an `X-Fetched-At` header (ISO 8601) with the poll timestamp of the last
+    successful ingestion. If the age of the snapshot exceeds 30 min, an
+    `X-Stale: true` header is added so the client can flag data as old
+    without hiding it.
   tags:
     - V2
   responses:
     200:
-      description: GeoJSON FeatureCollection
+      description: GeoJSON FeatureCollection with a top-level `disclaimer` string.
       headers:
         X-Fetched-At:
           description: ISO 8601 timestamp of the last successful upstream fetch.
           schema:
             type: string
             format: date-time
+        X-Stale:
+          description: Present as "true" when the snapshot is older than 30 minutes.
+          schema:
+            type: string
       content:
         application/json:
           schema:

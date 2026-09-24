@@ -104,6 +104,7 @@ Route::group(['prefix' => 'v2'], function () {
     Route::group(['prefix' => 'fire'], function () {
         Route::get('perimeters', '\App\Http\Controllers\FirePerimetersController@perimeters');
         Route::get('simulation', '\App\Http\Controllers\FirePerimetersController@simulation');
+        Route::get('perimeters/uncorrelated', '\App\Http\Controllers\FirePerimetersController@uncorrelated');
     });
 
     Route::group(['prefix' => 'rcm'], function () {

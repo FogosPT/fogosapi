@@ -2,17 +2,26 @@ get:
   operationId: v2GetIncidentPerimeter
   summary: Latest satellite-derived perimeter for a specific incident
   description: |
-    Returns the most recent burned-area perimeter recorded for a specific
-    fogos.pt incident, as a GeoJSON `FeatureCollection` containing at
-    most one `Feature`. The `fetched_at` field (ISO 8601) indicates the
-    poll timestamp of the underlying MTG FRP snapshot.
+    Returns the most recent MTG-derived perimeter for a specific fogos.pt
+    incident, as a GeoJSON `FeatureCollection` containing at most one
+    `Feature`. The `fetched_at` field (ISO 8601) indicates the poll
+    timestamp of the underlying MTG FRP snapshot.
 
-    Perimeters are ingested every 15 minutes from the MTG FRP Processor
-    and each poll is persisted as a history row — this endpoint always
-    returns the latest snapshot.
+    **What this is NOT.** Not an official ANEPC perimeter and not a measured
+    burned-area figure. Evidence of fire from MTG pixels (2-4 km
+    resolution). The `disclaimer` field on the response and on the feature
+    (when present) repeats this caveat.
 
-    If the incident has no correlated perimeter yet, an empty
-    FeatureCollection is returned (HTTP 200).
+    Perimeters are ingested every 10 minutes from the MTG FRP Processor
+    (`/api/external/v1/active` — one perimeter per active incident, since
+    ignition). Each poll is persisted as a history row; this endpoint
+    always returns the latest snapshot.
+
+    When the incident has no correlated perimeter yet, an empty
+    `FeatureCollection` is returned (HTTP 200). When the upstream indicates
+    the incident has known errors (e.g. `"no usable coordinates"`), the
+    response's `errors` field lists them so the frontend can show
+    "sem perímetro possível" with a reason instead of an empty state.
   tags:
     - V2
   parameters:
@@ -24,7 +33,7 @@ get:
         type: string
   responses:
     200:
-      description: GeoJSON FeatureCollection
+      description: GeoJSON FeatureCollection with optional `disclaimer` and `errors` fields.
       content:
         application/json:
           schema:

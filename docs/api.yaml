@@ -179,6 +179,8 @@ paths:
     $ref: './fires/paths/v2-fire-perimeters.yaml'
   /v2/fire/simulation:
     $ref: './fires/paths/v2-fire-simulation.yaml'
+  /v2/fire/perimeters/uncorrelated:
+    $ref: './fires/paths/v2-fire-perimeters-uncorrelated.yaml'
 
   # V2 — RCM (fire risk maps)
   /v2/rcm/today:

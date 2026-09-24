@@ -2,15 +2,24 @@ get:
   operationId: v2GetIncidentSimulation
   summary: Latest fire spread simulation for a specific incident
   description: |
-    Returns the most recent fire spread simulation stored for a specific
-    fogos.pt incident, as a GeoJSON `FeatureCollection` containing
+    Returns the most recent PyroCast fire spread simulation stored for a
+    specific fogos.pt incident, as a GeoJSON `FeatureCollection` containing
     isochrone polygons at hour offsets +1h through +6h. The `fetched_at`
     field (ISO 8601) indicates the poll timestamp of the underlying MTG
     FRP snapshot.
 
-    Because only one simulation exists globally at a time, most incidents
-    will not have a stored simulation. If none is available, an empty
-    FeatureCollection is returned (HTTP 200).
+    **What this is NOT.** Not an operational forecast. A scenario: "if
+    nothing stops the fire, the flame front could reach these polygons".
+    Always show it alongside — never instead of — ANEPC information. The
+    `disclaimer` field on the response and on each feature repeats this
+    caveat.
+
+    Simulations run hourly across every active incident. If the incident
+    is not visible to MTG (no satellite features at the last run) or if
+    the upstream reported an expected error (out-of-coverage, fuel-nodata,
+    engine-unavailable), no new row is written and this endpoint continues
+    to serve the previous one. If none has ever been stored, an empty
+    `FeatureCollection` is returned (HTTP 200).
   tags:
     - V2
   parameters:
@@ -22,7 +31,7 @@ get:
         type: string
   responses:
     200:
-      description: GeoJSON FeatureCollection
+      description: GeoJSON FeatureCollection with `disclaimer` and `fetched_at` top-level fields.
       content:
         application/json:
           schema:
