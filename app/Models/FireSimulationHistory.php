@@ -19,14 +19,19 @@ class FireSimulationHistory extends Model
         'fetched_at',
         'feature_collection',
         'wind',
+        'wind_mode',
         'hours',
         'fogos_url',
+        'fuel_source',
+        'ros_source',
+        'moisture_source',
         'payload_hash',
     ];
 
     protected $casts = [
         'feature_collection' => 'array',
         'wind'               => 'array',
+        'fuel_source'        => 'array',
         'hours'              => 'integer',
         'fetched_at'         => 'datetime',
         'created'            => 'datetime',
