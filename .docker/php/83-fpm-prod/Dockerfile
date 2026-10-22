@@ -1,4 +1,5 @@
-FROM php:8.3-fpm-bookworm
+# Pinned to the patch release: >= 8.3.36 fixes CVE-2026-109618 / CVE-2026-109619 (RCE).
+FROM php:8.3.36-fpm-bookworm
 
 LABEL description="Fogos.pt API Production PHP 8.3 image"
 LABEL org.opencontainers.image.source="https://github.com/FogosPT/fogosapi"
@@ -57,6 +58,7 @@ RUN docker-php-ext-install \
 COPY zz-docker.conf /usr/local/etc/php-fpm.d/zz-docker.conf
 COPY uploads.ini /usr/local/etc/php/conf.d/zz-uploads.ini
 COPY opcache.ini /usr/local/etc/php/conf.d/zz-opcache.ini
+COPY security.ini /usr/local/etc/php/conf.d/zz-security.ini
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
