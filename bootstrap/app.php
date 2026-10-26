@@ -66,7 +66,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule) {
         if (env('SCHEDULER_ENABLE')) {
             $schedule->job(new HourlySummary())->hourlyAt(0);
-            $schedule->job(new ProcessOcorrenciasSite())->everyFiveMinutes();
+            $schedule->job(new ProcessOcorrenciasSite())->everyTwoMinutes();
             $schedule->job(new ProcessDataForHistoryTotal())->everyTwoMinutes();
             // $schedule->job(new ProcessMadeiraWarnings())->everyTenMinutes();
             // $schedule->job(new ProcessPlanes())->everyFiveMinutes();
