@@ -9,7 +9,7 @@ get:
     - $ref: '../parameters/query/after.yaml'
     - $ref: '../parameters/query/before.yaml'
     - $ref: '../parameters/query/extend.yaml'
-    - $ref: '../parameters/query/concelho.yaml'
+    - $ref: '../parameters/query/concelho-v2.yaml'
   responses:
     200:
       $ref: '../responses/legacy-fires-list.yaml'

@@ -1,0 +1,9 @@
+name: concelho
+in: query
+description: >-
+  Municipality name (case-insensitive, e.g. `Vila Nova de Gaia`). Must be a
+  known municipality; an unknown value returns `422` with
+  `{"success": false, "error": "invalid_concelho"}`.
+required: false
+schema:
+  type: string

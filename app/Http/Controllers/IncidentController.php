@@ -8,6 +8,7 @@ use App\Models\Hotspot;
 use App\Models\Incident;
 use App\Models\IncidentKmlHistory;
 use App\Resources\IncidentResource;
+use App\Support\Concelho;
 use App\Tools\ConvexHullTool;
 use App\Tools\FacebookTool;
 use App\Tools\HashTagTool;
@@ -15,6 +16,7 @@ use App\Tools\Renderer;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
 use Carbon\Carbon;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -28,7 +30,7 @@ class IncidentController extends Controller
 
     public function active(Request $request): JsonResponse
     {
-        $concelho = $request->get('concelho');
+        $concelho = $this->concelhoFilter($request);
         $subRegion = $request->get('subRegion');
 
         $limit = $request->exists('limit') ? (int) $request->get('limit') : 1000;
@@ -39,7 +41,7 @@ class IncidentController extends Controller
         $csv2 = $request->get('csv2');
 
         $incidents = $this->buildActiveQuery($request)
-            ->when($concelho, fn ($q) => $q->where('concelho', $concelho))
+            ->when($concelho, fn ($q) => $q->whereIn('concelho', $concelho))
             ->when($subRegion, fn ($q) => $q->where('sub_regiao', $subRegion))
             ->orderBy('created_at', 'desc')
             ->paginate($limit);
@@ -85,7 +87,7 @@ class IncidentController extends Controller
                 Log::debug(json_encode($incidents));
 
                 $incidents = $this->buildActiveQuery($request)
-                    ->when($concelho, fn ($q) => $q->where('concelho', $concelho))
+                    ->when($concelho, fn ($q) => $q->whereIn('concelho', $concelho))
                     ->orderBy('created_at', 'desc')
                     ->paginate($limit);
             }
@@ -231,12 +233,12 @@ class IncidentController extends Controller
 
     public function activeKML(Request $request): JsonResponse
     {
-        $concelho = $request->get('concelho');
+        $concelho = $this->concelhoFilter($request);
 
         $limit = $request->exists('limit') ? (int) $request->get('limit') : 300;
 
         $incidents = $this->buildActiveQuery($request)
-            ->when($concelho, fn ($q) => $q->where('concelho', $concelho))
+            ->when($concelho, fn ($q) => $q->whereIn('concelho', $concelho))
             ->orderBy('created_at', 'desc')
             ->paginate($limit);
 
@@ -270,6 +272,32 @@ class IncidentController extends Controller
 
         echo $newxml;
         die();
+    }
+
+    /**
+     * Values to match for the optional `concelho` filter: what the client sent
+     * plus the casing the ingestion jobs store ("Vila Nova De Gaia"). Null when
+     * absent; a 422 JSON response when it is not a known municipality.
+     *
+     * @return array<int, string>|null
+     */
+    private function concelhoFilter(Request $request): ?array
+    {
+        $concelho = $request->query('concelho');
+
+        if ($concelho === null || $concelho === '') {
+            return null;
+        }
+
+        if (!is_string($concelho) || !Concelho::isKnown($concelho)) {
+            throw new HttpResponseException(new JsonResponse([
+                'success' => false,
+                'error' => 'invalid_concelho',
+                'message' => 'Unknown concelho: ' . (is_string($concelho) ? $concelho : json_encode($concelho)),
+            ], 422));
+        }
+
+        return array_values(array_unique([$concelho, Concelho::normalize($concelho)]));
     }
 
     /**
@@ -364,7 +392,7 @@ class IncidentController extends Controller
         $all = $request->get('all');
         $isFMA = $request->get('fma');
         $extend = $request->get('extend');
-        $concelho = $request->get('concelho');
+        $concelho = $this->concelhoFilter($request);
 
         $subRegion = $request->get('subRegion');
 
@@ -387,7 +415,7 @@ class IncidentController extends Controller
                 ]
             );
         })->when($concelho, function($query, $concelho){
-            return $query->where('concelho', $concelho);
+            return $query->whereIn('concelho', $concelho);
         })->when(!$all, function ($query, $all){
             return $query->isFire();
         })->when($extend, function ($query, $extend){
