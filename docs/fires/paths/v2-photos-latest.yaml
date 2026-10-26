@@ -87,13 +87,6 @@ get:
                           nullable: true
                           description: Azimuth (compass direction) the camera was pointing when the photo was taken.
               meta:
-                type: object
-                properties:
-                  total:
-                    type: integer
-                  page:
-                    type: integer
-                  per_page:
-                    type: integer
+                $ref: '../models/PhotoPageMeta.yaml'
     500:
       $ref: '../../common/responses/500.yaml'

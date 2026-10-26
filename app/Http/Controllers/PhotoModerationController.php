@@ -26,6 +26,7 @@ class PhotoModerationController extends Controller
 
         $photos = IncidentPhoto::where('status', $status)
             ->orderBy('created_at', 'asc')
+            ->orderBy('_id', 'asc')
             ->paginate($perPage);
 
         return new JsonResponse([
@@ -35,6 +36,7 @@ class PhotoModerationController extends Controller
                 'total'    => $photos->total(),
                 'page'     => $photos->currentPage(),
                 'per_page' => $photos->perPage(),
+                'last_page' => $photos->lastPage(),
             ],
         ]);
     }

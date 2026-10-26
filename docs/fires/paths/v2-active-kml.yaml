@@ -1,6 +1,10 @@
 get:
   operationId: v2GetActiveIncidentsKML
   summary: Active fire incidents as a KML document
+  description: >-
+    Paginated with `limit` and `page`, newest first (`created` desc, then
+    `_id`). KML has no pagination metadata; use `/v2/incidents/active` for
+    the totals.
   tags:
     - V2
   parameters:
@@ -8,7 +12,18 @@ get:
     - $ref: '../parameters/query/fma.yaml'
     - $ref: '../parameters/query/otherFires.yaml'
     - $ref: '../parameters/query/concelho-v2.yaml'
-    - $ref: '../parameters/query/limit.yaml'
+    - name: limit
+      in: query
+      required: false
+      description: >-
+        Page size (1–1000, default 300). Values above 1000 are clamped to
+        1000, below 1 to 1; a non-integer value uses the default.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 300
+    - $ref: '../parameters/query/page.yaml'
   responses:
     200:
       description: KML document with active incident placemarks

@@ -25,6 +25,7 @@ get:
         minimum: 1
         maximum: 50
         default: 20
+    - $ref: '../parameters/query/page.yaml'
   responses:
     200:
       description: OK
@@ -79,14 +80,7 @@ get:
                           nullable: true
                           description: Azimuth (compass direction) the camera was pointing when the photo was taken.
               meta:
-                type: object
-                properties:
-                  total:
-                    type: integer
-                  page:
-                    type: integer
-                  per_page:
-                    type: integer
+                $ref: '../models/PhotoPageMeta.yaml'
     404:
       $ref: '../../common/responses/404.yaml'
     500:

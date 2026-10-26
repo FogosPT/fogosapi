@@ -226,6 +226,7 @@ class IncidentPhotoController extends Controller
         $photos  = IncidentPhoto::where('status', IncidentPhoto::STATUS_APPROVED)
             ->where('public', true)
             ->orderBy('created_at', 'desc')
+            ->orderBy('_id', 'desc')
             ->paginate($perPage);
 
         return new JsonResponse([
@@ -235,6 +236,7 @@ class IncidentPhotoController extends Controller
                 'total'    => $photos->total(),
                 'page'     => $photos->currentPage(),
                 'per_page' => $photos->perPage(),
+                'last_page' => $photos->lastPage(),
             ],
         ], 200, ['Cache-Control' => 'public, s-maxage=120, max-age=60, stale-while-revalidate=300']);
     }
@@ -248,6 +250,7 @@ class IncidentPhotoController extends Controller
             ->where('status', IncidentPhoto::STATUS_APPROVED)
             ->where('public', true)
             ->orderBy('created_at', 'desc')
+            ->orderBy('_id', 'desc')
             ->paginate($perPage);
 
         return new JsonResponse([
@@ -257,6 +260,7 @@ class IncidentPhotoController extends Controller
                 'total'    => $photos->total(),
                 'page'     => $photos->currentPage(),
                 'per_page' => $photos->perPage(),
+                'last_page' => $photos->lastPage(),
             ],
         ], 200, ['Cache-Control' => 'public, s-maxage=300, max-age=120, stale-while-revalidate=300']);
     }
@@ -272,6 +276,7 @@ class IncidentPhotoController extends Controller
         $perPage = min(200, max(1, (int) $request->get('per_page', 50)));
         $photos  = IncidentPhoto::where('fire_id', $id)
             ->orderBy('created_at', 'desc')
+            ->orderBy('_id', 'desc')
             ->paginate($perPage);
 
         return new JsonResponse([
@@ -281,6 +286,7 @@ class IncidentPhotoController extends Controller
                 'total'    => $photos->total(),
                 'page'     => $photos->currentPage(),
                 'per_page' => $photos->perPage(),
+                'last_page' => $photos->lastPage(),
             ],
         ]);
     }

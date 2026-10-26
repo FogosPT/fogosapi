@@ -31,6 +31,7 @@ get:
         minimum: 1
         maximum: 100
         default: 25
+    - $ref: '../parameters/query/page.yaml'
   responses:
     200:
       description: OK
@@ -46,14 +47,7 @@ get:
                 items:
                   type: object
               meta:
-                type: object
-                properties:
-                  total:
-                    type: integer
-                  page:
-                    type: integer
-                  per_page:
-                    type: integer
+                $ref: '../models/PhotoPageMeta.yaml'
     401:
       $ref: '../../common/responses/401.yaml'
     500:
