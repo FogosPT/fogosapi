@@ -219,6 +219,8 @@ paths:
   # V2 — Stats
   /v2/stats/today/ignitions-hourly:
     $ref: './stats/paths/v2-stats-ignitions-hourly.yaml'
+  /v2/stats/means-peak:
+    $ref: './stats/paths/v2-stats-means-peak.yaml'
 
   # V2 — Other
   /v2/other/mobile-contributors:

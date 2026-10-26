@@ -1,0 +1,73 @@
+get:
+  operationId: v2GetStatsMeansPeak
+  summary: Peak of operatives, ground and aerial means reached by a single incident
+  description: >-
+    Considers the incidents that started between `after` and `before`
+    (inclusive, Europe/Lisbon days), optionally filtered by location. For each
+    kind of means returns the highest value recorded in the incident history
+    snapshots, the time it was recorded and the incident. On ties the earliest
+    snapshot wins. Incidents before 2022 have no history. Cached for 1 hour.
+  tags:
+    - Stats
+  parameters:
+    - name: after
+      in: query
+      required: true
+      description: First day of the interval (Y-m-d).
+      schema:
+        type: string
+        format: date
+        example: '2025-08-01'
+    - name: before
+      in: query
+      required: true
+      description: Last day of the interval (Y-m-d). At most 366 days after `after`.
+      schema:
+        type: string
+        format: date
+        example: '2025-08-31'
+    - name: district
+      in: query
+      required: false
+      description: District name (case-insensitive).
+      schema:
+        type: string
+    - name: concelho
+      in: query
+      required: false
+      description: Municipality name (case-insensitive).
+      schema:
+        type: string
+    - name: freguesia
+      in: query
+      required: false
+      description: Parish name (case-insensitive).
+      schema:
+        type: string
+    - $ref: '../../fires/parameters/query/all.yaml'
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: object
+                properties:
+                  incidents:
+                    type: integer
+                    description: Number of incidents considered
+                  man:
+                    $ref: '../models/MeansPeak.yaml'
+                  terrain:
+                    $ref: '../models/MeansPeak.yaml'
+                  aerial:
+                    $ref: '../models/MeansPeak.yaml'
+    422:
+      $ref: '../../common/responses/422.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

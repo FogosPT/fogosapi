@@ -134,5 +134,6 @@ Route::group(['prefix' => 'v2'], function () {
         Route::group(['prefix' => 'today'], function () {
             Route::get('ignitions-hourly', '\App\Http\Controllers\StatsController@ignitionsHourly');
         });
+        Route::get('means-peak', '\App\Http\Controllers\StatsController@meansPeak');
     });
 });
