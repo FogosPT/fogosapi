@@ -239,7 +239,6 @@ class ProcessOcorrenciasSite extends Job
             'duracaoMinutos' => (int) ($data['DuracaoMinutos'] ?? 0),
             'endereco' => $data['Endereco'] ?? null,
             'source' => Incident::SOURCE_ANEPC,
-            'anepcUpdatedAt' => Carbon::now(),
         ];
 
         if (!empty($data['DataDosDados'])) {

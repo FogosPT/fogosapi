@@ -105,7 +105,6 @@ class Incident extends Model
         'meios_aquaticos',
         'nearestWeatherStationId',
         'source',
-        'anepcUpdatedAt',
     ];
 
     public const SOURCE_ANEPC = 'anepc';
