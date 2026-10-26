@@ -197,7 +197,9 @@ class StatsController extends Controller
             'at' => $created instanceof UTCDateTime
                 ? Carbon::instance($created->toDateTime())->setTimezone('Europe/Lisbon')->toIso8601String()
                 : null,
-            'incident' => $incident ? (new IncidentResource($incident))->resolve() : ['id' => $incidentId],
+            // Fixed representation: resolve against an empty request so query
+            // flags such as `extend` never leak into the shared cache entry.
+            'incident' => $incident ? (new IncidentResource($incident))->resolve(new Request()) : ['id' => $incidentId],
         ];
     }
 }

@@ -72,6 +72,19 @@ class MeansPeakTest extends TestCase
     }
 
     /** @test */
+    public function it_never_includes_extended_incident_data(): void
+    {
+        $this->incident('1001', 'Lisboa', '2025-08-10 14:00');
+        $this->history('1001', 60, 14, 2, '2025-08-10 16:00');
+
+        $this->getJson('v2/stats/means-peak?after=2025-08-01&before=2025-08-31&extend=1')
+            ->assertOk()
+            ->assertJsonPath('data.man.incident.id', '1001')
+            ->assertJsonMissingPath('data.man.incident.history')
+            ->assertJsonMissingPath('data.man.incident.statusHistory');
+    }
+
+    /** @test */
     public function it_filters_by_location_case_insensitively(): void
     {
         $this->incident('1001', 'Lisboa', '2025-08-10 14:00');
