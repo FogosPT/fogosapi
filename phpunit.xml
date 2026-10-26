@@ -17,7 +17,10 @@
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_KEY" value="base64:ymQNfpaYx1EOn3zmibg45NKX+99eEcFU8KcOYU1MguY="/>
-        <env name="CACHE_STORE" value="array"/>
+        <env name="CACHE_STORE" value="array" force="true"/>
+        <env name="DISCORD_ENABLE" value="false" force="true"/>
+        <server name="CACHE_STORE" value="array" force="true"/>
+        <server name="DISCORD_ENABLE" value="false" force="true"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
     </php>
 </phpunit>
