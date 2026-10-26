@@ -64,7 +64,7 @@ class ProcessOcorrenciasSite extends Job
         Cache::forget('legacy.active.v1');
 
         $activeList = array_map(fn ($a) => ['numero_sado' => (string) $a['Numero']], $incidents);
-        dispatch(new CheckIsActive($activeList));
+        dispatch(new CheckIsActive($activeList, guardAnepcFeedHealth: true));
         dispatch(new CheckImportantFireIncident());
     }
 

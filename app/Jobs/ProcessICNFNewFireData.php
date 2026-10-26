@@ -148,17 +148,20 @@ class ProcessICNFNewFireData extends Job
             $dirty = true;
         }
 
-        if ($icnfOnly) {
-            // ICNF owns the lifecycle: brings back fires that were dropped
-            // because a frozen ANEPC list did not include them.
-            if ((bool) $incident->active !== $icnfActive) {
-                $incident->active = $icnfActive;
-                $dirty = true;
-            }
-        } elseif ($icnfEstado === ICNFTool::ESTADO_EXTINTO && $incident->active) {
-            // ANEPC incident while the feed is frozen: close it when ICNF
-            // says it is out, but never reopen what ANEPC already closed.
-            $incident->active = false;
+        if ($anepcStale && $icnfOnly) {
+            // ANEPC frozen: ICNF owns the lifecycle and brings back fires
+            // that a frozen ANEPC list dropped.
+            $active = $icnfActive;
+        } elseif ($icnfEstado === ICNFTool::ESTADO_EXTINTO) {
+            // Close when ICNF says it is out. Reopening is never done here
+            // while ANEPC is fresh, otherwise it would fight CheckIsActive.
+            $active = false;
+        } else {
+            $active = (bool) $incident->active;
+        }
+
+        if ((bool) $incident->active !== $active) {
+            $incident->active = $active;
             $dirty = true;
         }
 

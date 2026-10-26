@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Log;
 
 // Compara incidentes com active a true com a lista que aparece no site da ANEPC
 // e adicionalmente marca inactivos os que o ICNF já reporta como "Extinto".
-// Não corre enquanto o feed da ANEPC estiver parado (ver AnepcFeedHealth).
+// Despachado pelo ProcessOcorrenciasSite, não corre enquanto esse feed estiver
+// parado (ver AnepcFeedHealth).
 // Queries de consulta devem ter todos active = true
 class CheckIsActive extends Job
 {
@@ -17,13 +18,20 @@ class CheckIsActive extends Job
     public $activeIds;
 
     /**
+     * Only callers whose list comes from the feed tracked by AnepcFeedHealth
+     * (OcorrenciasSite) should skip cleanup when that feed is stale.
+     */
+    public bool $guardAnepcFeedHealth = false;
+
+    /**
      * Create a new job instance.
      *
      * @param mixed $data
      */
-    public function __construct($data)
+    public function __construct($data, bool $guardAnepcFeedHealth = false)
     {
         $this->data = $data;
+        $this->guardAnepcFeedHealth = $guardAnepcFeedHealth;
         $activeIds = [];
         foreach ($this->data as $d) {
             $activeIds[] = $d['numero_sado'];
@@ -39,7 +47,7 @@ class CheckIsActive extends Job
     {
         // A frozen ANEPC list would wipe every fire ICNF reported meanwhile;
         // while the feed is stale ProcessICNFNewFireData owns the lifecycle.
-        if (AnepcFeedHealth::isStale()) {
+        if ($this->guardAnepcFeedHealth && AnepcFeedHealth::isStale()) {
             Log::info('CheckIsActive: ANEPC feed is stale, skipping');
 
             return;
