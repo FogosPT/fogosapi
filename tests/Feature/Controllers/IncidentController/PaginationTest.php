@@ -6,7 +6,9 @@ use App\Models\IncidentPhoto;
 use Carbon\Carbon;
 use Database\Factories\IncidentFactory;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
+use MongoDB\BSON\UTCDateTime;
 use Tests\TestCase;
 
 class PaginationTest extends TestCase
@@ -84,6 +86,29 @@ class PaginationTest extends TestCase
     }
 
     /** @test */
+    public function search_ordering_is_served_by_an_index_without_an_in_memory_sort(): void
+    {
+        foreach (range(1, 20) as $i) {
+            $this->fire((string) (2000 + $i), '2025-08-01 10:00', ['isFire' => $i % 2 === 0]);
+        }
+
+        $sort = ['dateTime' => -1, '_id' => -1];
+        $range = ['$gte' => new UTCDateTime(Carbon::parse('2025-01-01')), '$lte' => new UTCDateTime(Carbon::parse('2025-12-31'))];
+
+        foreach ([
+            'fire-only' => ['isFire' => true],
+            'fire-only in a range' => ['isFire' => true, 'dateTime' => $range],
+            'all=1' => [],
+            'all=1 in a range' => ['dateTime' => $range],
+        ] as $label => $filter) {
+            $stages = $this->planStages($filter, $sort);
+
+            $this->assertContains('IXSCAN', $stages, $label);
+            $this->assertNotContains('SORT', $stages, $label);
+        }
+    }
+
+    /** @test */
     public function burned_more_than_1000ha_is_ordered_by_start_time_desc(): void
     {
         $this->fire('1001', '2025-07-01 10:00', ['icnf' => ['burnArea' => ['total' => 1500]]]);
@@ -120,6 +145,35 @@ class PaginationTest extends TestCase
                 'per_page' => 2,
                 'last_page' => 2,
             ]);
+    }
+
+    /**
+     * Stage names of the winning plan for a find with sort on `data`.
+     *
+     * @return array<int, string>
+     */
+    private function planStages(array $filter, array $sort): array
+    {
+        $explain = DB::connection('mongodb')->getMongoDB()->command([
+            'explain' => ['find' => 'data', 'filter' => (object) $filter, 'sort' => $sort, 'limit' => 50],
+            'verbosity' => 'queryPlanner',
+        ], ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']])->toArray()[0];
+
+        $stages = [];
+        $walk = function (array $plan) use (&$walk, &$stages) {
+            $stages[] = $plan['stage'];
+            foreach (['inputStage', 'queryPlan'] as $key) {
+                if (isset($plan[$key])) {
+                    $walk($plan[$key]);
+                }
+            }
+            foreach ($plan['inputStages'] ?? [] as $input) {
+                $walk($input);
+            }
+        };
+        $walk($explain['queryPlanner']['winningPlan']);
+
+        return $stages;
     }
 
     private function fire(string $id, string $start, array $attributes = []): void
