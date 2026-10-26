@@ -1,20 +1,35 @@
 get:
   operationId: v2getFiresActiveList
   summary: List active fires
+  description: >-
+    Paginated with `limit` and `page`, newest first (`created` desc, then `_id`).
+    The `paginator` object is returned in the JSON response (not in the
+    `geojson` or CSV variants).
   tags:
     - V2
   parameters:
     - $ref: '../parameters/query/all.yaml'
     - $ref: '../parameters/query/geojson.yaml'
     - $ref: '../parameters/query/concelho-v2.yaml'
-    - $ref: '../parameters/query/limit.yaml'
+    - name: limit
+      in: query
+      required: false
+      description: >-
+        Page size (1–1000, default 1000). Values above 1000 are clamped to
+        1000, below 1 to 1; a non-integer value uses the default.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 1000
+    - $ref: '../parameters/query/page.yaml'
     - $ref: '../parameters/query/fma.yaml'
     - $ref: '../parameters/query/otherFires.yaml'
     - $ref: '../parameters/query/csv.yaml'
     - $ref: '../parameters/query/csv2.yaml'
   responses:
     200:
-      $ref: '../responses/legacy-fires-list.yaml'
+      $ref: '../responses/v2-fires-paginated-list.yaml'
     404:
       $ref: '../../common/responses/404.yaml'
     422:

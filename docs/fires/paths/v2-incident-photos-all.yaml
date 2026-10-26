@@ -1,0 +1,55 @@
+post:
+  operationId: v2ListAllIncidentPhotos
+  summary: List every photo of an incident (moderators)
+  description: |
+    All photos uploaded for the incident, whatever their status or
+    visibility, with the moderator payload (raw GPS / EXIF). Newest first.
+    Requires the `key` header to match `PHOTO_MODERATION_KEY`. `per_page` and
+    `page` may be sent as query string or form fields.
+  tags:
+    - Moderation
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Incident public ID
+      schema:
+        type: string
+    - name: key
+      in: header
+      required: true
+      description: Moderation API key (`PHOTO_MODERATION_KEY` env value).
+      schema:
+        type: string
+    - name: per_page
+      in: query
+      required: false
+      description: Items per page (1–200, default 50).
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+    - $ref: '../parameters/query/page.yaml'
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: array
+                items:
+                  type: object
+              meta:
+                $ref: '../models/PhotoPageMeta.yaml'
+    401:
+      $ref: '../../common/responses/401.yaml'
+    404:
+      $ref: '../../common/responses/404.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

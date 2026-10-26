@@ -1,9 +1,21 @@
 title: Paginator
 type: object
+description: >-
+  Pagination metadata of the `limit`/`page` incident endpoints. Results are
+  ordered deterministically, so walking pages 1..totalPages returns every
+  item exactly once (as long as the data does not change in between).
 properties:
   currentPage:
     type: integer
+    example: 1
   totalPages:
     type: integer
+    description: Last page number (1 when there are no results).
+    example: 3
   totalItems:
     type: integer
+    example: 128
+  perPage:
+    type: integer
+    description: Effective page size after clamping `limit`.
+    example: 50

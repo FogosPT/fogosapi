@@ -1,10 +1,22 @@
 get:
   operationId: v2GetIncidentsBurnedMoreThan1000Ha
   summary: List fire incidents with ICNF-reported burn area exceeding 1000 ha
+  description: Paginated with `limit` and `page`, newest first (`dateTime` desc, then `_id`).
   tags:
     - V2
   parameters:
-    - $ref: '../parameters/query/limit.yaml'
+    - name: limit
+      in: query
+      required: false
+      description: >-
+        Page size (1–1000, default 500). Values above 1000 are clamped to
+        1000, below 1 to 1; a non-integer value uses the default.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 500
+    - $ref: '../parameters/query/page.yaml'
   responses:
     200:
       description: OK

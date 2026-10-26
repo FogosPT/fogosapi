@@ -1,0 +1,18 @@
+title: PhotoPageMeta
+type: object
+description: Pagination metadata of the `per_page`/`page` photo endpoints.
+properties:
+  total:
+    type: integer
+    example: 42
+  page:
+    type: integer
+    example: 1
+  per_page:
+    type: integer
+    description: Effective page size after clamping `per_page`.
+    example: 20
+  last_page:
+    type: integer
+    description: Last page number (1 when there are no results).
+    example: 3

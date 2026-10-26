@@ -19,6 +19,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Routing\Controller;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
@@ -28,12 +29,17 @@ class IncidentController extends Controller
 {
     use CacheableResponse;
 
+    /**
+     * Upper bound for `limit` on the paginated incident endpoints.
+     */
+    private const MAX_LIMIT = 1000;
+
     public function active(Request $request): JsonResponse
     {
         $concelho = $this->concelhoFilter($request);
         $subRegion = $request->get('subRegion');
 
-        $limit = $request->exists('limit') ? (int) $request->get('limit') : 1000;
+        $limit = $this->limit($request, 1000);
 
         $geoJson = $request->boolean('geojson');
 
@@ -43,7 +49,8 @@ class IncidentController extends Controller
         $incidents = $this->buildActiveQuery($request)
             ->when($concelho, fn ($q) => $q->whereIn('concelho', $concelho))
             ->when($subRegion, fn ($q) => $q->where('sub_regiao', $subRegion))
-            ->orderBy('created_at', 'desc')
+            ->orderBy('created', 'desc')
+            ->orderBy('_id', 'desc')
             ->paginate($limit);
 
         if($csv) {
@@ -88,7 +95,8 @@ class IncidentController extends Controller
 
                 $incidents = $this->buildActiveQuery($request)
                     ->when($concelho, fn ($q) => $q->whereIn('concelho', $concelho))
-                    ->orderBy('created_at', 'desc')
+                    ->orderBy('created', 'desc')
+                    ->orderBy('_id', 'desc')
                     ->paginate($limit);
             }
 
@@ -126,7 +134,8 @@ class IncidentController extends Controller
                 }
             } else {
                 $incident = Incident::isFire()
-                    ->orderBy('created_at', 'desc')
+                    ->orderBy('created', 'desc')
+                    ->orderBy('_id', 'desc')
                     ->paginate(1);
 
 
@@ -219,6 +228,7 @@ class IncidentController extends Controller
 
             $response = new JsonResponse([
                 'success' => true,
+                'paginator' => $this->paginatorMeta($incidents),
                 'data' => IncidentResource::collection($incidents),
             ]);
 
@@ -235,11 +245,12 @@ class IncidentController extends Controller
     {
         $concelho = $this->concelhoFilter($request);
 
-        $limit = $request->exists('limit') ? (int) $request->get('limit') : 300;
+        $limit = $this->limit($request, 300);
 
         $incidents = $this->buildActiveQuery($request)
             ->when($concelho, fn ($q) => $q->whereIn('concelho', $concelho))
-            ->orderBy('created_at', 'desc')
+            ->orderBy('created', 'desc')
+            ->orderBy('_id', 'desc')
             ->paginate($limit);
 
         $r=new \XMLWriter();
@@ -272,6 +283,34 @@ class IncidentController extends Controller
 
         echo $newxml;
         die();
+    }
+
+    /**
+     * Page size from `limit`: `$default` when absent or not an integer,
+     * otherwise clamped to [1, MAX_LIMIT].
+     */
+    private function limit(Request $request, int $default): int
+    {
+        $limit = filter_var($request->query('limit'), FILTER_VALIDATE_INT);
+
+        if ($limit === false) {
+            return $default;
+        }
+
+        return min(self::MAX_LIMIT, max(1, $limit));
+    }
+
+    /**
+     * Pagination metadata shared by the paginated v2 incident endpoints.
+     */
+    private function paginatorMeta(LengthAwarePaginator $paginator): array
+    {
+        return [
+            'currentPage' => $paginator->currentPage(),
+            'totalPages' => $paginator->lastPage(),
+            'totalItems' => $paginator->total(),
+            'perPage' => $paginator->perPage(),
+        ];
     }
 
     /**
@@ -368,11 +407,7 @@ class IncidentController extends Controller
         $naturezaCode = $request->get('naturezaCode');
 
 
-        if($request->exists('limit')){
-            $limit = (int)$request->get('limit');
-        } else {
-            $limit = 50;
-        }
+        $limit = $this->limit($request, 50);
 
         if($day && ($before || $after)){
             abort(422);
@@ -426,7 +461,7 @@ class IncidentController extends Controller
             return $query->where('naturezaCode', (string)$naturezaCode);
         })->when($subRegion, function ($query, $subRegion){
             return $query->where('sub_regiao', (string)$subRegion);
-        });
+        })->orderBy('dateTime', 'desc')->orderBy('_id', 'desc');
 
         $csv2 = $request->get('csv2');
 
@@ -477,15 +512,9 @@ class IncidentController extends Controller
         } else {
             $incidents = $incidents->paginate($limit);
 
-            $paginator = [
-                'currentPage' => $incidents->currentPage(),
-                'totalPages' => $incidents->lastPage(),
-                'totalItems' => $incidents->total()
-            ];
-
             return new JsonResponse([
                 'success' => true,
-                'paginator' => $paginator,
+                'paginator' => $this->paginatorMeta($incidents),
                 'data' => IncidentResource::collection($incidents),
             ]);
         }
@@ -529,25 +558,17 @@ class IncidentController extends Controller
 
     public function burnMoreThan1000(Request $request)
     {
-        if($request->exists('limit')){
-            $limit = (int)$request->get('limit');
-        } else {
-            $limit = 500;
-        }
+        $limit = $this->limit($request, 500);
 
         $incidents = Incident::where('isFire', true)
             ->where('icnf.burnArea.total', '>', 1000)
+            ->orderBy('dateTime', 'desc')
+            ->orderBy('_id', 'desc')
             ->paginate($limit);
-
-        $paginator = [
-            'currentPage' => $incidents->currentPage(),
-            'totalPages' => $incidents->lastPage(),
-            'totalItems' => $incidents->total()
-        ];
 
         return new JsonResponse([
             'success' => true,
-            'paginator' => $paginator,
+            'paginator' => $this->paginatorMeta($incidents),
             'data' => IncidentResource::collection($incidents),
         ]);
     }

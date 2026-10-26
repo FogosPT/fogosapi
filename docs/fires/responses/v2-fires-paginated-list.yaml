@@ -1,0 +1,14 @@
+description: OK
+content:
+  application/json:
+    schema:
+      type: object
+      properties:
+        success:
+          type: boolean
+        paginator:
+          $ref: '../models/Paginator.yaml'
+        data:
+          type: array
+          items:
+            $ref: '../models/Fire.yaml'
