@@ -104,7 +104,12 @@ class Incident extends Model
         'sub_regiao',
         'meios_aquaticos',
         'nearestWeatherStationId',
+        'source',
+        'anepcUpdatedAt',
     ];
+
+    public const SOURCE_ANEPC = 'anepc';
+    public const SOURCE_ICNF = 'icnf';
 
     public const NATUREZA_CODE_FIRE = [
         '3101',
@@ -211,6 +216,22 @@ class Incident extends Model
     public function scopeWhereFireId(Builder $query, string $id): Builder
     {
         return $query->whereRaw(['$or' => [['id' => $id], ['_id' => $id]]]);
+    }
+
+    /**
+     * Incident known only through ICNF (never updated by ANEPC). Documents
+     * created before `source` existed are recognised by the -1 sentinels the
+     * ICNF job writes for man/terrain/aerial.
+     */
+    public function isIcnfOnly(): bool
+    {
+        if ($this->source !== null) {
+            return $this->source === self::SOURCE_ICNF;
+        }
+
+        return (int) $this->man === -1
+            && (int) $this->terrain === -1
+            && (int) $this->aerial === -1;
     }
 
     public function scopeIsActive(Builder $query): Builder

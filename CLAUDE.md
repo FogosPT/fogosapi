@@ -72,8 +72,9 @@ Weather extremes:
 
 ### Jobs (Background Processing)
 The scheduler runs when `SCHEDULER_ENABLE=true`. Key jobs and their cadence:
-- `ProcessANPCAllDataV2` — every 2 minutes; core ingestion loop that fetches incidents from `ANEPC_API_URL` and upserts into MongoDB. After each run it dispatches `CheckIsActive` and `CheckImportantFireIncident`
-- `ProcessICNFNewFireData` — every 5 minutes; fetches ICNF fire data
+- `ProcessOcorrenciasSite` — every 5 minutes; core ANEPC ingestion from the ArcGIS `OcorrenciasSite` feed, upserts into MongoDB (`source=anepc`). After each run it dispatches `CheckIsActive` and `CheckImportantFireIncident`. `ProcessANPCAllDataV2` (`ANEPC_API_URL`) is the older feed, no longer scheduled (manual via `SyncANEPCIncidents`).
+- `ProcessICNFNewFireData` — every 5 minutes; fetches ICNF fire data (`App\Tools\ICNFTool`), creates fires ANEPC does not have (`source=icnf`)
+- **ANEPC ↔ ICNF failover** — `App\Support\AnepcFeedHealth` tracks the newest `DataDosDados` of the ANEPC feed in Redis. ANEPC is primary; when no new data arrives for `ANEPC_STALE_MINUTES` (default 30) the feed is *stale*: `ProcessOcorrenciasSite` stops writing the frozen snapshot, `CheckIsActive` is skipped, and `ProcessICNFNewFireData` owns the `active` flag (ICNF-only fires: active per `ICNFTool::isActive`; ANEPC fires: closed when ICNF says Extinto, never reopened). When fresh ANEPC data returns, ANEPC overwrites the incidents and `CheckIsActive` deactivates anything not in its list. Transitions are posted to Discord.
 - `UpdateICNFData` — runs at several intervals (4h, 12h, daily, etc.) indexed by a numeric mode argument (0–6)
 - `UpdateWeatherData` — hourly; updates weather station readings
 - `UpdateWeatherDataDaily` — daily; aggregates daily weather summaries

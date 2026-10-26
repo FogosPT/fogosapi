@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Incident;
 use App\Models\Location;
+use App\Support\AnepcFeedHealth;
 use App\Tools\DiscordTool;
 use Carbon\Carbon;
 use GuzzleHttp\Exception\ClientException;
@@ -46,6 +47,18 @@ class ProcessOcorrenciasSite extends Job
 
         $incidents = array_map(fn ($f) => $f['attributes'] ?? [], $features);
 
+        AnepcFeedHealth::record($incidents);
+
+        // A frozen snapshot would overwrite ICNF updates and, through
+        // CheckIsActive, deactivate every fire only ICNF knows about.
+        if (AnepcFeedHealth::isStale()) {
+            Log::info('OcorrenciasSite: feed is stale, ICNF is the primary source', [
+                'lastDataAt' => AnepcFeedHealth::lastDataAt()?->toIso8601String(),
+            ]);
+
+            return;
+        }
+
         $this->handleIncidents($incidents);
 
         Cache::forget('legacy.active.v1');
@@ -53,8 +66,6 @@ class ProcessOcorrenciasSite extends Job
         $activeList = array_map(fn ($a) => ['numero_sado' => (string) $a['Numero']], $incidents);
         dispatch(new CheckIsActive($activeList));
         dispatch(new CheckImportantFireIncident());
-
-        $this->trackFreshness($incidents);
     }
 
     private function fetchAllFeatures(): array
@@ -227,6 +238,8 @@ class ProcessOcorrenciasSite extends Job
             'rasi' => $data['RASI'] ?? null,
             'duracaoMinutos' => (int) ($data['DuracaoMinutos'] ?? 0),
             'endereco' => $data['Endereco'] ?? null,
+            'source' => Incident::SOURCE_ANEPC,
+            'anepcUpdatedAt' => Carbon::now(),
         ];
 
         if (!empty($data['DataDosDados'])) {
@@ -292,53 +305,5 @@ class ProcessOcorrenciasSite extends Job
             'DICO' => $location->code,
             'distrito' => $distrito[0]->name,
         ];
-    }
-
-    private function trackFreshness(array $incidents): void
-    {
-        $currentHash = md5(json_encode($incidents));
-        $jsonPath = 'history.json';
-
-        if (!file_exists($jsonPath)) {
-            return;
-        }
-
-        $json = file_get_contents($jsonPath);
-        $x = json_decode($json, true);
-        if (!is_array($x) || empty($x)) {
-            return;
-        }
-
-        $last = end($x);
-        $now = Carbon::now();
-        $then = Carbon::parse($last['time']);
-        $diff = $then->diffInMinutes($now);
-
-        if ($last['hash'] !== $currentHash) {
-            $x[] = [
-                'hash' => $currentHash,
-                'time' => $now,
-                'ticks' => 1,
-                'notify' => false,
-            ];
-
-            if ($last['notify']) {
-                DiscordTool::postError('Voltou a API depois de ' . $diff . ' minutos sem atualizar');
-            }
-        } else {
-            if ($diff >= 15) {
-                if (!$last['notify']) {
-                    DiscordTool::postError('A API não atualiza ha 10 minutos');
-                    $last['notify'] = true;
-                }
-
-                if ($last['ticks'] % 5 == 0) {
-                    DiscordTool::postError('A API não atualiza ha ' . $diff . ' minutos');
-                }
-            }
-
-            $last['ticks']++;
-            $x[] = $last;
-        }
     }
 }
