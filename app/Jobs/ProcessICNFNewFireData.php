@@ -3,7 +3,10 @@
 namespace App\Jobs;
 
 use App\Models\Incident;
+use App\Support\AnepcFeedHealth;
+use App\Tools\ICNFTool;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use voku\helper\UTF8;
 
@@ -23,59 +26,18 @@ class ProcessICNFNewFireData extends Job
      */
     public function handle()
     {
-        $url = 'https://fogos.icnf.pt/localizador/faztable.asp';
+        $occurrences = ICNFTool::fetchOccurrences();
 
-        $options = [
-            'headers' => [
-                'User-Agent' => 'Fogos.pt/3.0',
-                //    'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
-            ],
-            'verify' => false,
-            'connect_timeout' => 10,
-            'timeout' => 30,
-        ];
+        // While the ANEPC feed is frozen ICNF is the primary source for every
+        // fire it lists; otherwise only for incidents ANEPC never reported.
+        $anepcStale = AnepcFeedHealth::isStale();
+        $changed = false;
 
-        $client = new \GuzzleHttp\Client();
-        $res = $client->request('GET', $url, $options);
-
-        $data = $res->getBody()->getContents();
-        $data = str_replace(PHP_EOL, '', $data);
-
-        preg_match_all('/\[(.*?)\]/', $data, $result);
-
-        $i = 0;
-        $skippedIds = [];
-        foreach ($result[1] as $r) {
-            if ($i === 0 || $i === 1) {
-                ++$i;
-
-                continue;
-            }
-            ++$i;
-
-            $rr = explode("',", $r);
-            $icnfEstado = isset($rr[12]) ? ltrim($rr[12], "'") : '';
-
-            if ($icnfEstado === 'Extinto') {
-                $status = 'Conclusão';
-                $statusCode = 8;
-                $statusColor = '8e7e7d';
-            } elseif ($icnfEstado === 'Dominado') {
-                $status = 'Em Resolução';
-                $statusCode = 7;
-                $statusColor = '65C4ED';
-            } else {
-                $status = 'Em Curso';
-                $statusCode = 5;
-                $statusColor = 'B81E1F';
-            }
-
-            $id = strip_tags(str_replace("'", '', $rr[0]));
-
-            if (!ctype_digit($id)) {
-                $skippedIds[$id] = ($skippedIds[$id] ?? 0) + 1;
-                continue;
-            }
+        foreach ($occurrences as $occurrence) {
+            $id = $occurrence['id'];
+            $icnfEstado = $occurrence['estado'];
+            [$status, $statusCode, $statusColor] = ICNFTool::mapStatus($icnfEstado);
+            $icnfActive = ICNFTool::isActive($icnfEstado, $occurrence['startedAt']);
 
             $incident = Incident::whereFireId($id)
                 ->get();
@@ -125,7 +87,7 @@ class ProcessICNFNewFireData extends Job
                     'statusColor' =>$statusColor,
                     'status' => $status,
                     'localidade' => $localidade,
-                    'active' => true,
+                    'active' => $icnfActive,
                     'sadoId' => $id,
                     'sharepointId' => $id,
                     'disappear' => false,
@@ -137,7 +99,8 @@ class ProcessICNFNewFireData extends Job
                     'isFMA' => false,
                     'regiao' => false,
                     'sub_regiao' => false,
-                    'sentCheckImportant' => false
+                    'sentCheckImportant' => false,
+                    'source' => Incident::SOURCE_ICNF,
                 ];
 
 
@@ -151,33 +114,59 @@ class ProcessICNFNewFireData extends Job
 
                 $incidentDb = new Incident($point);
                 $incidentDb->save();
+                $changed = $changed || $icnfActive;
             } else {
-                $incident = $incident[0];
-
-                // Only mirror ICNF state on incidents we have no ANEPC data for
-                // (man/terrain/aerial all sentinel -1). Otherwise ANEPC remains
-                // the source of truth for status.
-                $icnfOnly = (int) $incident->man === -1
-                    && (int) $incident->terrain === -1
-                    && (int) $incident->aerial === -1;
-
-                if ($icnfOnly
-                    && $incident->statusCode !== $statusCode
-                    && $statusCode > (int) $incident->statusCode) {
-                    $incident->statusCode = $statusCode;
-                    $incident->status = $status;
-                    $incident->statusColor = $statusColor;
-                    $incident->save();
-                }
+                $changed = $this->updateFromIcnf($incident[0], $icnfEstado, $icnfActive, $anepcStale) || $changed;
             }
         }
 
-        if (!empty($skippedIds)) {
-            Log::debug('ICNF: skipped non-numeric ids', [
-                'total' => array_sum($skippedIds),
-                'unique' => $skippedIds,
-            ]);
+        if ($changed) {
+            Cache::forget('legacy.active.v1');
         }
+    }
+
+    /**
+     * Applies ICNF state to an existing incident when ICNF is the primary
+     * source for it. Returns whether the incident was saved.
+     */
+    private function updateFromIcnf(Incident $incident, string $icnfEstado, bool $icnfActive, bool $anepcStale): bool
+    {
+        $icnfOnly = $incident->isIcnfOnly();
+
+        if (!$anepcStale && !$icnfOnly) {
+            return false;
+        }
+
+        [$status, $statusCode, $statusColor] = ICNFTool::mapStatus($icnfEstado);
+        $dirty = false;
+
+        // Status only moves forward; never regress what ANEPC reported.
+        if ($statusCode > (int) $incident->statusCode) {
+            $incident->statusCode = $statusCode;
+            $incident->status = $status;
+            $incident->statusColor = $statusColor;
+            $dirty = true;
+        }
+
+        if ($icnfOnly) {
+            // ICNF owns the lifecycle: brings back fires that were dropped
+            // because a frozen ANEPC list did not include them.
+            if ((bool) $incident->active !== $icnfActive) {
+                $incident->active = $icnfActive;
+                $dirty = true;
+            }
+        } elseif ($icnfEstado === ICNFTool::ESTADO_EXTINTO && $incident->active) {
+            // ANEPC incident while the feed is frozen: close it when ICNF
+            // says it is out, but never reopen what ANEPC already closed.
+            $incident->active = false;
+            $dirty = true;
+        }
+
+        if ($dirty) {
+            $incident->save();
+        }
+
+        return $dirty;
     }
 
     private function parseIcnfDate(string $date, string $hour): ?Carbon

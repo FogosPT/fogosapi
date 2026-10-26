@@ -215,7 +215,9 @@ class ProcessANPCAllDataV2 extends Job
             'isOtherIncident' => $isOtherIncident,
             'isFMA' => $isFMA,
             'regiao' => $data['regiao'],
-            'sub_regiao' => $data['sub_regiao']
+            'sub_regiao' => $data['sub_regiao'],
+            'source' => Incident::SOURCE_ANEPC,
+            'anepcUpdatedAt' => Carbon::now(),
         ];
 
         if($create){
