@@ -54,6 +54,10 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --no-suggest
 
+      - name: Audit dependencies
+        # Fails on known security advisories; abandoned packages are reported only.
+        run: composer audit --locked --no-interaction --abandoned=report
+
       - name: Execute tests
         run: vendor/bin/phpunit --testdox --coverage-clover build/logs/clover.xml
         env:
