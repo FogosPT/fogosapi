@@ -1,8 +1,38 @@
 version: '3.8'
 
+# Rotate container logs (json-file) so a chatty service cannot fill the disk.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
+
+# App image. Pin a build with FOGOS_IMAGE_TAG=sha-<8 chars of the commit> in
+# .env to make deploys reproducible and rollbacks trivial (the image workflow
+# pushes that tag for api and scheduler on commits touching .docker/);
+# defaults to latest.
+x-app: &app
+  image: ghcr.io/fogospt/fogosapi:${FOGOS_IMAGE_TAG:-latest}
+  restart: unless-stopped
+  volumes:
+    - ./:/var/www/html
+  networks:
+    - fogos
+  logging: *logging
+
+# Queue workers: same image, unprivileged (www-data owns storage/), no ports.
+x-worker: &worker
+  <<: *app
+  user: www-data
+  # Only applied with `docker-compose --compatibility up -d` (compose v1).
+  deploy:
+    resources:
+      limits:
+        memory: 1536M
+
 services:
   fogos.server:
-    image: nginx:1.21.0
+    image: nginx:1.30.6-alpine
     expose:
       - 80
     volumes:
@@ -12,45 +42,60 @@ services:
     restart: unless-stopped
     ports:
       - 127.0.0.1:8080:80
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/nginx-health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging: *logging
     networks:
       fogos:
         aliases:
           - api.fogos.pt
 
   fogos.api:
-    image: ghcr.io/fogospt/fogosapi
-    restart: unless-stopped
-    volumes:
-      - ./:/var/www/html
+    <<: *app
     expose:
       - 9000
-    networks:
-      - fogos
-
-        #fogos.mongodb:
-        #image: mongo:4.4.6
-        #expose:
-        #- 27017
-        #restart: unless-stopped
-        #volumes:
-        #- mongodb_data:/data/db
-        #- ./.docker/mongodb/timezone:/etc/timezone
-        #- ./.docker/mongodb/localtime:/etc/localtime
-        #networks:
-        #- fogos
+    # php-fpm accepting connections. To load new code use
+    # `docker-compose kill -s USR2 fogos.api`: php-fpm reload, resets opcache,
+    # no container restart (a restart also re-chowns storage/ and is slower).
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 9000) ? 0 : 1);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   fogos.redis:
-    image: redis:6.2.3-alpine
+    image: redis:7.4.9-alpine
     # Internal only (no published port). REDIS_PASSWORD comes from .env and
-    # is also what the app uses (config/database.php).
+    # is also what the app uses (config/database.php); the app must use
+    # REDIS_HOST=fogos.redis.
     command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}"
+    volumes:
+      # AOF on a volume: queued jobs survive container recreation/upgrades
+      # (without it they lived in the container layer and were lost).
+      - redis_data:/data
+    environment:
+      # Lets redis-cli (healthcheck) authenticate without the password on the command line.
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
     expose:
       - 6379
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging: *logging
     networks:
       - fogos
 
   fogos.minio:
+    # No longer pullable: MinIO stopped publishing images (Docker Hub repo
+    # removed in 2025). Runs from the copy already on the host; keep a
+    # backup (`docker save … | gzip`) and never `docker image prune -a`.
     image: minio/minio:RELEASE.2023-09-30T07-02-29Z
     command: server /data --console-address ":9001"
     environment:
@@ -64,92 +109,66 @@ services:
     volumes:
       - /data:/data
     restart: unless-stopped
+    logging: *logging
     networks:
       - fogos
 
   fogos.renderer:
     build: ./renderer
+    # Playwright image's unprivileged user (Chromium still runs with
+    # --no-sandbox; at least it is no longer root).
+    user: pwuser
     environment:
       # Must cover SCREENSHOT_DOMAIN (exact host or a parent domain).
       ALLOWED_HOSTS: ${RENDERER_ALLOWED_HOSTS:-fogos.pt}
     expose:
       - 3000
     restart: unless-stopped
+    # Only applied with `docker-compose --compatibility up -d` (compose v1).
     deploy:
       resources:
         limits:
           cpus: 2
           memory: 2048M
+    logging: *logging
     networks:
       fogos:
         aliases:
           - fogos-renderer
 
   fogos.scheduler:
-    image: ghcr.io/fogospt/fogosapi-scheduler
+    # Cron needs root; the schedule itself runs as www-data (cron.d/artisan).
+    image: ghcr.io/fogospt/fogosapi-scheduler:${FOGOS_IMAGE_TAG:-latest}
     restart: unless-stopped
     volumes:
       - ./:/var/www/html
       - ./.docker/scheduler/cron.d:/etc/cron.d
-    expose:
-      - 9000
     depends_on:
       - fogos.api
+    logging: *logging
     networks:
       - fogos
     entrypoint: ./.docker/scheduler/entrypoint.sh
 
   fogos.worker:
-    image: ghcr.io/fogospt/fogosapi
-    restart: unless-stopped
-    volumes:
-      - ./:/var/www/html
-    expose:
-      - 9000
-    networks:
-      - fogos
+    <<: *worker
     command: php artisan queue:work --queue=default --sleep=3 --tries=3 --max-time=3600
 
   fogos.worker-icnf:
-    image: ghcr.io/fogospt/fogosapi
-    restart: unless-stopped
-    volumes:
-      - ./:/var/www/html
-    expose:
-      - 9000
-    depends_on:
-      - fogos.mongodb
-    networks:
-      - fogos
+    <<: *worker
     command: php artisan queue:work --queue=icnf --sleep=3 --tries=3 --max-time=3600
 
   fogos.worker-firms:
-    image: ghcr.io/fogospt/fogosapi
-    restart: unless-stopped
-    volumes:
-      - ./:/var/www/html
-    expose:
-      - 9000
-    depends_on:
-      - fogos.mongodb
-    networks:
-      - fogos
+    <<: *worker
     command: php artisan queue:work redis-long --queue=firms --sleep=3 --tries=1 --max-time=3600
 
   fogos.worker-mtg:
-    image: ghcr.io/fogospt/fogosapi
-    restart: unless-stopped
-    volumes:
-      - ./:/var/www/html
-    expose:
-      - 9000
-    depends_on:
-      - fogos.mongodb
-    networks:
-      - fogos
+    <<: *worker
     command: php artisan queue:work redis-long --queue=mtg-frp --sleep=3 --tries=2 --max-time=3600
 
+# Kept for docker-compose.override.yaml files that run MongoDB in compose.
 volumes:
+  redis_data:
   mongodb_data:
 
 networks:

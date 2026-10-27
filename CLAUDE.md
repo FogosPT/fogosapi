@@ -46,7 +46,28 @@ php artisan weather:collapse-warnings --dry-run
 php artisan weather:collapse-warnings
 ```
 
-## Architecture
+## Deploy (production, docker-compose v1 on the host)
+
+The repo is bind-mounted into every container (`/opt/fogosapi` → `/var/www/html`); `vendor/` lives on the host. The prod image has no composer and php-fpm runs opcache with `validate_timestamps=0`, so **code changes are invisible until php-fpm reloads**.
+
+```bash
+git pull
+# only when composer.lock changed (prod image has no composer):
+docker run --rm -v "$PWD":/app -w /app composer:2 install --no-dev --no-interaction --prefer-dist \
+  --optimize-autoloader --no-scripts --ignore-platform-req='ext-*'
+docker exec -u www-data fogosapi_fogos.api_1 php artisan package:discover   # after composer install
+docker exec -u www-data fogosapi_fogos.api_1 php artisan migrate --force     # when there are migrations
+docker-compose kill -s USR2 fogos.api        # php-fpm reload + opcache reset; sub-second blip vs seconds of 502s on restart
+docker exec -u www-data fogosapi_fogos.api_1 php artisan queue:restart       # workers pick up new code
+```
+
+- Run artisan as `-u www-data`: files root creates in `storage/` (e.g. today's log) are not writable by the www-data workers. The API container's entrypoint re-chowns `storage/` on start.
+- `docker-compose exec -T` (v1) can swallow output; prefer `docker exec <container>`.
+- Image changes (`.docker/**`) are built by the *build docker images* workflow; then `docker-compose pull --ignore-pull-failures && docker-compose up -d`. Pin with `FOGOS_IMAGE_TAG=sha-<8 chars>` in `.env` for reproducible deploys/rollbacks.
+- Redis has no published port: the app must use `REDIS_HOST=fogos.redis` and `REDIS_PASSWORD` (compose refuses to start Redis without it).
+- `minio/minio` can no longer be pulled (MinIO stopped publishing images); the host keeps the only copy — never `docker image prune -a`.
+- Memory limits under `deploy:` only apply with `docker-compose --compatibility up -d`.
+
 
 ### Framework & Infrastructure
 - **Laravel 12** (PHP 8.2+). App bootstrap lives in `bootstrap/app.php` using the `Application::configure()` style (routes, middleware, schedule, console commands all wired there).
