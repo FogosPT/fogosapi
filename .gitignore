@@ -21,3 +21,8 @@ storage/framework/views/*
 storage/logs/*
 !storage/logs/.gitkeep
 bootstrap/cache/*.php
+
+# Credentials read from the project root at runtime (never commit)
+credentials.json
+AuthKey*.p8
+*.p8
