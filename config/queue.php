@@ -16,6 +16,19 @@ return [
             'block_for' => null,
             'after_commit' => false,
         ],
+
+        // Same Redis queues, for jobs that run longer than the default
+        // retry_after (FIRMS up to 600 s, MTG simulation up to 1200 s): with
+        // 90 s a still-running job was handed to another worker and ran twice.
+        // retry_after must stay above the longest job $timeout.
+        'redis-long' => [
+            'driver' => 'redis',
+            'connection' => env('QUEUE_REDIS_CONNECTION', 'default'),
+            'queue' => env('REDIS_QUEUE', 'default'),
+            'retry_after' => (int) env('QUEUE_LONG_RETRY_AFTER', 1260),
+            'block_for' => null,
+            'after_commit' => false,
+        ],
     ],
 
     'batching' => [

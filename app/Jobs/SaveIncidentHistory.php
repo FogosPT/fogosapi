@@ -68,7 +68,10 @@ class SaveIncidentHistory extends Job
 
                 $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
 
-                $this->incident->lastTweetId = $lastTweetId;
+                // Keep the thread when the tweet failed (tweet() returns null).
+                if ($lastTweetId) {
+                    $this->incident->lastTweetId = $lastTweetId;
+                }
                 $this->incident->save();
 
                 FacebookTool::publish($status);
@@ -82,7 +85,10 @@ class SaveIncidentHistory extends Job
 
                 $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
 
-                $this->incident->lastTweetId = $lastTweetId;
+                // Keep the thread when the tweet failed (tweet() returns null).
+                if ($lastTweetId) {
+                    $this->incident->lastTweetId = $lastTweetId;
+                }
                 $this->incident->save();
 
                 FacebookTool::publish($status);
@@ -96,7 +102,10 @@ class SaveIncidentHistory extends Job
 
                 $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
 
-                $this->incident->lastTweetId = $lastTweetId;
+                // Keep the thread when the tweet failed (tweet() returns null).
+                if ($lastTweetId) {
+                    $this->incident->lastTweetId = $lastTweetId;
+                }
                 $this->incident->save();
 
                 FacebookTool::publish($status);
@@ -151,7 +160,10 @@ class SaveIncidentHistory extends Job
 
                     TwitterTool::retweetVost($lastTweetId);
 
-                    $this->incident->lastTweetId = $lastTweetId;
+                    // Keep the thread when the tweet failed (tweet() returns null).
+                    if ($lastTweetId) {
+                        $this->incident->lastTweetId = $lastTweetId;
+                    }
                     $this->incident->save();
 
                     $statusf = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:%0A  👩‍🚒 {$this->incident->man}%0A 🚒 {$this->incident->terrain}%0A 🚁 {$this->incident->aerial}%0A https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT 🚨ℹ";

@@ -134,7 +134,7 @@ services:
       - fogos.mongodb
     networks:
       - fogos
-    command: php artisan queue:work --queue=firms --sleep=3 --tries=1 --max-time=3600
+    command: php artisan queue:work redis-long --queue=firms --sleep=3 --tries=1 --max-time=3600
 
   fogos.worker-mtg:
     image: ghcr.io/fogospt/fogosapi
@@ -147,7 +147,7 @@ services:
       - fogos.mongodb
     networks:
       - fogos
-    command: php artisan queue:work --queue=mtg-frp --sleep=3 --tries=2 --max-time=3600
+    command: php artisan queue:work redis-long --queue=mtg-frp --sleep=3 --tries=2 --max-time=3600
 
 volumes:
   mongodb_data:

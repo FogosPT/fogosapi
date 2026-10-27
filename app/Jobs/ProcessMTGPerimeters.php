@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Redis;
 class ProcessMTGPerimeters extends Job
 {
     public $queue = 'mtg-frp';
+    public $connection = 'redis-long';
 
     public $timeout = 300;
 

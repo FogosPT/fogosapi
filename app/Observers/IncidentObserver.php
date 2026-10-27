@@ -30,7 +30,17 @@ trait IncidentObserver
             if($incident->dateTime->year >= 2022 ){
                 dispatch(new SaveIncidentHistory($incident));
                 dispatch(new SaveIncidentStatusHistory($incident));
+            }
 
+            // Announce only incidents created active and not already over:
+            // ICNF imports of fires already out, historical imports, and
+            // incidents first seen in Conclusão/Vigilância (e.g. when the ANEPC
+            // feed comes back after an outage) are stored quietly.
+            if (!$incident->active || (int) $incident->statusCode >= $incident::STATUS_ID['Conclusão']) {
+                return;
+            }
+
+            if($incident->dateTime->year >= 2022 ){
                 if ($incident->isFire) {
                     dispatch(new HandleNewIncidentSocialMedia($incident));
                     dispatch(new ProcessICNFFireData($incident));

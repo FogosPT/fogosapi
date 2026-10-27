@@ -17,7 +17,9 @@ class Renderer
     ): ?RendererCapture {
         $rendererUrl = rtrim(env('RENDERER_URL', 'http://fogos-renderer:3000'), '/');
         $timeoutMs   = (int) env('RENDERER_TIMEOUT_MS', 20000);
-        $retries     = max(1, (int) env('RENDERER_RETRIES', 3));
+        // 2 × 20 s + backoff stays under the 60 s worker timeout; 3 attempts
+        // could exceed it and get the calling job killed and retried.
+        $retries     = max(1, (int) env('RENDERER_RETRIES', 2));
         $minBytes    = (int) env('RENDERER_MIN_BYTES', 8192);
 
         $width  = $width  ?: (int) env('SCREENSHOT_WIDTH', 1000);
