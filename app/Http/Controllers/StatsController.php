@@ -33,7 +33,11 @@ class StatsController extends Controller
         $day = $request->get('day');
 
         if($day){
-            $day = new Carbon($day);
+            try {
+                $day = new Carbon((string) $day);
+            } catch (\Throwable $e) {
+                return new JsonResponse(['success' => false, 'error' => 'invalid_day'], 422);
+            }
         } else {
             $day = Carbon::today();
         }

@@ -26,7 +26,9 @@ class AssignNearestWeatherStation extends Job
         $nearest = self::findNearest($incident->lat, $incident->lng);
 
         if ($nearest) {
-            $incident->nearestWeatherStationId = $nearest->id;
+            // ->id is the ObjectId for stations created after the v5
+            // migration; the IPMA station id lives in stationId.
+            $incident->nearestWeatherStationId = $nearest->stationId ?? $nearest->id;
             $incident->save();
         }
     }

@@ -285,7 +285,9 @@ class Incident extends Model
 
     public function statusHistory()
     {
-        return $this->hasMany(IncidentStatusHistory::class, 'id', 'id');
+        // laravel-mongodb v5 maps a foreign key named `id` to `_id`, so the
+        // old ('id', 'id') never matched; status history stores incidentId.
+        return $this->hasMany(IncidentStatusHistory::class, 'incidentId', 'id');
 
     }
 }

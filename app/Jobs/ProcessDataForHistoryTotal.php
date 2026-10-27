@@ -29,9 +29,9 @@ class ProcessDataForHistoryTotal extends Job
         $aerial = 0;
         $cars = 0;
         foreach ($active as $f) {
-            $man += $f['man'];
-            $aerial += $f['aerial'];
-            $cars += $f['terrain'];
+            $man += max(0, (int) $f['man']); // ICNF stores -1 for unknown
+            $aerial += max(0, (int) $f['aerial']); // ICNF stores -1 for unknown
+            $cars += max(0, (int) $f['terrain']); // ICNF stores -1 for unknown
         }
 
         $data = [

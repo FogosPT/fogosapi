@@ -110,6 +110,10 @@ class LegacyController extends Controller
     public function firesData(Request $request)
     {
         $id = $request->get('id');
+
+        if (! is_string($id) || $id === '') {
+            abort(404);
+        }
         $cacheKey = 'legacy.firesData.v1.' . md5((string) $id);
 
         $payload = Cache::remember($cacheKey, 60, function () use ($id) {
@@ -312,6 +316,10 @@ class LegacyController extends Controller
     {
         $id = $request->get('id');
 
+        if (! is_string($id) || $id === '') {
+            abort(404);
+        }
+
         $incident = Incident::whereFireId($id)->get();
 
         if (isset($incident[0])) {
@@ -345,6 +353,10 @@ class LegacyController extends Controller
     public function firesStatus(Request $request)
     {
         $id = $request->get('id');
+
+        if (! is_string($id) || $id === '') {
+            abort(404);
+        }
 
         $incident = Incident::whereFireId($id)->get();
 
@@ -396,9 +408,9 @@ class LegacyController extends Controller
         $areal = 0;
         $cars = 0;
         foreach ($incidents->get() as $f) {
-            $man += $f['man'];
-            $areal += $f['aerial'];
-            $cars += $f['terrain'];
+            $man += max(0, (int) $f['man']); // ICNF stores -1 for unknown
+            $areal += max(0, (int) $f['aerial']); // ICNF stores -1 for unknown
+            $cars += max(0, (int) $f['terrain']); // ICNF stores -1 for unknown
         }
 
         $data = [
@@ -632,9 +644,9 @@ class LegacyController extends Controller
             $areal = 0;
             $cars = 0;
             foreach ($active as $f) {
-                $man += $f['man'];
-                $areal += $f['aerial'];
-                $cars += $f['terrain'];
+                $man += max(0, (int) $f['man']); // ICNF stores -1 for unknown
+                $areal += max(0, (int) $f['aerial']); // ICNF stores -1 for unknown
+                $cars += max(0, (int) $f['terrain']); // ICNF stores -1 for unknown
             }
 
             $status = "{$date} - {$total} Incêndios em curso combatidos por {$man} operacionais, {$cars} meios terrestres e {$areal} meios aereos. https://fogos.pt #FogosPT";
@@ -680,11 +692,11 @@ class LegacyController extends Controller
             foreach ($active as $r) {
                 if (!isset($distritos[$r['district']])) {
                     $distritos[$r['district']] = [
-                        'm' => $r['aerial'],
+                        'm' => max(0, (int) $r['aerial']),
                         't' => 1,
                     ];
                 } else {
-                    $distritos[$r['district']]['m'] += $r['aerial'];
+                    $distritos[$r['district']]['m'] += max(0, (int) $r['aerial']);
                     ++$distritos[$r['district']]['t'];
                 }
             }

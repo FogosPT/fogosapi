@@ -42,7 +42,7 @@ class AssignWeatherStations extends Command
                 if ($nearest) {
                     // Raw update to avoid triggering observer
                     Incident::where('_id', $incident->_id)
-                        ->update(['nearestWeatherStationId' => $nearest->id]);
+                        ->update(['nearestWeatherStationId' => $nearest->stationId ?? $nearest->id]);
                 }
 
                 $bar->advance();
