@@ -1,1 +1,2 @@
-* * * * * cd /var/www/html && /usr/local/bin/php artisan schedule:run > /proc/1/fd/1 2>/proc/1/fd/2
+# Runs as root (cron), drops to www-data so files the schedule writes (logs, cache) stay writable by the workers.
+* * * * * cd /var/www/html && su -s /bin/sh www-data -c "/usr/local/bin/php artisan schedule:run" > /proc/1/fd/1 2>/proc/1/fd/2
