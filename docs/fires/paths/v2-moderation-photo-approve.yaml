@@ -15,6 +15,11 @@ post:
     incident's coordinates. Failures on individual channels are logged but
     do not change the response. When `publish` is omitted or false, the
     photo is only approved silently.
+
+    Publication is **asynchronous and happens at most once per photo**: the
+    first request with `publish: true` queues it (`published: "queued"`) and
+    the response returns immediately; repeating the request (e.g. a client
+    retry) only re-approves and returns `published: "already"`.
   tags:
     - Moderation
   parameters:
@@ -44,6 +49,10 @@ post:
                 Telegram and Discord, and a push notification is sent to
                 the incident's topic. When false or omitted, the photo is
                 only approved without any external publication.
+            twitter:
+              type: boolean
+              default: false
+              description: Also post to Twitter/X when `publish` is true.
   responses:
     200:
       description: OK
@@ -54,6 +63,16 @@ post:
             properties:
               success:
                 type: boolean
+              published:
+                description: >-
+                  `false` when `publish` was not requested, `"queued"` when this
+                  request queued the publication, `"already"` when the photo had
+                  already been published (nothing is posted again).
+                oneOf:
+                  - type: boolean
+                    enum: [false]
+                  - type: string
+                    enum: [queued, already]
     401:
       $ref: '../../common/responses/401.yaml'
     404:
