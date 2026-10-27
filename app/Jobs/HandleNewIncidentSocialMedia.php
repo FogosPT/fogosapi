@@ -15,6 +15,9 @@ class HandleNewIncidentSocialMedia extends Job
 {
     public $incident;
 
+    // A retry re-sends the push and posts that already went out.
+    public $tries = 1;
+
     public function __construct(Incident $incident)
     {
         $this->incident = $incident;
@@ -35,7 +38,10 @@ class HandleNewIncidentSocialMedia extends Job
         try {
             $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
-            $this->incident->lastTweetId = $lastTweetId;
+            // Keep the thread when the tweet failed (tweet() returns null).
+            if ($lastTweetId) {
+                $this->incident->lastTweetId = $lastTweetId;
+            }
             $this->incident->save();
 
             if ($path) {

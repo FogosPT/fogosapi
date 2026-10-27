@@ -9,6 +9,7 @@ class TwitterTool
 {
     private static $client = false;
     private static $clientVOST = false;
+    private static $clientEmergencias = false;
 
     public static function getClient()
     {
@@ -28,17 +29,20 @@ class TwitterTool
         return self::$client;
     }
 
+    // The VOST and Emergências accounts used \TwitterAPIExchange (API v1.1),
+    // which is not installed, so every call crashed. They now use the same v2
+    // client with their own OAuth 1.0a credentials.
     public static function getVOSTClient()
     {
         if (!self::$clientVOST) {
-            $settings = [
-                'oauth_access_token' => env('TWITTER_OAUTH_ACCESS_TOKEN_VOST'),
-                'oauth_access_token_secret' => env('TWITTER_OAUTH_ACCESS_TOKEN_SECRET_VOST'),
+            self::$clientVOST = new Client([
+                'access_token' => env('TWITTER_OAUTH_ACCESS_TOKEN_VOST'),
+                'access_token_secret' => env('TWITTER_OAUTH_ACCESS_TOKEN_SECRET_VOST'),
                 'consumer_key' => env('TWITTER_CONSUMER_KEY_VOST'),
                 'consumer_secret' => env('TWITTER_CONSUMER_SECRET_VOST'),
-            ];
-
-            self::$clientVOST = new \TwitterAPIExchange($settings);
+                'bearer_token' => (string) env('TWITTER_BEARER_TOKEN_VOST', ''),
+                'account_id' => (string) env('TWITTER_ACCOUNT_ID_VOST', '0'),
+            ]);
         }
 
         return self::$clientVOST;
@@ -46,18 +50,18 @@ class TwitterTool
 
     public static function getClientEmergencias()
     {
-        if (!self::$client) {
-            $settings = [
-                'oauth_access_token' => env('TWITTER_OAUTH_ACCESS_TOKEN_EMERGENCIAS'),
-                'oauth_access_token_secret' => env('TWITTER_OAUTH_ACCESS_TOKEN_SECRET_EMERGENCIAS'),
+        if (!self::$clientEmergencias) {
+            self::$clientEmergencias = new Client([
+                'access_token' => env('TWITTER_OAUTH_ACCESS_TOKEN_EMERGENCIAS'),
+                'access_token_secret' => env('TWITTER_OAUTH_ACCESS_TOKEN_SECRET_EMERGENCIAS'),
                 'consumer_key' => env('TWITTER_CONSUMER_KEY_EMERGENCIAS'),
                 'consumer_secret' => env('TWITTER_CONSUMER_SECRET_EMERGENCIAS'),
-            ];
-
-            self::$client = new \TwitterAPIExchange($settings);
+                'bearer_token' => (string) env('TWITTER_BEARER_TOKEN_EMERGENCIAS', ''),
+                'account_id' => (string) env('TWITTER_ACCOUNT_ID_EMERGENCIAS', '0'),
+            ]);
         }
 
-        return self::$client;
+        return self::$clientEmergencias;
     }
 
     private static function splitTweets($long_string, $max_length = 280, $max_sentences = 10, $encoding = 'UTF-8')
@@ -104,12 +108,30 @@ class TwitterTool
         return $sentences_array;
     }
 
+    /**
+     * Returns the id of the last tweet posted, or null/false when disabled or
+     * on failure. Never throws: callers post to several channels and record
+     * "already sent" state after tweeting, so a Twitter error (429, duplicate
+     * text, ...) used to abort the job and, on retry, repeat the pushes and
+     * posts that ran before it.
+     */
     public static function tweet($text, $lastId = false, $imagePath = false, $emergencias = false, $vost = false, $bypassEnable = false)
     {
         if (!env('TWITTER_ENABLE')) {
             return false;
         }
 
+        try {
+            return self::postTweet($text, $lastId, $imagePath, $emergencias, $vost);
+        } catch (\Throwable $e) {
+            Log::warning('Twitter post failed: '.$e->getMessage(), ['vost' => $vost, 'emergencias' => $emergencias]);
+
+            return null;
+        }
+    }
+
+    private static function postTweet($text, $lastId, $imagePath, $emergencias, $vost)
+    {
         if($vost){
             $client = self::getVOSTClient();
         } else if($emergencias){
@@ -163,13 +185,21 @@ class TwitterTool
             return;
         }
 
-        $client = self::getVOSTClient();
+        if (!$id) {
+            return;
+        }
 
-        $url = 'https://api.twitter.com/1.1/statuses/retweet/' . $id . '.json';
+        // v2 retweets need the VOST numeric user id.
+        if (!env('TWITTER_ACCOUNT_ID_VOST')) {
+            Log::info('VOST retweet skipped: TWITTER_ACCOUNT_ID_VOST is not set');
 
-        $response = $client
-            ->buildOauth($url, 'POST')
-            ->setPostfields([])
-            ->performRequest();
+            return;
+        }
+
+        try {
+            self::getVOSTClient()->retweet()->performRequest(['tweet_id' => (string) $id]);
+        } catch (\Throwable $e) {
+            Log::warning('VOST retweet failed: '.$e->getMessage());
+        }
     }
 }

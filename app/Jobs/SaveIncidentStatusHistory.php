@@ -37,13 +37,17 @@ class SaveIncidentStatusHistory extends Job
             ->limit(1)
             ->get();
 
-        if (isset($last[0])) {
-            $last = $last[0];
+        $last = $last[0] ?? null;
 
-            if ($this->incident->status === $last['status']) {
-                return;
-            }
+        if ($last && $this->incident->status === $last['status']) {
+            return;
+        }
 
+        // Record the transition before posting: if a channel fails below, the
+        // next run sees this status as current instead of announcing it again.
+        $this->saveStatusHistory();
+
+        if ($last) {
             if ($this->incident->facebookPostId) {
                 $now = date('H:i');
                 FacebookTool::commentOnPost(
@@ -80,7 +84,10 @@ class SaveIncidentStatusHistory extends Job
                         try {
                             $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
-                            $this->incident->lastTweetId = $lastTweetId;
+                            // Keep the thread when the tweet failed (tweet() returns null).
+                            if ($lastTweetId) {
+                                $this->incident->lastTweetId = $lastTweetId;
+                            }
                             $this->incident->save();
 
                             FacebookTool::publish($status);
@@ -106,7 +113,10 @@ class SaveIncidentStatusHistory extends Job
                         try {
                             $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
-                            $this->incident->lastTweetId = $lastTweetId;
+                            // Keep the thread when the tweet failed (tweet() returns null).
+                            if ($lastTweetId) {
+                                $this->incident->lastTweetId = $lastTweetId;
+                            }
                             $this->incident->save();
 
                             TelegramTool::publish($status);
@@ -127,7 +137,10 @@ class SaveIncidentStatusHistory extends Job
                 LiveActivityTool::pushUpdate($this->incident);
             }
         }
+    }
 
+    private function saveStatusHistory(): void
+    {
         $incidentStatusHistory = new IncidentStatusHistory();
         $incidentStatusHistory->incidentId = $this->incident->id;
         $incidentStatusHistory->sharepointId = $this->incident->sharepointId;
@@ -135,7 +148,6 @@ class SaveIncidentStatusHistory extends Job
         $incidentStatusHistory->status = $this->incident->status;
         $incidentStatusHistory->statusCode = $this->incident->statusCode;
         $incidentStatusHistory->save();
-
     }
 
     private function updateIncident()

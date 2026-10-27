@@ -40,8 +40,8 @@ class CheckImportantFireIncident extends Job implements ShouldQueue, ShouldBeUni
 
 
         foreach ($incidents as $incident) {
-            if(isset($incidents->sentCheckImportant) && $incidents->sentCheckImportant){
-                return;
+            if ($incident->sentCheckImportant) {
+                continue;
             }
 
             $totalAssets = $incident->aerial + $incident->terrain;
@@ -52,6 +52,10 @@ class CheckImportantFireIncident extends Job implements ShouldQueue, ShouldBeUni
                 $timestampLast = strtotime('-3 hours', $timestampLast);
 
                 if ($incident->dateTime->timestamp < $timestampLast) {
+                    // Mark first: if a channel fails below, the retry or the
+                    // next run (every 2 min) must not announce it again.
+                    $incident->sentCheckImportant = true;
+                    $incident->save();
 
                     $hashTag = HashTagTool::getHashTag($incident->concelho);
 
@@ -72,8 +76,9 @@ class CheckImportantFireIncident extends Job implements ShouldQueue, ShouldBeUni
                     $facebookStatus = "ℹ🔥 Segundo os critérios da ANEPC o incêndio em {$incident->location} é considerado importante. https://{$domain}/fogo/{$incident->id} {$hashTag} #FogosPT 🔥ℹ";
                     FacebookTool::publish($facebookStatus);
 
-                    $incident->sentCheckImportant = true;
-                    $incident->save();
+                    if ($incident->isDirty('lastTweetId')) {
+                        $incident->save();
+                    }
                 }
             }
         }

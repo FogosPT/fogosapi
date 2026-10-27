@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 class ProcessFIRMSData extends Job
 {
     public $queue = 'firms';
+    public $connection = 'redis-long';
 
     public $timeout = 600;
 

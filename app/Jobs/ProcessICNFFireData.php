@@ -208,7 +208,10 @@ class ProcessICNFFireData extends Job
             try {
                 $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
-                $this->incident->lastTweetId = $lastTweetId;
+                // Keep the thread when the tweet failed (tweet() returns null).
+                if ($lastTweetId) {
+                    $this->incident->lastTweetId = $lastTweetId;
+                }
                 $this->incident->save();
 
                 FacebookTool::publish($status);
@@ -237,7 +240,10 @@ class ProcessICNFFireData extends Job
                 try {
                     $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId, $path);
 
-                    $this->incident->lastTweetId = $lastTweetId;
+                    // Keep the thread when the tweet failed (tweet() returns null).
+                    if ($lastTweetId) {
+                        $this->incident->lastTweetId = $lastTweetId;
+                    }
                     $this->incident->save();
                 } finally {
                     if ($shot) {

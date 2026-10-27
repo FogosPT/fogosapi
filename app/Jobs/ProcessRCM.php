@@ -29,7 +29,16 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
     {
         $this->publishSocial = $publishSocial;
         $this->tomorrow = $tomorrow;
-        Log::debug('');
+    }
+
+    /**
+     * Unique per mode. With the class-wide default lock, the hourly run at
+     * 18:00 took the lock first and the scheduled 18:00 "risk for tomorrow"
+     * social post was silently dropped.
+     */
+    public function uniqueId(): string
+    {
+        return ($this->publishSocial ? 'social' : 'quiet').'-'.($this->tomorrow ? 'tomorrow' : 'today');
     }
 
     /**

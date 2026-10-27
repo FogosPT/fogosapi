@@ -78,7 +78,10 @@ class ProcessICNFPDF extends Job implements ShouldQueue
             $hashtag = HashTagTool::getHashTag($this->incident->concelho);
             $status = "ℹ Incêndio na área de actuação própria do {$this->incident->cbv} https://{$domain}/fogo/{$this->incident->id} {$hashtag} ℹ";
             $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
-            $this->incident->lastTweetId = $lastTweetId;
+            // Keep the thread when the tweet failed (tweet() returns null).
+            if ($lastTweetId) {
+                $this->incident->lastTweetId = $lastTweetId;
+            }
             $this->incident->save();
         }
 

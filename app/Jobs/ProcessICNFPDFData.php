@@ -116,7 +116,10 @@ class ProcessICNFPDFData extends Job implements ShouldQueue, ShouldBeUnique
 
                 $status = "ℹ Área queimada disponível https://{$domain}/fogo/{$this->incident[0]->id}/detalhe {$hashtag} ℹ";
                 $lastTweetId = TwitterTool::tweet($status, $this->incident[0]->lastTweetId);
-                $this->incident[0]->lastTweetId = $lastTweetId;
+                // Keep the thread when the tweet failed (tweet() returns null).
+                if ($lastTweetId) {
+                    $this->incident[0]->lastTweetId = $lastTweetId;
+                }
                 $this->incident[0]->save();
             }
         }
