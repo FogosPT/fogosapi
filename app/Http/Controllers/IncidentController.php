@@ -575,12 +575,6 @@ class IncidentController extends Controller
 
     public function addPosit(Request $request, $id)
     {
-        $key = $request->header('key');
-
-        if(env('API_WRITE_KEY') !== $key){
-            abort(401);
-        }
-
         $incident = Incident::whereFireId($id)->firstOrFail();
 
         $incident->extra = $request->post('posit');
@@ -596,12 +590,6 @@ class IncidentController extends Controller
 
     public function addKML(Request $request, $id)
     {
-        $key = $request->header('key');
-
-        if(env('API_WRITE_KEY') !== $key){
-            abort(401);
-        }
-
         $incident = Incident::whereFireId($id)->firstOrFail();
 
         $kml    = (string) $request->post('kml');

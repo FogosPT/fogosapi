@@ -11,6 +11,25 @@ const RENDER_TIMEOUT_MS = parseInt(process.env.RENDER_TIMEOUT_MS || '15000', 10)
 const DEFAULT_WIDTH = parseInt(process.env.DEFAULT_WIDTH || '1000', 10);
 const DEFAULT_HEIGHT = parseInt(process.env.DEFAULT_HEIGHT || '1300', 10);
 const SETTLE_MS = parseInt(process.env.SETTLE_MS || '1500', 10);
+const MAX_DIMENSION = parseInt(process.env.MAX_DIMENSION || '3000', 10);
+// Hosts the renderer may open (exact or any subdomain), comma-separated.
+const ALLOWED_HOSTS = (process.env.ALLOWED_HOSTS || 'fogos.pt')
+  .split(',').map((h) => h.trim().toLowerCase()).filter(Boolean);
+
+function isAllowedUrl(raw) {
+  let parsed;
+  try { parsed = new URL(raw); } catch (_) { return false; }
+  if (parsed.protocol !== 'https:' || parsed.username || parsed.password) return false;
+  const host = parsed.hostname.toLowerCase();
+  return ALLOWED_HOSTS.some((h) => host === h || host.endsWith('.' + h));
+}
+
+function dimension(value) {
+  if (value === undefined || value === null) return undefined;
+  const n = parseInt(value, 10);
+  if (!Number.isFinite(n) || n < 1 || n > MAX_DIMENSION) return null;
+  return n;
+}
 
 let browser = null;
 const pool = [];
@@ -93,12 +112,24 @@ app.post('/render', async (request, reply) => {
   if (!url || typeof url !== 'string') {
     return reply.code(400).send({ error: 'url is required' });
   }
+  if (!isAllowedUrl(url)) {
+    request.log.warn({ url }, 'render refused: url not allowed');
+    return reply.code(403).send({ error: 'url not allowed' });
+  }
+  const w = dimension(width);
+  const h = dimension(height);
+  if (w === null || h === null) {
+    return reply.code(400).send({ error: `width/height must be 1..${MAX_DIMENSION}` });
+  }
+  if (waitFor !== undefined && (typeof waitFor !== 'string' || waitFor.length > 200)) {
+    return reply.code(400).send({ error: 'invalid waitFor' });
+  }
 
   const started = Date.now();
   let buffer;
   try {
     buffer = await Promise.race([
-      render({ url, width, height, waitFor }),
+      render({ url, width: w, height: h, waitFor }),
       new Promise((_, reject) => setTimeout(
         () => reject(new Error('render timeout')), RENDER_TIMEOUT_MS + 5000)),
     ]);

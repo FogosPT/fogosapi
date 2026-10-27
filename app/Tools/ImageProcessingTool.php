@@ -14,6 +14,8 @@ class ImageProcessingTool
     private const PNG_SIGNATURE = "\x89PNG\r\n\x1a\n";
     private const MAX_LONG_EDGE = 2560;
     private const JPEG_QUALITY  = 82;
+    // ~50 MP covers current phone cameras; 50M px × 4 B ≈ 200 MB decoded.
+    private const MAX_PIXELS    = 50_000_000;
 
     public static function isPng(string $bytes): bool
     {
@@ -94,6 +96,13 @@ class ImageProcessingTool
      */
     public static function process(string $bytes): array
     {
+        // GD decodes the full bitmap: check the declared size from the header
+        // first so a small file cannot expand into gigabytes of memory.
+        $size = @getimagesizefromstring($bytes);
+        if ($size === false || $size[0] < 1 || $size[1] < 1 || $size[0] * $size[1] > self::MAX_PIXELS) {
+            throw new \RuntimeException('Image dimensions missing or above the pixel limit.');
+        }
+
         $manager = ImageManager::gd();
         $image   = $manager->read($bytes);
 

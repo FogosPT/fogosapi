@@ -21,6 +21,9 @@
         <env name="DISCORD_ENABLE" value="false" force="true"/>
         <server name="CACHE_STORE" value="array" force="true"/>
         <server name="DISCORD_ENABLE" value="false" force="true"/>
+        <!-- postError() ignores DISCORD_ENABLE; blank its webhook in tests. -->
+        <env name="DISCORD_WEBHOOK_ID_ERRORS" value="" force="true"/>
+        <server name="DISCORD_WEBHOOK_ID_ERRORS" value="" force="true"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
     </php>
 </phpunit>

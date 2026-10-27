@@ -55,6 +55,10 @@ RUN docker-php-ext-install \
     redis \
     timezonedb
 
+# Production defaults (display_errors=Off, log_errors=On, ...); without a
+# php.ini PHP falls back to built-in defaults with display_errors on.
+RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+
 COPY zz-docker.conf /usr/local/etc/php-fpm.d/zz-docker.conf
 COPY uploads.ini /usr/local/etc/php/conf.d/zz-uploads.ini
 COPY opcache.ini /usr/local/etc/php/conf.d/zz-opcache.ini

@@ -29,12 +29,6 @@ class WarningsController extends Controller
 
     public function add(Request $request)
     {
-        $key = $request->header('key');
-
-        if(env('API_WRITE_KEY') !== $key){
-            abort(401);
-        }
-
         $status = $request->get('status');
 
         $warning = new Warning();
@@ -53,12 +47,6 @@ class WarningsController extends Controller
 
     public function addAgif(Request $request)
     {
-        $key = $request->header('key');
-
-        if(env('API_WRITE_KEY') !== $key){
-            abort(401);
-        }
-
         $status = $request->get('status');
 
         $warning = new WarningAgif();

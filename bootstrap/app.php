@@ -41,6 +41,7 @@ use App\Console\Commands\SyncOcorrenciasSite;
 use App\Console\Commands\TestStuff;
 use App\Http\Middleware\LiveActivityRateLimit;
 use App\Http\Middleware\PhotoModerationAuth;
+use App\Http\Middleware\RequireWriteKey;
 use App\Http\Middleware\PhotoUploadRateLimit;
 use Illuminate\Http\Middleware\HandleCors;
 
@@ -112,14 +113,33 @@ return Application::configure(basePath: dirname(__DIR__))
         }
     })
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->validateCsrfTokens(except: ['*']);
-        $middleware->trustProxies(at: '*');
+        // Stateless public API: no sessions (each request used to create a
+        // session document and Set-Cookie), no cookies, no CSRF.
+        $middleware->web(remove: [
+            \Illuminate\Cookie\Middleware\EncryptCookies::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \Illuminate\Session\Middleware\StartSession::class,
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+        ]);
+        // No trusted proxies: the client IP is resolved explicitly from the
+        // Cloudflare → nginx chain (trusting '*' let clients pick their IP).
+        $middleware->prepend(\App\Http\Middleware\ResolveClientIp::class);
         $middleware->append(HandleCors::class);
+        $middleware->append(\App\Http\Middleware\RejectArrayQueryParams::class);
         $middleware->alias([
             'photo.ratelimit'        => PhotoUploadRateLimit::class,
             'photo.modauth'          => PhotoModerationAuth::class,
+            'write.key'              => RequireWriteKey::class,
             'liveactivity.ratelimit' => LiveActivityRateLimit::class,
         ]);
     })
-    ->withExceptions(function (Exceptions $exceptions) {})
+    ->withExceptions(function (Exceptions $exceptions) {
+        // API only: render every error (validation included) as JSON instead
+        // of HTML or a session-backed redirect.
+        $exceptions->shouldRenderJsonWhen(fn () => true);
+
+        // Report unhandled exceptions to Sentry (no-op while SENTRY_DSN is empty).
+        \Sentry\Laravel\Integration::handles($exceptions);
+    })
     ->create();

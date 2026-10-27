@@ -41,12 +41,12 @@ services:
 
   fogos.redis:
     image: redis:6.2.3-alpine
-    command: redis-server --appendonly yes --requirepass
+    # Internal only (no published port). REDIS_PASSWORD comes from .env and
+    # is also what the app uses (config/database.php).
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}"
     expose:
       - 6379
     restart: unless-stopped
-    ports:
-      - 6379:6379
     networks:
       - fogos
 
@@ -69,6 +69,9 @@ services:
 
   fogos.renderer:
     build: ./renderer
+    environment:
+      # Must cover SCREENSHOT_DOMAIN (exact host or a parent domain).
+      ALLOWED_HOSTS: ${RENDERER_ALLOWED_HOSTS:-fogos.pt}
     expose:
       - 3000
     restart: unless-stopped

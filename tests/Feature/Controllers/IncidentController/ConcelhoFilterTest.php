@@ -38,9 +38,10 @@ class ConcelhoFilterTest extends TestCase
     /** @test */
     public function it_returns_422_when_concelho_is_not_a_string(): void
     {
+        // Rejected globally by RejectArrayQueryParams before the controller.
         $this->getJson('v2/incidents/active?concelho[]=Lisboa')
             ->assertStatus(422)
-            ->assertJson(['error' => 'invalid_concelho']);
+            ->assertJson(['error' => 'invalid_parameters']);
     }
 
     /** @test */

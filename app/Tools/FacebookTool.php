@@ -8,26 +8,6 @@ class FacebookTool
 {
     private const APP_PROMO_COMMENT = 'Se tirares fotos de incêndios, pedimos que as captes e submetas através da Aplicação fogos.pt disponível para Android e iOS. Dessa forma, as fotos ficam com localização e hora, podendo mais facilmente ser usadas em termos operacionais pelas entidades oficiais.';
 
-    private static function getUrl($message)
-    {
-        $pageId = env('FACEBOOK_PAGE_ID');
-        $clientId = env('FACEBOOK_CLIENT_ID');
-        $clientSecret = env('FACEBOOK_CLIENT_SECRET');
-        $accessCode = env('FACEBOOK_ACCESS_CODE');
-
-        return "https://graph.facebook.com/{$pageId}/feed?client_id={$clientId}&client_secret={$clientSecret}&access_token={$accessCode}&message={$message}";
-    }
-
-    private static function getEmergenciasUrl($message)
-    {
-        $pageId = env('FACEBOOK_PAGE_ID_EMERGENCIAS');
-        $clientId = env('FACEBOOK_CLIENT_ID_EMERGENCIAS');
-        $clientSecret = env('FACEBOOK_CLIENT_SECRET_EMERGENCIAS');
-        $accessCode = env('FACEBOOK_ACCESS_CODE_EMERGENCIAS');
-
-        return "https://graph.facebook.com/{$pageId}/feed?client_id={$clientId}&client_secret={$clientSecret}&access_token={$accessCode}&message={$message}";
-    }
-
     public static function publish($status)
     {
         if (!env('FACEBOOK_ENABLE')) {
@@ -35,7 +15,16 @@ class FacebookTool
         }
         try{
             $client = new \GuzzleHttp\Client();
-            $response = $client->request('POST', self::getUrl($status));
+            // Token and message go in the body: in the URL they leak into
+            // exception messages/logs, and the message was not encoded.
+            $response = $client->request('POST', 'https://graph.facebook.com/'.env('FACEBOOK_PAGE_ID').'/feed', [
+                'form_params' => [
+                    'access_token' => env('FACEBOOK_ACCESS_CODE'),
+                    // Callers still build messages for the old URL form with
+                    // %0A as line breaks; in the body that would be literal.
+                    'message' => str_ireplace('%0A', "\n", (string) $status),
+                ],
+            ]);
             $body = json_decode((string) $response->getBody(), true);
             $postId = $body['id'] ?? null;
             self::commentOnPost($postId, self::APP_PROMO_COMMENT);
@@ -107,14 +96,6 @@ class FacebookTool
     {
         if (!env('FACEBOOK_ENABLE')) {
             return;
-        }
-
-        try{
-            $client = new \GuzzleHttp\Client();
-            //$response = $client->request('POST', self::getEmergenciasUrl($status));
-
-        } catch (\Exception $e){
-            Log::error($e->getMessage());
         }
 
     }

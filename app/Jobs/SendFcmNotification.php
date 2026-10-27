@@ -42,8 +42,6 @@ class SendFcmNotification extends Job
             ],
         ];
 
-        Log::debug('FCM dispatch: ' . json_encode($headers));
-
         try {
             $client->post(self::ENDPOINT, $headers);
         } catch (RequestException $e) {

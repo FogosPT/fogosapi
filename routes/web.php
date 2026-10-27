@@ -66,11 +66,11 @@ Route::group(['prefix' => 'v2'], function () {
         Route::get('{id}/perimeter', '\App\Http\Controllers\FirePerimetersController@perimeterByIncident');
         Route::get('{id}/simulation', '\App\Http\Controllers\FirePerimetersController@simulationByIncident');
 
-        Route::post('{id}/posit', '\App\Http\Controllers\IncidentController@addPosit');
-        Route::post('{id}/kml', '\App\Http\Controllers\IncidentController@addKML');
+        Route::post('{id}/posit', '\App\Http\Controllers\IncidentController@addPosit')->middleware('write.key');
+        Route::post('{id}/kml', '\App\Http\Controllers\IncidentController@addKML')->middleware('write.key');
 
         Route::get('{id}/photos', '\App\Http\Controllers\IncidentPhotoController@publicList');
-        Route::post('{id}/photos/all', '\App\Http\Controllers\IncidentPhotoController@listAll');
+        Route::post('{id}/photos/all', '\App\Http\Controllers\IncidentPhotoController@listAll')->middleware('photo.modauth');
         Route::post('{id}/photos', '\App\Http\Controllers\IncidentPhotoController@upload')
             ->middleware('photo.ratelimit');
 
@@ -109,7 +109,7 @@ Route::group(['prefix' => 'v2'], function () {
 
     Route::group(['prefix' => 'rcm'], function () {
         Route::get('today', '\App\Http\Controllers\RCMController@today');
-        Route::get('update', '\App\Http\Controllers\RCMController@update');
+        Route::get('update', '\App\Http\Controllers\RCMController@update')->middleware('write.key');
         Route::get('tomorrow', '\App\Http\Controllers\RCMController@tomorrow');
         Route::get('after', '\App\Http\Controllers\RCMController@after');
         Route::get('parish', '\App\Http\Controllers\RCMController@parish');
@@ -126,8 +126,8 @@ Route::group(['prefix' => 'v2'], function () {
 
     Route::group(['prefix' => 'warnings'], function () {
         Route::get('ipma', '\App\Http\Controllers\WarningsController@ipma');
-        Route::post('add', '\App\Http\Controllers\WarningsController@add');
-        Route::post('add/agif', '\App\Http\Controllers\WarningsController@addAgif');
+        Route::post('add', '\App\Http\Controllers\WarningsController@add')->middleware('write.key');
+        Route::post('add/agif', '\App\Http\Controllers\WarningsController@addAgif')->middleware('write.key');
     });
 
     Route::group(['prefix' => 'stats'], function () {

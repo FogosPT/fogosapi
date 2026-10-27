@@ -267,10 +267,6 @@ class IncidentPhotoController extends Controller
 
     public function listAll(Request $request, string $id): JsonResponse
     {
-        if (env('PHOTO_MODERATION_KEY') !== $request->header('key')) {
-            abort(401);
-        }
-
         Incident::whereFireId($id)->firstOrFail();
 
         $perPage = min(200, max(1, (int) $request->get('per_page', 50)));
