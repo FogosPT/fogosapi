@@ -53,6 +53,7 @@ class WeatherDataDaily extends Model
 
     public function station()
     {
-        return $this->hasOne(WeatherStation::class, 'id', 'stationId');
+        // Not ('id', …): laravel-mongodb v5 maps `id` to `_id`.
+        return $this->hasOne(WeatherStation::class, 'stationId', 'stationId');
     }
 }

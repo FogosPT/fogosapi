@@ -138,8 +138,11 @@ class WeatherController extends Controller
         }
 
 
-        $date = $request->get('date');
-        $date = new Carbon($date);
+        try {
+            $date = new Carbon((string) $request->get('date'));
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'error' => 'invalid_date'], 422);
+        }
 
         $date = Carbon::parse($date->startOfDay());
 

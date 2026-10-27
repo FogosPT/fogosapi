@@ -64,7 +64,10 @@ class IncidentController extends Controller
             // Write utf-8 bom to the file
             fputs($f, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-            fputcsv($f, array_keys($incidents[0]->toArray()), ';');
+            // No active incidents: empty file (BOM only) instead of a 500.
+            if (isset($incidents[0])) {
+                fputcsv($f, array_keys($incidents[0]->toArray()), ';');
+            }
 
 
             foreach ($incidents as $i) {

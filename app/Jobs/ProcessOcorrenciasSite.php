@@ -38,6 +38,12 @@ class ProcessOcorrenciasSite extends Job
         } catch (ClientException $e) {
             DiscordTool::postError('Error OcorrenciasSite API => ' . $e->getCode() . ' => ' . $e->getMessage());
             return;
+        } catch (\GuzzleHttp\Exception\GuzzleException|\RuntimeException $e) {
+            // Network errors / 5xx / an incomplete page set: skip this run
+            // (retrying immediately rarely helps; the next run is in 2 min and
+            // AnepcFeedHealth alerts if the feed stays down).
+            Log::warning('OcorrenciasSite fetch failed: ' . $e->getMessage());
+            return;
         }
 
         if (empty($features)) {
@@ -99,6 +105,12 @@ class ProcessOcorrenciasSite extends Job
             $body = json_decode($res->getBody(), true);
 
             if (!is_array($body) || !isset($body['features'])) {
+                // A bad later page used to end the loop and hand a partial
+                // list to CheckIsActive, deactivating everything on the
+                // missing pages.
+                if ($offset > 0) {
+                    throw new \RuntimeException("OcorrenciasSite returned an invalid page at offset {$offset}");
+                }
                 break;
             }
 

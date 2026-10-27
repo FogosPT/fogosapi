@@ -187,14 +187,20 @@ class ProcessICNFNewFireData extends Job
         ];
 
         foreach ($formats as $format) {
-            $parsed = Carbon::createFromFormat($format, $raw, 'Europe/lisbon');
+            // Carbon 3 throws on a format mismatch instead of returning false;
+            // uncaught, one odd date aborted the whole ICNF run.
+            try {
+                $parsed = Carbon::createFromFormat($format, $raw, 'Europe/Lisbon');
+            } catch (\Throwable $e) {
+                continue;
+            }
             if ($parsed !== false) {
                 return $parsed;
             }
         }
 
         try {
-            return new Carbon($raw, 'Europe/lisbon');
+            return new Carbon($raw, 'Europe/Lisbon');
         } catch (\Throwable $e) {
             return null;
         }
