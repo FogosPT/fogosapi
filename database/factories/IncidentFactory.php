@@ -14,7 +14,8 @@ class IncidentFactory extends Factory
         $dateTime = $this->faker->dateTime;
 
         return [
-            'id' => (string) $this->faker->randomDigit,
+            // Unique: a random digit collided (E11000 on _id) when a test created several incidents.
+            'id' => (string) $this->faker->unique()->numberBetween(1_000_000, 9_999_999),
             'coords' => $this->faker->boolean,
             'dateTime' => $dateTime,
             'date' => $dateTime->format('d-m-Y'),
