@@ -21,6 +21,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
+use MongoDB\BSON\UTCDateTime;
 use voku\helper\UTF8;
 
 /** @deprecated */
@@ -250,24 +251,31 @@ class LegacyController extends Controller
 
     public function statsWeek()
     {
-        $timestampLast = strtotime(date('Y-m-d 00:00'));
+        // One aggregation (fires per local day) instead of 9 count queries.
+        $return = Cache::remember('legacy.stats.week.v1.'.Carbon::today()->toDateString(), 60, function () {
+            $first = Carbon::today()->subDays(8)->startOfDay();
+            $last = Carbon::today()->endOfDay();
 
-        $return = [];
-        for ($i = 0; $i <= 8; ++$i) {
-            $start = strtotime("-{$i} days", $timestampLast);
-            $date_start = Carbon::parse($start)->startOfDay();
-            $date_end = Carbon::parse($start)->endOfDay();
+            $counts = [];
+            foreach ($this->aggregateFires($first, $last, [], [
+                ['$group' => [
+                    '_id' => ['$dateToString' => ['format' => '%Y-%m-%d', 'date' => '$dateTime', 'timezone' => config('app.timezone')]],
+                    'n' => ['$sum' => 1],
+                ]],
+            ]) as $row) {
+                $counts[$row['_id']] = $row['n'];
+            }
 
-            $incidents = Incident::where('isFire', true)->where([['dateTime', '>=', $date_start], ['dateTime', '<=', $date_end]]);
+            $return = [];
+            for ($day = $first->copy(); $day->lte($last); $day->addDay()) {
+                $return[] = [
+                    'label' => $day->format('Y-m-d'),
+                    'total' => $counts[$day->format('Y-m-d')] ?? 0,
+                ];
+            }
 
-            $_r = [
-                'label' => $date_start->format('Y-m-d', ),
-                'total' => $incidents->count(),
-            ];
-            $return[] = $_r;
-        }
-
-        $return = array_reverse($return);
+            return $return;
+        });
 
         $response = [
             'success' => true,
@@ -429,70 +437,96 @@ class LegacyController extends Controller
         return response()->json($response);
     }
 
+    /**
+     * Fires per district in [start, end] (a $group aggregation instead of
+     * loading every document just to count it).
+     */
     private function getForStatsTimestamp($start, $end)
     {
-        $incidents = Incident::where('isFire', true)
-            ->where([['dateTime', '>=', $start], ['dateTime', '<=', $end]])
-            ->get();
-
-        $total = $incidents->count();
-        $distritos = [];
-        foreach ($incidents as $r) {
-            if (!isset($distritos[$r['district']])) {
-                $distritos[$r['district']] = 1;
-            } else {
-                ++$distritos[$r['district']];
+        return $this->cachedStats('timestamp', $start, $end, function () use ($start, $end) {
+            $distritos = [];
+            foreach ($this->aggregateFires($start, $end, [], [
+                ['$group' => ['_id' => '$district', 'n' => ['$sum' => 1]]],
+            ]) as $row) {
+                $distritos[(string) $row['_id']] = $row['n'];
             }
-        }
 
-        arsort($distritos);
+            arsort($distritos);
 
-        return [
-            'total' => $total,
-            'distritos' => $distritos,
-        ];
+            return [
+                'total' => array_sum($distritos),
+                'distritos' => $distritos,
+            ];
+        });
     }
 
     private function getForBurnedArea($start, $end)
     {
-        $incidents = Incident::where('isFire', true)
-            ->where('icnf.burnArea.total', '>', 0)
-            ->where([['dateTime', '>=', $start], ['dateTime', '<=', $end]])
-            ->get();
+        return $this->cachedStats('burned', $start, $end, function () use ($start, $end) {
+            $rows = $this->aggregateFires($start, $end, ['icnf.burnArea.total' => ['$gt' => 0]], [
+                ['$group' => ['_id' => null, 'total' => ['$sum' => '$icnf.burnArea.total']]],
+            ]);
 
-        $total = 0;
-
-        foreach ($incidents as $r) {
-            $total += (float)$r['icnf']['burnArea']['total'];
-        }
-
-        return $total;
+            return (float) ($rows[0]['total'] ?? 0);
+        });
     }
 
     private function getForMotive($start, $end)
     {
-        $incidents = Incident::where('isFire', true)
-            ->where('icnf.causa', 'exists', true)
-            ->where([['dateTime', '>=', $start], ['dateTime', '<=', $end]])
-            ->get();
-
-
-        $motives = [];
-
-        foreach ($incidents as $r) {
-            $key = false;
-            if(isset($r['icnf']['tipocausa']) && isset($r['icnf']['causafamilia'])){
-                $key = $r['icnf']['tipocausa'] . ' ' . $r['icnf']['causafamilia'];
+        return $this->cachedStats('motive', $start, $end, function () use ($start, $end) {
+            $motives = [];
+            foreach ($this->aggregateFires($start, $end, [
+                'icnf.causa' => ['$exists' => true],
+                'icnf.tipocausa' => ['$exists' => true, '$ne' => null],
+                'icnf.causafamilia' => ['$exists' => true, '$ne' => null],
+            ], [
+                ['$group' => [
+                    '_id' => ['tipo' => '$icnf.tipocausa', 'familia' => '$icnf.causafamilia'],
+                    'n' => ['$sum' => 1],
+                ]],
+            ]) as $row) {
+                $motives[$row['_id']['tipo'].' '.$row['_id']['familia']] = $row['n'];
             }
 
-            if($key && isset($motives[$key])){
-                $motives[$key]++;
-            } elseif ($key){
-                $motives[$key] = 1;
-            }
-        }
+            ksort($motives);
 
-        return $motives;
+            return $motives;
+        });
+    }
+
+    /**
+     * $match fires started in [start, end] (+ extra conditions), then $stages.
+     */
+    private function aggregateFires($start, $end, array $match, array $stages): array
+    {
+        $pipeline = array_merge([
+            ['$match' => [
+                'isFire' => true,
+                'dateTime' => [
+                    '$gte' => new UTCDateTime(Carbon::parse($start)),
+                    '$lte' => new UTCDateTime(Carbon::parse($end)),
+                ],
+            ] + $match],
+        ], $stages);
+
+        return Incident::raw(fn ($collection) => $collection->aggregate($pipeline, [
+            'typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array'],
+        ])->toArray());
+    }
+
+    /**
+     * Windows reaching now are cached for a minute. Closed windows for an
+     * hour: counts are final but ICNF fills burn area / cause days later.
+     */
+    private function cachedStats(string $kind, $start, $end, \Closure $compute)
+    {
+        $start = Carbon::parse($start);
+        $end = Carbon::parse($end);
+        $open = $end->greaterThanOrEqualTo(Carbon::now()->subMinute());
+
+        $key = 'legacy.stats.'.$kind.'.v1.'.$start->timestamp.'.'.($open ? 'open' : $end->timestamp);
+
+        return Cache::remember($key, $open ? 60 : 3600, $compute);
     }
 
     public function stats8hours()
