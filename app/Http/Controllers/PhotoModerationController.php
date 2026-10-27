@@ -2,20 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\BroadcastApprovedPhoto;
 use App\Models\Incident;
 use App\Models\IncidentPhoto;
 use App\Resources\IncidentPhotoModerationResource;
-use App\Tools\DiscordTool;
-use App\Tools\FacebookTool;
-use App\Tools\NotificationTool;
 use App\Tools\PhotoStorageTool;
-use App\Tools\TelegramTool;
-use App\Tools\TwitterTool;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Bus;
 
 class PhotoModerationController extends Controller
 {
@@ -48,23 +44,41 @@ class PhotoModerationController extends Controller
             abort(404);
         }
 
-        $photo->status     = IncidentPhoto::STATUS_APPROVED;
-        $photo->moderation = array_merge((array) $photo->moderation, [
-            'reviewed_at' => Carbon::now(),
+        // Field-level update: saving the whole `moderation` array could wipe a
+        // concurrent request's moderation.published_at claim.
+        IncidentPhoto::where('_id', $photo->getKey())->update([
+            'status' => IncidentPhoto::STATUS_APPROVED,
+            'moderation.reviewed_at' => Carbon::now(),
         ]);
-        $photo->save();
 
         $publish = filter_var($request->input('publish', false), FILTER_VALIDATE_BOOLEAN);
         $twitter = filter_var($request->input('twitter', false), FILTER_VALIDATE_BOOLEAN);
 
-        if ($publish) {
-            $incident = Incident::whereFireId($photo->fire_id)->first();
-            if ($incident !== null) {
-                $this->broadcastApprovedPhoto($photo, $incident, $twitter);
+        $published = false;
+        // Nothing to publish for a photo whose incident does not exist.
+        if ($publish && Incident::whereFireId((string) $photo->fire_id)->exists()) {
+            // Publishing used to run inside this request: slow uploads made
+            // clients time out and retry, and every retry posted again.
+            // Claim the publication atomically (first request wins) and post
+            // from the queue, so the response is immediate and repeats are
+            // no-ops.
+            $published = $this->claimPublication($photo) ? 'queued' : 'already';
+            if ($published === 'queued') {
+                try {
+                    Bus::dispatch(new BroadcastApprovedPhoto((string) $photo->_id, $twitter));
+                } catch (\Throwable $e) {
+                    // Queue unavailable: release the claim so a retry can
+                    // publish, instead of leaving the photo marked as
+                    // published forever.
+                    $this->releasePublication($photo);
+                    report($e);
+
+                    return new JsonResponse(['success' => false, 'error' => 'publish_queue_unavailable'], 503);
+                }
             }
         }
 
-        return new JsonResponse(['success' => true]);
+        return new JsonResponse(['success' => true, 'published' => $published]);
     }
 
     public function reject(Request $request, string $photoId): JsonResponse
@@ -85,107 +99,21 @@ class PhotoModerationController extends Controller
         return new JsonResponse(['success' => true]);
     }
 
-    private function broadcastApprovedPhoto(IncidentPhoto $photo, Incident $incident, bool $twitter = false): void
+    /**
+     * Sets moderation.published_at only if it is not set yet; true for the
+     * single request that set it.
+     */
+    private function claimPublication(IncidentPhoto $photo): bool
     {
-        $text = $this->buildPublicationText($photo, $incident);
-
-        $tmp = null;
-        try {
-            $contents = Storage::disk('minio')->get($photo->storage_key);
-            if ($contents !== null) {
-                $tmp = tempnam(sys_get_temp_dir(), 'fogo_photo_') . '.jpg';
-                file_put_contents($tmp, $contents);
-            }
-        } catch (\Throwable $e) {
-            DiscordTool::postError('Photo approve: failed to fetch image from MinIO — ' . $e->getMessage());
-            $tmp = null;
-        }
-
-        if ($twitter) {
-            try {
-                TwitterTool::tweet($text, false, $tmp ?: false);
-            } catch (\Throwable $e) {
-                DiscordTool::postError('Photo approve: Twitter failed — ' . $e->getMessage());
-            }
-        }
-
-        try {
-            if ($tmp) {
-                FacebookTool::publishWithImage($text, $tmp);
-            } else {
-                FacebookTool::publish($text);
-            }
-        } catch (\Throwable $e) {
-            DiscordTool::postError('Photo approve: Facebook failed — ' . $e->getMessage());
-        }
-
-        try {
-            if ($tmp) {
-                TelegramTool::publishImage($text, $tmp);
-            } else {
-                TelegramTool::publish($text);
-            }
-        } catch (\Throwable $e) {
-            DiscordTool::postError('Photo approve: Telegram failed — ' . $e->getMessage());
-        }
-
-        try {
-            $discordText = $text . "\n" . PhotoStorageTool::publicUrl($photo->storage_key);
-            DiscordTool::post($discordText);
-        } catch (\Throwable $e) {
-            DiscordTool::postError('Photo approve: Discord failed — ' . $e->getMessage());
-        }
-
-        try {
-            NotificationTool::sendNewPhotoNotification($incident);
-        } catch (\Throwable $e) {
-            DiscordTool::postError('Photo approve: push notification failed — ' . $e->getMessage());
-        }
-
-        if ($tmp && file_exists($tmp)) {
-            @unlink($tmp);
-        }
+        // null also matches a missing field.
+        return IncidentPhoto::where('_id', $photo->getKey())
+            ->whereNull('moderation.published_at')
+            ->update(['moderation.published_at' => Carbon::now()]) === 1;
     }
 
-    private function buildPublicationText(IncidentPhoto $photo, Incident $incident): string
+    private function releasePublication(IncidentPhoto $photo): void
     {
-        $base = "Foi publicada uma nova foto no incêndio em {$incident->location}. https://fogos.pt/pt/fogo/{$incident->id}/detalhe";
-
-        $extras = [];
-
-        if ($photo->taken_at instanceof \DateTimeInterface) {
-            $taken = Carbon::instance($photo->taken_at)->setTimezone(config('app.timezone'));
-            $extras[] = 'Tirada às ' . $taken->format('H:i');
-        }
-
-        $photoLat = is_array($photo->gps) ? ($photo->gps['lat'] ?? null) : null;
-        $photoLng = is_array($photo->gps) ? ($photo->gps['lng'] ?? null) : null;
-
-        if ($photoLat !== null && $photoLng !== null && $incident->lat !== null && $incident->lng !== null) {
-            $km = $this->haversineKm((float) $photoLat, (float) $photoLng, (float) $incident->lat, (float) $incident->lng);
-            $formatted = number_format($km, 1, ',', '');
-            if (empty($extras)) {
-                $extras[] = "A {$formatted} km do local do incêndio";
-            } else {
-                $extras[count($extras) - 1] .= " a {$formatted} km do local do incêndio";
-            }
-        }
-
-        if (!empty($extras)) {
-            return $base . "\n" . implode(' ', $extras) . '.';
-        }
-
-        return $base;
-    }
-
-    private function haversineKm(float $lat1, float $lng1, float $lat2, float $lng2): float
-    {
-        $earthRadius = 6371;
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLng = deg2rad($lng2 - $lng1);
-        $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-
-        return $earthRadius * $c;
+        IncidentPhoto::where('_id', $photo->getKey())
+            ->update(['$unset' => ['moderation.published_at' => '']]);
     }
 }
