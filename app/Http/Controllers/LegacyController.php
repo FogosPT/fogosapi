@@ -524,7 +524,9 @@ class LegacyController extends Controller
         $end = Carbon::parse($end);
         $open = $end->greaterThanOrEqualTo(Carbon::now()->subMinute());
 
-        $key = 'legacy.stats.'.$kind.'.v1.'.$start->timestamp.'.'.($open ? 'open' : $end->timestamp);
+        // Always key on both ends: windows that merely end near "now" (e.g.
+        // today vs 00h-08h right after 08:00) must not share an entry.
+        $key = 'legacy.stats.'.$kind.'.v2.'.$start->timestamp.'.'.$end->timestamp;
 
         return Cache::remember($key, $open ? 60 : 3600, $compute);
     }
@@ -739,7 +741,9 @@ class LegacyController extends Controller
     public function stats()
     {
         $timestampLast = Carbon::today();
-        $timestamp = Carbon::now();
+        // Same result as "until now" (no fire starts in the future) with a
+        // stable cache key.
+        $timestamp = Carbon::today()->endOfDay();
 
         $result = $this->getForStatsTimestamp($timestampLast, $timestamp);
         $total = $result['total'];

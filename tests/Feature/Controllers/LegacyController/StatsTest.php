@@ -77,6 +77,23 @@ class StatsTest extends TestCase
             ->assertJsonPath('data', ['Negligente Queimadas' => 2, 'Intencional Vandalismo' => 1]);
     }
 
+    /** @test */
+    public function fixed_windows_do_not_share_cache_with_today(): void
+    {
+        // Just after 08:00: a fire at 08:00:30 is today's, not 00h-08h's.
+        Carbon::setTestNow(Carbon::parse('2026-08-16 08:00:50', 'Europe/Lisbon'));
+        $this->fire('Lisboa', '2026-08-16 07:00');
+        $this->fire('Lisboa', '2026-08-16 08:00:30');
+
+        $this->getJson('v1/stats/today')->assertJsonPath('data.total', 2);
+        $this->getJson('v1/stats/8hours')->assertJsonPath('data.00h-08h.total', 1);
+
+        Cache::flush();
+
+        $this->getJson('v1/stats/8hours')->assertJsonPath('data.00h-08h.total', 1);
+        $this->getJson('v1/stats/today')->assertJsonPath('data.total', 2);
+    }
+
     private function fire(string $district, string $at, array $attributes = []): void
     {
         IncidentFactory::new()->fire()->create($attributes + [
