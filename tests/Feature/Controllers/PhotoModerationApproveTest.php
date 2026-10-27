@@ -7,6 +7,7 @@ use App\Models\IncidentPhoto;
 use Database\Factories\IncidentFactory;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Testing\Fakes\QueueFake;
 use Tests\TestCase;
 
 class PhotoModerationApproveTest extends TestCase
@@ -20,6 +21,8 @@ class PhotoModerationApproveTest extends TestCase
         parent::setUp();
 
         Queue::fake();
+
+        IncidentFactory::new()->active()->fire()->create(['id' => '2026300001', 'dateTime' => now()]);
 
         $this->keyBackup = $_SERVER['PHOTO_MODERATION_KEY'] ?? null;
         $_SERVER['PHOTO_MODERATION_KEY'] = $_ENV['PHOTO_MODERATION_KEY'] = 'mod-key';
@@ -71,9 +74,40 @@ class PhotoModerationApproveTest extends TestCase
     }
 
     /** @test */
+    public function a_failed_enqueue_releases_the_claim_so_a_retry_publishes(): void
+    {
+        $photo = $this->pendingPhoto();
+
+        Queue::swap(new class(app()) extends QueueFake {
+            public function push($job, $data = '', $queue = null)
+            {
+                throw new \RuntimeException('Redis is loading the dataset in memory');
+            }
+        });
+
+        $this->approve($photo, ['publish' => true])
+            ->assertStatus(503)
+            ->assertJson(['success' => false, 'error' => 'publish_queue_unavailable']);
+        $this->assertNull(IncidentPhoto::find($photo->_id)->moderation['published_at'] ?? null);
+
+        // Queue back: the retry publishes.
+        Queue::fake();
+        $this->approve($photo, ['publish' => true])->assertJson(['published' => 'queued']);
+        Queue::assertPushed(BroadcastApprovedPhoto::class, 1);
+    }
+
+    /** @test */
+    public function publish_is_skipped_when_the_incident_does_not_exist(): void
+    {
+        $photo = $this->pendingPhoto('2026999999');
+
+        $this->approve($photo, ['publish' => true])->assertJson(['published' => false]);
+        Queue::assertNotPushed(BroadcastApprovedPhoto::class);
+    }
+
+    /** @test */
     public function the_broadcast_job_survives_unavailable_storage_and_disabled_channels(): void
     {
-        IncidentFactory::new()->active()->fire()->create(['id' => '2026300001', 'dateTime' => now()]);
         $photo = $this->pendingPhoto();
 
         // MinIO is not reachable in tests and every channel flag is off:
@@ -83,10 +117,10 @@ class PhotoModerationApproveTest extends TestCase
         $this->assertTrue(true);
     }
 
-    private function pendingPhoto(): IncidentPhoto
+    private function pendingPhoto(string $fireId = '2026300001'): IncidentPhoto
     {
         $photo = new IncidentPhoto();
-        $photo->fire_id = '2026300001';
+        $photo->fire_id = $fireId;
         $photo->status = IncidentPhoto::STATUS_PENDING;
         $photo->public = true;
         $photo->storage_key = 'incidents/2026300001/x.jpg';

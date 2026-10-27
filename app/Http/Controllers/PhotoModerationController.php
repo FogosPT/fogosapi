@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\BroadcastApprovedPhoto;
+use App\Models\Incident;
 use App\Models\IncidentPhoto;
 use App\Resources\IncidentPhotoModerationResource;
 use App\Tools\PhotoStorageTool;
@@ -10,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Bus;
 
 class PhotoModerationController extends Controller
 {
@@ -53,7 +55,8 @@ class PhotoModerationController extends Controller
         $twitter = filter_var($request->input('twitter', false), FILTER_VALIDATE_BOOLEAN);
 
         $published = false;
-        if ($publish) {
+        // Nothing to publish for a photo whose incident does not exist.
+        if ($publish && Incident::whereFireId((string) $photo->fire_id)->exists()) {
             // Publishing used to run inside this request: slow uploads made
             // clients time out and retry, and every retry posted again.
             // Claim the publication atomically (first request wins) and post
@@ -61,7 +64,17 @@ class PhotoModerationController extends Controller
             // no-ops.
             $published = $this->claimPublication($photo) ? 'queued' : 'already';
             if ($published === 'queued') {
-                dispatch(new BroadcastApprovedPhoto((string) $photo->_id, $twitter));
+                try {
+                    Bus::dispatch(new BroadcastApprovedPhoto((string) $photo->_id, $twitter));
+                } catch (\Throwable $e) {
+                    // Queue unavailable: release the claim so a retry can
+                    // publish, instead of leaving the photo marked as
+                    // published forever.
+                    $this->releasePublication($photo);
+                    report($e);
+
+                    return new JsonResponse(['success' => false, 'error' => 'publish_queue_unavailable'], 503);
+                }
             }
         }
 
@@ -96,5 +109,11 @@ class PhotoModerationController extends Controller
         return IncidentPhoto::where('_id', $photo->getKey())
             ->whereNull('moderation.published_at')
             ->update(['moderation.published_at' => Carbon::now()]) === 1;
+    }
+
+    private function releasePublication(IncidentPhoto $photo): void
+    {
+        IncidentPhoto::where('_id', $photo->getKey())
+            ->update(['$unset' => ['moderation.published_at' => '']]);
     }
 }

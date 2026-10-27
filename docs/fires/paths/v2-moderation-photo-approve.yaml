@@ -19,7 +19,10 @@ post:
     Publication is **asynchronous and happens at most once per photo**: the
     first request with `publish: true` queues it (`published: "queued"`) and
     the response returns immediately; repeating the request (e.g. a client
-    retry) only re-approves and returns `published: "already"`.
+    retry) only re-approves and returns `published: "already"`. If the queue
+    is unavailable the publication is not claimed and the API answers `503`
+    (`error: publish_queue_unavailable`): retrying is safe. Nothing is
+    published when the photo's incident does not exist (`published: false`).
   tags:
     - Moderation
   parameters:
@@ -75,6 +78,8 @@ post:
                     enum: [queued, already]
     401:
       $ref: '../../common/responses/401.yaml'
+    503:
+      description: Publication requested but the queue is unavailable; nothing was published or claimed. Retry later.
     404:
       $ref: '../../common/responses/404.yaml'
     500:
