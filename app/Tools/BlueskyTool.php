@@ -25,6 +25,12 @@ use phpDocumentor\Reflection\Types\Self_;
     }
     public static function publish($status)
     {
+        // Same switch as the other channels; defaults to on so production
+        // keeps posting, set BLUESKY_ENABLE=false in dev/staging.
+        if (!filter_var(env('BLUESKY_ENABLE', true), FILTER_VALIDATE_BOOLEAN)) {
+            return;
+        }
+
         try {
             $session = self::getToken();
 
