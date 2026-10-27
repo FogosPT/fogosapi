@@ -56,6 +56,9 @@
         "optimize-autoloader": true,
         "allow-plugins": {
             "composer/package-versions-deprecated": true
+        },
+        "platform": {
+            "php": "8.3.36"
         }
     },
     "minimum-stability": "dev",
