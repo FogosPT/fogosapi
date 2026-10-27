@@ -727,25 +727,28 @@ class LegacyController extends Controller
 
     public function risk(Request $request)
     {
-        $concelho = $request->get('concelho');
-        $concelho = UTF8::ucwords(UTF8::strtolower(trim($concelho)));
+        $concelho = UTF8::ucwords(UTF8::strtolower(trim((string) $request->get('concelho'))));
 
-        $risk = RCM::where('concelho', $concelho)
-            ->orderBy('created', 'desc')
-            ->get();
+        // Only the latest row is used; this used to load every RCM row ever
+        // stored for the concelho (~26 per day).
+        $response = Cache::remember('legacy.risk.concelho.v1.'.md5($concelho), 900, function () use ($concelho) {
+            $risk = RCM::where('concelho', $concelho)
+                ->orderBy('created', 'desc')
+                ->first();
 
-        if (isset($risk[0])) {
-            $status = $concelho." risco de incêndio: \r\n Hoje - ".$risk[0]['hoje'].",\r\n Amanhã - ".$risk[0]['amanha'].",\r\n Depois - ".$risk[0]['depois']."\r\n #FogosPT #Risco";
-        } else {
-            $status = "\"{$concelho}\" não encontrado :'( https://fogos.pt #FogosPT #Risco";
-        }
+            if ($risk) {
+                $status = $concelho." risco de incêndio: \r\n Hoje - ".$risk['hoje'].",\r\n Amanhã - ".$risk['amanha'].",\r\n Depois - ".$risk['depois']."\r\n #FogosPT #Risco";
+            } else {
+                $status = "\"{$concelho}\" não encontrado :'( https://fogos.pt #FogosPT #Risco";
+            }
 
-        $response = [
-            'success' => true,
-            'data' => $status,
-        ];
+            return [
+                'success' => true,
+                'data' => $status,
+            ];
+        });
 
-        return response()->json($response);
+        return $this->cacheable(response()->json($response), 900);
     }
 
     public function riskToday()

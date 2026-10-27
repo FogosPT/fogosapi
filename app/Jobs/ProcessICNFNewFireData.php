@@ -33,16 +33,17 @@ class ProcessICNFNewFireData extends Job
         $anepcStale = AnepcFeedHealth::isStale();
         $changed = false;
 
+        $existing = $this->loadExisting(array_column($occurrences, 'id'));
+
         foreach ($occurrences as $occurrence) {
             $id = $occurrence['id'];
             $icnfEstado = $occurrence['estado'];
             [$status, $statusCode, $statusColor] = ICNFTool::mapStatus($icnfEstado);
             $icnfActive = ICNFTool::isActive($icnfEstado, $occurrence['startedAt']);
 
-            $incident = Incident::whereFireId($id)
-                ->get();
+            $incident = $existing[$id] ?? null;
 
-            if (!isset($incident[0])) {
+            if ($incident === null) {
                 $d = $this->getData($id);
 
                 if (!$d) {
@@ -116,13 +117,48 @@ class ProcessICNFNewFireData extends Job
                 $incidentDb->save();
                 $changed = $changed || $icnfActive;
             } else {
-                $changed = $this->updateFromIcnf($incident[0], $icnfEstado, $icnfActive, $anepcStale) || $changed;
+                $changed = $this->updateFromIcnf($incident, $icnfEstado, $icnfActive, $anepcStale) || $changed;
             }
         }
 
         if ($changed) {
             Cache::forget('legacy.active.v1');
         }
+    }
+
+    /**
+     * Existing incidents for the listed ids, keyed by business id, in a few
+     * batched queries instead of one per ICNF row (~9000 every run). Only the
+     * fields this job and the incident observer read are loaded; saving the
+     * hydrated models writes just the attributes that changed.
+     *
+     * @param array<int, string> $ids
+     * @return array<string, Incident>
+     */
+    private function loadExisting(array $ids): array
+    {
+        $projection = array_fill_keys([
+            'id', 'source', 'man', 'terrain', 'aerial', 'statusCode', 'status',
+            'statusColor', 'active', 'dateTime', 'lat', 'lng', 'concelho', 'location',
+        ], 1);
+
+        $existing = [];
+
+        foreach (array_chunk(array_values(array_unique($ids)), 1000) as $chunk) {
+            // Raw query: v5 maps `id` to `_id`, but legacy documents keep the
+            // business id in a separate `id` field (same as whereFireId()).
+            $docs = Incident::raw(fn ($collection) => $collection->find(
+                ['$or' => [['_id' => ['$in' => $chunk]], ['id' => ['$in' => $chunk]]]],
+                ['projection' => $projection, 'typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
+            )->toArray());
+
+            foreach ($docs as $doc) {
+                $businessId = (string) ($doc['id'] ?? $doc['_id']);
+                $existing[$businessId] ??= Incident::hydrate([$doc])->first();
+            }
+        }
+
+        return $existing;
     }
 
     /**
