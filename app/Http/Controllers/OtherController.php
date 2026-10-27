@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Routing\Controller;
 
@@ -17,32 +16,24 @@ class OtherController extends Controller
         }
         $url = 'https://api.github.com/repos/FogosPT/fogosmobile/contributors';
 
-        $client = new \GuzzleHttp\Client();
+        // Without timeouts a slow GitHub held the PHP worker indefinitely
+        // (1 + N sequential calls on a cache miss).
+        $client = new \GuzzleHttp\Client(['connect_timeout' => 5, 'timeout' => 10]);
 
         try {
-            $response = $client->request('GET', $url);
-        } catch (ClientException $e) {
-            return ['error' => $e->getMessage()];
-        } catch (RequestException $e) {
-            return ['error' => $e->getMessage()];
-        }
+            $result = json_decode($client->request('GET', $url)->getBody()->getContents(), true);
 
-        $body = $response->getBody();
-        $result = json_decode($body->getContents(), true);
-
-        foreach ($result as &$r) {
-            try {
-                $responseContributors = $client->request('GET', $r['url']);
-            } catch (ClientException $e) {
-                return ['error' => $e->getMessage()];
-            } catch (RequestException $e) {
-                return ['error' => $e->getMessage()];
+            if (!is_array($result)) {
+                return response()->json(['success' => false, 'error' => 'upstream_invalid'], 502);
             }
 
-            $bodyContributors = $responseContributors->getBody();
-            $data = json_decode($bodyContributors->getContents(), true);
-
-            $r = array_merge($r, $data);
+            foreach ($result as &$r) {
+                $data = json_decode($client->request('GET', $r['url'])->getBody()->getContents(), true);
+                $r = array_merge($r, is_array($data) ? $data : []);
+            }
+            unset($r);
+        } catch (GuzzleException $e) {
+            return response()->json(['success' => false, 'error' => 'upstream_unavailable'], 502);
         }
 
         Redis::set('mobile:contributors', json_encode($result), 'EX', 108000);

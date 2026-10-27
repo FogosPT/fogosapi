@@ -9,11 +9,13 @@ use App\Models\WeatherStation;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 
 class WeatherController extends Controller
@@ -255,24 +257,24 @@ class WeatherController extends Controller
 
     public function ipmaServicesHTTPS()
     {
-        $client = new Client();
-        $url = 'https://mf2.ipma.pt/services?SERVICE=WMS&REQUEST=GetCapabilities';
+        // The capabilities document changes rarely: cache it instead of
+        // calling IPMA (with no timeout) on every request.
+        $data = Cache::get('weather.ipma.services.v1');
 
-        try {
-            $response = $client->request('GET', $url);
+        if ($data === null) {
+            try {
+                $response = (new Client())->request('GET', 'https://mf2.ipma.pt/services?SERVICE=WMS&REQUEST=GetCapabilities', [
+                    'connect_timeout' => 5,
+                    'timeout' => 15,
+                ]);
+            } catch (GuzzleException $e) {
+                return response()->json(['success' => false, 'error' => 'upstream_unavailable'], 502);
+            }
 
-        } catch (ClientException $e) {
-            return ['error' => $e->getMessage()];
-        } catch (RequestException $e) {
-            return ['error' => $e->getMessage()];
+            $data = str_replace('http://', 'https://', $response->getBody()->getContents());
+            Cache::put('weather.ipma.services.v1', $data, 3600);
         }
 
-        $body = $response->getBody();
-        $result = $body->getContents();
-
-        $data = str_replace('http://', 'https://', $result);
-        header("Content-Type: application/xml; charset=utf-8");
-        echo $data;
-        die();
+        return response($data, 200, ['Content-Type' => 'application/xml; charset=utf-8']);
     }
 }

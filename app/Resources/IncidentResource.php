@@ -21,9 +21,19 @@ class IncidentResource extends JsonResource
      */
     private static ?array $activeWeatherWarningsByArea = null;
 
+    /**
+     * Per-request cache of the latest observation + station per station id.
+     * Many incidents share a station, so a list of N incidents costs 2 queries
+     * per distinct station instead of 2 per incident.
+     *
+     * @var array<int, array{data: ?WeatherData, station: ?WeatherStation}>
+     */
+    private static array $weatherByStation = [];
+
     public static function flushWeatherWarningsCache(): void
     {
         self::$activeWeatherWarningsByArea = null;
+        self::$weatherByStation = [];
     }
 
     private function haversineDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
@@ -41,16 +51,27 @@ class IncidentResource extends JsonResource
             return null;
         }
 
-        $data = WeatherData::where('stationId', (string) $this->nearestWeatherStationId)
-            ->where('date', '>=', Carbon::now()->subDay())
-            ->orderBy('date', 'desc')
-            ->first();
+        $stationId = (int) $this->nearestWeatherStationId;
+
+        if (!array_key_exists($stationId, self::$weatherByStation)) {
+            $data = WeatherData::where('stationId', (string) $this->nearestWeatherStationId)
+                ->where('date', '>=', Carbon::now()->subDay())
+                ->orderBy('date', 'desc')
+                ->first();
+
+            self::$weatherByStation[$stationId] = [
+                'data' => $data,
+                'station' => $data ? WeatherStation::whereStationId($stationId)->first() : null,
+            ];
+        }
+
+        $data = self::$weatherByStation[$stationId]['data'];
 
         if (!$data) {
             return null;
         }
 
-        $station = WeatherStation::whereStationId((int) $this->nearestWeatherStationId)->first();
+        $station = self::$weatherByStation[$stationId]['station'];
 
         $stationDistance = null;
         if ($station && isset($station->coordinates[0], $station->coordinates[1]) && $this->lat && $this->lng) {

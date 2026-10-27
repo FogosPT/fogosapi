@@ -377,6 +377,9 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
         Cache::forget('legacy.risk.hoje.v1');
         Cache::forget('legacy.risk.amanha.v1');
         Cache::forget('legacy.risk.depois.v1');
+        foreach (['hoje', 'amanha', 'depois'] as $when) {
+            Cache::forget(\App\Http\Controllers\RCMController::geoJsonCacheKey($when));
+        }
 
         $i = 0;
         $all = [];

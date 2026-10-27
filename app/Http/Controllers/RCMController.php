@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 use voku\helper\UTF8;
 
@@ -61,64 +62,46 @@ class RCMController extends Controller
     }
 
 
-	public function today()
+    public function today()
     {
-        $risk = RCMForJS::where('when', 'hoje')
-            ->orderBy('created', 'desc')
-            ->limit(1)
-            ->get();
-
-        if ($risk->isEmpty()) {
-            abort(404);
-        }
-
-        $risk = $risk[0]->toArray();
-
-        $dicos = $risk['local'];
-
-        $geoJson = RCMTool::buildGeoJSON($dicos);
-
-        return response()->json($geoJson);
+        return $this->geoJsonFor('hoje');
     }
 
     public function tomorrow()
     {
-        $risk = RCMForJS::where('when', 'amanha')
-            ->orderBy('created', 'desc')
-            ->limit(1)
-            ->get();
-
-        if ($risk->isEmpty()) {
-            abort(404);
-        }
-
-        $risk = $risk[0]->toArray();
-
-        $dicos = $risk['local'];
-
-        $geoJson = RCMTool::buildGeoJSON($dicos);
-
-        return response()->json($geoJson);
+        return $this->geoJsonFor('amanha');
     }
 
     public function after()
     {
-        $risk = RCMForJS::where('when', 'depois')
-            ->orderBy('created', 'desc')
-            ->limit(1)
-            ->get();
+        return $this->geoJsonFor('depois');
+    }
 
-        if ($risk->isEmpty()) {
+    /**
+     * Risk map as GeoJSON. Building it decodes a ~340 KB template and walks
+     * every feature, so the result is cached until ProcessRCM stores a new map
+     * (it forgets these keys) or for 15 minutes.
+     */
+    private function geoJsonFor(string $when): JsonResponse
+    {
+        $geoJson = Cache::remember(self::geoJsonCacheKey($when), 900, function () use ($when) {
+            $risk = RCMForJS::where('when', $when)
+                ->orderBy('created', 'desc')
+                ->first();
+
+            return $risk ? RCMTool::buildGeoJSON($risk->toArray()['local']) : null;
+        });
+
+        if ($geoJson === null) {
             abort(404);
         }
 
-        $risk = $risk[0]->toArray();
-
-        $dicos = $risk['local'];
-
-        $geoJson = RCMTool::buildGeoJSON($dicos);
-
         return response()->json($geoJson);
+    }
+
+    public static function geoJsonCacheKey(string $when): string
+    {
+        return 'rcm.geojson.v1.'.$when;
     }
 
     public function parish(Request $request)
