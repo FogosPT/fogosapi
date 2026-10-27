@@ -39,6 +39,10 @@ class SaveIncidentHistory extends Job
         $incidentHistory->terrain = $this->incident->terrain;
         $incidentHistory->location = $this->incident->location;
         $incidentHistory->man = $this->incident->man;
+        // Tracked so POSIT / COS changes can be detected against the last
+        // snapshot ('' rather than null so the key is always stored).
+        $incidentHistory->extra = (string) ($this->incident->extra ?? '');
+        $incidentHistory->cos = (string) ($this->incident->cos ?? '');
         $incidentHistory->save();
     }
 
@@ -51,130 +55,120 @@ class SaveIncidentHistory extends Job
 
         $last = IncidentHistory::whereFireId($this->incident->id)
             ->orderBy('created', 'desc')
-            ->limit(1)
-            ->get();
+            ->first();
+
+        if (!$last) {
+            $this->saveNewIncidentHistory();
+
+            return;
+        }
 
         $hashTag = HashTagTool::getHashTag($this->incident->concelho);
         $date = date('H:i');
 
         $domain = env('SOCIAL_LINK_DOMAIN');
 
-        if (isset($last[0])) {
-            $last = $last[0];
-            if (isset($this->incident->extra, $last['extra']) && $this->incident->extra !== $last['extra']) {
-                NotificationTool::sendNewPOSITNotification($this->incident);
+        $meansChanged = (int) $this->incident->man !== (int) $last['man']
+            || (int) $this->incident->terrain !== (int) $last['terrain']
+            || (int) $this->incident->aerial !== (int) $last['aerial'];
+        $positChanged = $this->fieldChanged($last, 'extra');
+        $cosChanged = $this->fieldChanged($last, 'cos');
+        // Snapshots written before POSIT/COS were tracked: store a baseline
+        // quietly instead of announcing every incident's current POSIT.
+        $missingBaseline = !$this->tracksField($last, 'extra') || !$this->tracksField($last, 'cos');
 
-                $status = "ℹ🔥{$date} - {$this->incident->location} - Novo Ponto de situaçã:: {$this->incident->extra} - https://{$domain}/fogo/{$this->incident->sadoId} {$hashTag} #FogosPT 🔥ℹ";
-
-                $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
-
-                // Keep the thread when the tweet failed (tweet() returns null).
-                if ($lastTweetId) {
-                    $this->incident->lastTweetId = $lastTweetId;
-                }
-                $this->incident->save();
-
-                FacebookTool::publish($status);
-                TelegramTool::publish($status);
-            }
-
-            if (isset($this->incident->cos, $last['cos']) && $this->incident->cos !== $last['cos']) {
-                NotificationTool::sendNewCosNotification($this->incident);
-
-                $status = "ℹ🔥{$date} - {$this->incident->location} - Novo Comandante de Operações de Socorro: {$this->incident->cos} - https://{$domain}/fogo/{$this->incident->sadoId} {$hashTag} #FogosPT 🔥ℹ";
-
-                $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
-
-                // Keep the thread when the tweet failed (tweet() returns null).
-                if ($lastTweetId) {
-                    $this->incident->lastTweetId = $lastTweetId;
-                }
-                $this->incident->save();
-
-                FacebookTool::publish($status);
-                TelegramTool::publish($status);
-            }
-
-            if (isset($this->incident->POSITDescricao, $last['POSITDescricao']) && $this->incident->POSITDescricao !== $last['POSITDescricao']) {
-                NotificationTool::sendNewPOSITNotification($this->incident);
-
-                $status = "ℹ🔥{$date} - {$this->incident->location} - Novo Ponto de situação: {$this->incident->POSITDescricao} - https://{$domain}/fogo/{$this->incident->sadoId} {$hashTag} #FogosPT 🔥ℹ";
-
-                $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
-
-                // Keep the thread when the tweet failed (tweet() returns null).
-                if ($lastTweetId) {
-                    $this->incident->lastTweetId = $lastTweetId;
-                }
-                $this->incident->save();
-
-                FacebookTool::publish($status);
-                TelegramTool::publish($status);
-            }
-
-            if ($this->incident->man !== $last['man'] or $this->incident->terrain !== $last['terrain'] or $this->incident->aerial !== $last['aerial']) {
-                $this->saveNewIncidentHistory();
-
-                $diffMan = (int) $this->incident->man - (int) $last['man'];
-                $diffCars = (int) $this->incident->terrain - (int) $last['terrain'];
-                $diffAerial = (int) $this->incident->aerial - (int) $last['aerial'];
-
-                $status = "Alteração de meios - MH: {$this->incident->man} (";
-                if ($diffMan > 0) {
-                    $status .= '+';
-                }
-
-                $status .= $diffMan.'), MT: '.$this->incident->terrain.' (';
-
-                if ($diffCars > 0) {
-                    $status .= '+';
-                }
-
-                $status .= $diffCars.'), MA: '.$this->incident->aerial.'(';
-
-                if ($diffAerial > 0) {
-                    $status .= '+';
-                }
-
-                $status .= $diffAerial.')';
-
-//                NotificationTool::send($status, $this->incident->location, $this->incident->id);
-
-                LiveActivityTool::pushUpdate($this->incident);
-            }
-
-            if ($this->incident->man >= env('BIG_INCIDENT_MAN') && !$this->incident['notifyBig']) {
-                if($this->incident->isFire){
-                    $this->incident->notifyBig = true;
-                    $this->incident->save();
-
-                    $date = date('H:i');
-
-                    $notification = "ℹ🚨 {$this->incident->location} - Grande mobilização de meios:  👩‍🚒 {$this->incident->man} 🚒 {$this->incident->terrain} 🚁 {$this->incident->aerial} 🚨ℹ";
-
-                    NotificationTool::sendImportant($notification, $this->incident->id);
-
-                    $status = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:\r\n 👩‍🚒 {$this->incident->man}\r\n 🚒 {$this->incident->terrain}\r\n 🚁 {$this->incident->aerial}\r\n https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT 🚨ℹ";
-
-                    $lastTweetId = TwitterTool::tweet($status);
-
-                    TwitterTool::retweetVost($lastTweetId);
-
-                    // Keep the thread when the tweet failed (tweet() returns null).
-                    if ($lastTweetId) {
-                        $this->incident->lastTweetId = $lastTweetId;
-                    }
-                    $this->incident->save();
-
-                    $statusf = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:%0A  👩‍🚒 {$this->incident->man}%0A 🚒 {$this->incident->terrain}%0A 🚁 {$this->incident->aerial}%0A https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT 🚨ℹ";
-                    FacebookTool::publish($statusf);
-
-                    TelegramTool::publish($status);
-                }
-            }
-        } else {
+        if ($meansChanged || $positChanged || $cosChanged || $missingBaseline) {
+            // Record first, so a failing channel below cannot make the next
+            // run announce the same change again.
             $this->saveNewIncidentHistory();
         }
+
+        if ($positChanged) {
+            NotificationTool::sendNewPOSITNotification($this->incident);
+
+            $status = "ℹ🔥{$date} - {$this->incident->location} - Novo ponto de situação: {$this->incident->extra} - https://{$domain}/fogo/{$this->incident->sadoId} {$hashTag} #FogosPT 🔥ℹ";
+
+            $this->publish($status);
+        }
+
+        if ($cosChanged) {
+            NotificationTool::sendNewCosNotification($this->incident);
+
+            $status = "ℹ🔥{$date} - {$this->incident->location} - Novo Comandante de Operações de Socorro: {$this->incident->cos} - https://{$domain}/fogo/{$this->incident->sadoId} {$hashTag} #FogosPT 🔥ℹ";
+
+            $this->publish($status);
+        }
+
+        if ($meansChanged) {
+            LiveActivityTool::pushUpdate($this->incident);
+        }
+
+        if ($this->incident->man >= env('BIG_INCIDENT_MAN') && !$this->incident['notifyBig']) {
+            if($this->incident->isFire){
+                $this->incident->notifyBig = true;
+                $this->incident->save();
+
+                $date = date('H:i');
+
+                $notification = "ℹ🚨 {$this->incident->location} - Grande mobilização de meios:  👩‍🚒 {$this->incident->man} 🚒 {$this->incident->terrain} 🚁 {$this->incident->aerial} 🚨ℹ";
+
+                NotificationTool::sendImportant($notification, $this->incident->id);
+
+                $status = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:\r\n 👩‍🚒 {$this->incident->man}\r\n 🚒 {$this->incident->terrain}\r\n 🚁 {$this->incident->aerial}\r\n https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT 🚨ℹ";
+
+                $lastTweetId = TwitterTool::tweet($status);
+
+                TwitterTool::retweetVost($lastTweetId);
+
+                // Keep the thread when the tweet failed (tweet() returns null).
+                if ($lastTweetId) {
+                    $this->incident->lastTweetId = $lastTweetId;
+                }
+                $this->incident->save();
+
+                $statusf = "ℹ🚨 {$date} - {$this->incident->location} - Grande mobilização de meios:%0A  👩‍🚒 {$this->incident->man}%0A 🚒 {$this->incident->terrain}%0A 🚁 {$this->incident->aerial}%0A https://{$domain}/fogo/{$this->incident->id} {$hashTag} #FogosPT 🚨ℹ";
+                FacebookTool::publish($statusf);
+
+                TelegramTool::publish($status);
+            }
+        }
+    }
+
+    /**
+     * Tweet in the incident thread, then Facebook and Telegram.
+     */
+    private function publish(string $status): void
+    {
+        $lastTweetId = TwitterTool::tweet($status, $this->incident->lastTweetId);
+
+        // Keep the thread when the tweet failed (tweet() returns null).
+        if ($lastTweetId) {
+            $this->incident->lastTweetId = $lastTweetId;
+            $this->incident->save();
+        }
+
+        FacebookTool::publish($status);
+        TelegramTool::publish($status);
+    }
+
+    private function tracksField(IncidentHistory $last, string $field): bool
+    {
+        return array_key_exists($field, $last->getAttributes());
+    }
+
+    /**
+     * A new, non-empty value that differs from the last snapshot. Clearing
+     * the field is not announced.
+     */
+    private function fieldChanged(IncidentHistory $last, string $field): bool
+    {
+        if (!$this->tracksField($last, $field)) {
+            return false;
+        }
+
+        $current = trim((string) ($this->incident->{$field} ?? ''));
+
+        return $current !== '' && $current !== trim((string) $last[$field]);
     }
 
     private function updateIncident()

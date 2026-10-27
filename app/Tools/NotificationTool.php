@@ -342,7 +342,8 @@ class NotificationTool
 
     public static function sendNewPOSITNotification(Incident $incident)
     {
-        $status = 'Novo ponto de situação: ' . $incident->POSITDescricao;
+        // The POSIT text is stored in `extra` (POST /v2/incidents/{id}/posit).
+        $status = 'Novo ponto de situação: ' . $incident->extra;
         $topic = self::buildIncidentTopic($incident->id, false);
         self::send($status, $incident->location, $incident->id, $topic);
     }
