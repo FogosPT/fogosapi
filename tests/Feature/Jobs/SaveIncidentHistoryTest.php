@@ -82,6 +82,23 @@ class SaveIncidentHistoryTest extends TestCase
         $this->assertNoPushContaining('ponto de situação');
     }
 
+    /** @test */
+    public function restoring_a_cleared_posit_is_announced(): void
+    {
+        $incident = $this->incident(['extra' => 'POSIT 1', 'cos' => '']);
+        $this->runJob($incident); // first snapshot
+
+        $incident->extra = '';
+        $incident->saveQuietly();
+        $this->runJob($incident); // cleared: baseline moves, nothing announced
+        $this->assertNoPushContaining('ponto de situação');
+
+        $incident->extra = 'POSIT 1';
+        $incident->saveQuietly();
+        $this->runJob($incident);
+        $this->assertPushContaining('Novo ponto de situação: POSIT 1');
+    }
+
     private function incident(array $attributes): Incident
     {
         return IncidentFactory::new()->active()->fire()->create($attributes + [

@@ -71,13 +71,18 @@ class SaveIncidentHistory extends Job
         $meansChanged = (int) $this->incident->man !== (int) $last['man']
             || (int) $this->incident->terrain !== (int) $last['terrain']
             || (int) $this->incident->aerial !== (int) $last['aerial'];
-        $positChanged = $this->fieldChanged($last, 'extra');
-        $cosChanged = $this->fieldChanged($last, 'cos');
+        // Any difference (including a cleared field) moves the baseline; only
+        // a new non-empty value is announced. Otherwise clearing and then
+        // restoring the same POSIT/COS would look unchanged.
+        $positDiffers = $this->fieldDiffers($last, 'extra');
+        $cosDiffers = $this->fieldDiffers($last, 'cos');
+        $positChanged = $positDiffers && $this->fieldValue('extra') !== '';
+        $cosChanged = $cosDiffers && $this->fieldValue('cos') !== '';
         // Snapshots written before POSIT/COS were tracked: store a baseline
         // quietly instead of announcing every incident's current POSIT.
         $missingBaseline = !$this->tracksField($last, 'extra') || !$this->tracksField($last, 'cos');
 
-        if ($meansChanged || $positChanged || $cosChanged || $missingBaseline) {
+        if ($meansChanged || $positDiffers || $cosDiffers || $missingBaseline) {
             // Record first, so a failing channel below cannot make the next
             // run announce the same change again.
             $this->saveNewIncidentHistory();
@@ -157,18 +162,18 @@ class SaveIncidentHistory extends Job
     }
 
     /**
-     * A new, non-empty value that differs from the last snapshot. Clearing
-     * the field is not announced.
+     * The current value differs from the last snapshot (snapshots from before
+     * the field was tracked never differ: they only set a baseline).
      */
-    private function fieldChanged(IncidentHistory $last, string $field): bool
+    private function fieldDiffers(IncidentHistory $last, string $field): bool
     {
-        if (!$this->tracksField($last, $field)) {
-            return false;
-        }
+        return $this->tracksField($last, $field)
+            && $this->fieldValue($field) !== trim((string) $last[$field]);
+    }
 
-        $current = trim((string) ($this->incident->{$field} ?? ''));
-
-        return $current !== '' && $current !== trim((string) $last[$field]);
+    private function fieldValue(string $field): string
+    {
+        return trim((string) ($this->incident->{$field} ?? ''));
     }
 
     private function updateIncident()
