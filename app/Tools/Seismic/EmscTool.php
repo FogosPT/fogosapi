@@ -49,6 +49,8 @@ class EmscTool extends SeismicSource implements RangeSource
 
     public function parse(string $body): array
     {
+        $this->rawCount = 0;
+
         // FDSN answers 204 with an empty body when nothing matches.
         if (trim($body) === '') {
             return [];
@@ -58,6 +60,7 @@ class EmscTool extends SeismicSource implements RangeSource
         if (!isset($json->features) || !is_array($json->features)) {
             throw InvalidSeismicPayload::from($this->name(), $body);
         }
+        $this->rawCount = count($json->features);
 
         $events = [];
         foreach ($json->features as $f) {

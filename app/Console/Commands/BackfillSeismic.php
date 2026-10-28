@@ -100,7 +100,8 @@ class BackfillSeismic extends Command
         $this->pause();
 
         // A full page means the catalogue truncated it: split and fetch again.
-        if (count($events) >= $tool->pageLimit() && $from->diffInMinutes($to) > 60) {
+        // Judge on the raw response, parse() may have dropped explosions.
+        if ($tool->rawCount() >= $tool->pageLimit() && $from->diffInMinutes($to) > 60) {
             $middle = $from->copy()->addSeconds((int) ($from->diffInSeconds($to) / 2));
             [$t1, $c1] = $this->importRange($tool, $from, $middle, $minMag);
             [$t2, $c2] = $this->importRange($tool, $middle, $to, $minMag);

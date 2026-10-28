@@ -79,6 +79,25 @@ class SeismicStatsTest extends TestCase
         $this->assertSame(1.0, SeismicStats::poissonTail(0, 3));
         $this->assertEqualsWithDelta(1 - exp(-1), SeismicStats::poissonTail(1, 1), 1e-9);
         $this->assertLessThan(0.001, SeismicStats::poissonTail(20, 3));
+        // P(X ≥ 3 | λ = 2) = 1 − e^-2 (1 + 2 + 2) = 0.3233
+        $this->assertEqualsWithDelta(0.323324, SeismicStats::poissonTail(3, 2), 1e-6);
+    }
+
+    /** @test */
+    public function poisson_tail_stays_accurate_when_exp_minus_lambda_underflows(): void
+    {
+        // e^-800 underflows to 0 in double precision.
+        $this->assertSame(0.0, exp(-800));
+
+        $p = SeismicStats::poissonTail(1000, 800);
+        $this->assertGreaterThan(0.0, $p);
+        $this->assertLessThan(1e-10, $p);
+
+        // Around the mean the tail is ~0.5.
+        $this->assertEqualsWithDelta(0.5, SeismicStats::poissonTail(800, 800), 0.03);
+        $this->assertGreaterThan(0.999999, SeismicStats::poissonTail(600, 800));
+        $this->assertEqualsWithDelta(log(3628800), SeismicStats::logFactorial(10), 1e-9);
+        $this->assertEqualsWithDelta(363.73938, SeismicStats::logFactorial(100), 1e-4);
     }
 
     /** @test */

@@ -14,6 +14,7 @@ abstract class FdsnTextSource extends SeismicSource
 
     public function parse(string $body): array
     {
+        $this->rawCount = 0;
         $events = [];
         // FDSN answers 204 with an empty body when nothing matches; anything
         // else must start with the text-format header.
@@ -28,6 +29,7 @@ abstract class FdsnTextSource extends SeismicSource
             if ($line === '' || str_starts_with($line, '#')) {
                 continue;
             }
+            ++$this->rawCount;
 
             // EventID|Time|Latitude|Longitude|Depth/km|Author|Catalog|Contributor|ContributorID|MagType|Magnitude|MagAuthor|EventLocationName|EventType
             $c = explode('|', $line);

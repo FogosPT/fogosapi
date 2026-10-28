@@ -180,6 +180,10 @@ class SeismicStats
 
     /**
      * P(X ≥ k) for X ~ Poisson(λ).
+     *
+     * Summed outward from the pmf at k (computed in log space), so it stays
+     * accurate for large λ where e^-λ underflows: the upper tail directly
+     * when k > λ, otherwise 1 − the lower tail.
      */
     public static function poissonTail(int $k, float $lambda): float
     {
@@ -190,15 +194,49 @@ class SeismicStats
             return 0.0;
         }
 
-        // 1 − Σ_{i<k} e^-λ λ^i / i!, accumulated in log space.
-        $term = exp(-$lambda);
-        $cdf = $term;
-        for ($i = 1; $i < $k; ++$i) {
-            $term *= $lambda / $i;
-            $cdf += $term;
+        if ($k > $lambda) {
+            // Σ_{i≥k} pmf(i) = pmf(k) · Σ_j Π (λ/(k+j))
+            $logPmf = -$lambda + $k * log($lambda) - self::logFactorial($k);
+            $sum = 0.0;
+            $term = 1.0;
+            for ($i = $k; $term > 1e-16 * $sum && $i < $k + 100000; ++$i) {
+                $sum += $term;
+                $term *= $lambda / ($i + 1);
+            }
+
+            return max(0.0, min(1.0, exp($logPmf + log($sum))));
         }
 
-        return max(0.0, min(1.0, 1 - $cdf));
+        // Σ_{i<k} pmf(i), from i = k−1 downward.
+        $logPmf = -$lambda + ($k - 1) * log($lambda) - self::logFactorial($k - 1);
+        $sum = 0.0;
+        $term = 1.0;
+        for ($i = $k - 1; $i >= 0 && ($term > 1e-16 * $sum); --$i) {
+            $sum += $term;
+            $term *= $i / $lambda;
+        }
+
+        return max(0.0, min(1.0, 1 - exp($logPmf + log($sum))));
+    }
+
+    /**
+     * ln(n!), exact up to 30 and by Stirling's series above.
+     */
+    public static function logFactorial(int $n): float
+    {
+        if ($n < 2) {
+            return 0.0;
+        }
+        if ($n <= 30) {
+            $s = 0.0;
+            for ($i = 2; $i <= $n; ++$i) {
+                $s += log($i);
+            }
+
+            return $s;
+        }
+
+        return $n * log($n) - $n + 0.5 * log(2 * M_PI * $n) + 1 / (12 * $n) - 1 / (360 * $n ** 3);
     }
 
     /**

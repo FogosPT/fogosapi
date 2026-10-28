@@ -20,6 +20,9 @@ class FakeRangeSource extends SeismicSource implements RangeSource
     public array $calls = [];
     public int $failuresLeft = 0;
 
+    /** Drop one record per response, as EMSC parse() drops explosions. */
+    public bool $dropOne = false;
+
     public function name(): string
     {
         return 'emsc';
@@ -55,7 +58,10 @@ class FakeRangeSource extends SeismicSource implements RangeSource
             $events[] = new SeismicEvent('emsc', 'e'.$d->format('Ymd'), $d->copy(), 37.8, -26.2, 10.0, 2.0, 'ML', 'AZORES');
         }
 
-        return array_slice($events, 0, $this->pageLimit());
+        $page = array_slice($events, 0, $this->pageLimit());
+        $this->rawCount = count($page);
+
+        return $this->dropOne ? array_slice($page, 1) : $page;
     }
 }
 
@@ -84,6 +90,19 @@ class BackfillSeismicTest extends TestCase
         // Idempotent.
         $this->artisan('seismic:backfill emsc --from=2020-01-01 --to=2020-03-01 --sleep=0')->assertSuccessful();
         $this->assertSame(60, Earthquake::count());
+    }
+
+    /** @test */
+    public function a_full_raw_page_is_split_even_if_parse_dropped_records(): void
+    {
+        $this->fake->dropOne = true;
+
+        $this->artisan('seismic:backfill emsc --from=2020-01-01 --to=2020-02-01 --sleep=0')->assertSuccessful();
+
+        // A month of 31 daily events vs a page of 20: without splitting only
+        // 19 would be imported. Each leaf chunk still drops its first record.
+        $this->assertGreaterThan(19, Earthquake::count());
+        $this->assertGreaterThan(1, count($this->fake->calls));
     }
 
     /** @test */
