@@ -1,0 +1,24 @@
+#EventID|Time|Latitude|Longitude|Depth/km|Author|Catalog|Contributor|ContributorID|MagType|Magnitude|MagAuthor|EventLocationName|EventType
+812637|1969-02-28T02:40:33.702|36.0673|-10.6461|18.5|ISC|ISC|ISC|1790373|MW|7.80|EVBIB|Azores-Cape St. Vincent Ridge|earthquake
+812640|1969-02-28T03:45:39.500|36.0000|-10.6000|33.0|SPGM|ISC|ISC|1790376||||Azores-Cape St. Vincent Ridge|earthquake
+812641|1969-02-28T03:53:17.500|36.0000|-10.6000|33.0|SPGM|ISC|ISC|1790377||||Azores-Cape St. Vincent Ridge|earthquake
+812643|1969-02-28T04:07:45.500|36.0000|-10.6000|33.0|SPGM|ISC|ISC|1790380||||Azores-Cape St. Vincent Ridge|earthquake
+812644|1969-02-28T04:14:53.500|36.0000|-10.6000|33.0|SPGM|ISC|ISC|1790381||||Azores-Cape St. Vincent Ridge|earthquake
+812645|1969-02-28T04:21:18.000|36.0000|-10.6000|33.0|SPGM|ISC|ISC|1790382||||Azores-Cape St. Vincent Ridge|earthquake
+812647|1969-02-28T04:23:39.000|36.0000|-10.6000|33.0|SPGM|ISC|ISC|1790384||||Azores-Cape St. Vincent Ridge|earthquake
+812648|1969-02-28T04:25:38.758|36.2027|-10.5438|30.1|ISC|ISC|ISC|1790390|MS|6.10|ISC|Azores-Cape St. Vincent Ridge|earthquake
+812649|1969-02-28T04:40:36.534|35.8587|-11.7901|10.0|ISC|ISC|ISC|1790392||||Azores-Cape St. Vincent Ridge|earthquake
+812650|1969-02-28T04:41:00.000|36.0000|-10.5000|33.0|SPGM|ISC|ISC|1790393||||Azores-Cape St. Vincent Ridge|earthquake
+812651|1969-02-28T04:42:09.061|36.2661|-10.3822|35.0|ISC|ISC|ISC|1790396|M|3.80|MDD|Azores-Cape St. Vincent Ridge|earthquake
+812652|1969-02-28T04:44:59.624|36.2246|-10.3417|35.0|ISC|ISC|ISC|1790399|mb|4.46|ISC|Azores-Cape St. Vincent Ridge|earthquake
+812653|1969-02-28T04:54:29.000|36.0000|-10.5000|33.0|SPGM|ISC|ISC|1790400||||Azores-Cape St. Vincent Ridge|earthquake
+# Agencies whose data contributed towards the results of this search:
+# BCIS      Bureau Central International de Sismologie                                       France
+# CENT      Centennial Earthquake Catalog                                                    U.S.A.
+# EVBIB     Data from publications listed in the ISC Event Bibliography                      
+# ISC       International Seismological Centre                                               United Kingdom
+# ISC-EHB   Revision and Continuation of the EHB project                                     United Kingdom
+# MDD       Instituto Geográfico Nacional                                                    Spain
+# MOS       Geophysical Survey of Russian Academy of Sciences                                Russia
+# SPGM      Service de Physique du Globe                                                     Morocco
+# USCGS     United States Coast and Geodetic Survey                                          U.S.A.

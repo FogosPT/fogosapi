@@ -40,6 +40,8 @@ use App\Console\Commands\SyncFR24Planes;
 use App\Console\Commands\SyncMTGFireData;
 use App\Console\Commands\SyncOcorrenciasSite;
 use App\Console\Commands\SyncSeismic;
+use App\Console\Commands\BackfillSeismic;
+use App\Console\Commands\ComputeSeismicStats;
 use App\Console\Commands\TestStuff;
 use App\Http\Middleware\LiveActivityRateLimit;
 use App\Http\Middleware\PhotoModerationAuth;
@@ -66,6 +68,8 @@ return Application::configure(basePath: dirname(__DIR__))
         SyncMTGFireData::class,
         CollapseWeatherWarnings::class,
         SyncSeismic::class,
+        BackfillSeismic::class,
+        ComputeSeismicStats::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         if (env('SCHEDULER_ENABLE')) {
@@ -112,6 +116,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 $schedule->job(new ProcessSeismicSource('usgs'))->everyTenMinutes();
                 $schedule->job(new ProcessSeismicSource('geofon'))->everyFifteenMinutes();
                 $schedule->job(new ProcessSeismicSource('ign'))->everyFifteenMinutes();
+                // CPU-bound: runs in the scheduler container, not on a queue worker.
+                $schedule->command('seismic:stats')->hourlyAt(7)->withoutOverlapping(30)->runInBackground();
             }
 
             $schedule->job(new ProcessFR24Planes())->cron('*/3 * * * *');

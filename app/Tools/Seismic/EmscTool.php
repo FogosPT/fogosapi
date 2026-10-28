@@ -7,9 +7,14 @@ use Carbon\Carbon;
 /**
  * EMSC FDSN event service (GeoJSON): https://www.seismicportal.eu/fdsnws/event/1/.
  */
-class EmscTool extends SeismicSource
+class EmscTool extends SeismicSource implements RangeSource
 {
     public const BASE = 'https://www.seismicportal.eu/fdsnws/event/1/query';
+
+    public function pageLimit(): int
+    {
+        return 5000;
+    }
 
     public function name(): string
     {
@@ -36,7 +41,7 @@ class EmscTool extends SeismicSource
             'maxlon' => self::BBOX['maxLon'],
             'minmag' => $minMagnitude,
             'orderby' => 'time',
-            'limit' => 5000,
+            'limit' => $this->pageLimit(),
         ], fn ($v) => $v !== null));
 
         return $this->fetchAndParse(self::BASE.'?'.$query);

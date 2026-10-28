@@ -1,0 +1,38 @@
+get:
+  operationId: v2GetSeismicStats
+  summary: Precomputed seismic statistics for a region and window
+  description: |
+    Recomputed hourly (`seismic:stats`). `region=pt` is mainland + Azores +
+    Madeira. Sections:
+      - `magnitude`: max, mean, frequency–magnitude histogram and cumulative distribution.
+      - `gutenbergRichter`: Mc (maximum curvature + 0.2), Aki–Utsu b-value with Shi & Bolt σ,
+        bootstrap spread and, for windows of 1 year or more, mean return periods of M ≥ 4/5/6.
+      - `completenessByYear` (10y, all): Mc, b and count per year.
+      - `energy`: total (J and tonnes of TNT), share of the largest event, cumulative energy and Benioff strain.
+      - `depth`: histogram, median/p90 and how many have an undetermined (0) depth.
+      - `timeOfDay`: hour/weekday counts in local time; `workHoursRatio` > ~1.5 hints at quarry blasts.
+      - `series`: counts, max magnitude and energy per day/week/month/year.
+      - `rate` (7d, 30d): events ≥ Mc(10y) vs the 10-year rate before the window (Poisson tail and z-score).
+      - `sequences` (7d, 30d, 1y): Gardner–Knopoff mainshock–aftershock sequences with the Omori p exponent.
+      - `sourceQuality` (7d, 30d, 1y): magnitude differences between catalogues and publication latency.
+      - `top`, `feltEvents`.
+    Cached for 5 minutes.
+  tags: [Seismic]
+  parameters:
+    - { name: region, in: query, schema: { type: string, enum: [pt, continente, acores, madeira], default: pt } }
+    - { name: window, in: query, schema: { type: string, enum: ['7d', '30d', '1y', '10y', all], default: '30d' } }
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              computedAt: { type: string, format: date-time }
+              data: { type: object }
+    404:
+      $ref: '../../common/responses/404.yaml'
+    422:
+      $ref: '../../common/responses/422.yaml'

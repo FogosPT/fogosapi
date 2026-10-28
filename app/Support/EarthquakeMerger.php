@@ -56,7 +56,9 @@ class EarthquakeMerger
 
     private function findNearby(SeismicEvent $event): ?Earthquake
     {
-        $window = self::MAX_SECONDS * 2;
+        // Widest tolerance any candidate can get (large × historical).
+        $window = self::MAX_SECONDS * 4;
+        $historical = $event->source === 'isc' || $event->time->year < 1998;
         $candidates = Earthquake::where('time', '>=', $event->time->copy()->subSeconds($window))
             ->where('time', '<=', $event->time->copy()->addSeconds($window))
             ->get();
@@ -70,9 +72,11 @@ class EarthquakeMerger
                 continue;
             }
 
-            $large = max((float) $candidate->magnitude, (float) $event->magnitude) >= 5;
-            $maxSeconds = self::MAX_SECONDS * ($large ? 2 : 1);
-            $maxKm = self::MAX_KM * ($large ? 2 : 1);
+            // Catalogues disagree more for large events and for pre-digital
+            // (ISC, pre-1998) locations.
+            $factor = (max((float) $candidate->magnitude, (float) $event->magnitude) >= 5 ? 2 : 1) * ($historical ? 2 : 1);
+            $maxSeconds = self::MAX_SECONDS * $factor;
+            $maxKm = self::MAX_KM * $factor;
 
             $dt = abs($candidate->time->diffInMilliseconds($event->time, false)) / 1000;
             $km = self::distanceKm($candidate->lat, $candidate->lon, $event->lat, $event->lon);
@@ -125,7 +129,8 @@ class EarthquakeMerger
         $quake->magnitudeSource = $magnitudeSource;
         $quake->magnitude = $magnitudeSource ? (float) $sources[$magnitudeSource]['magnitude'] : null;
         $quake->magType = $magnitudeSource ? $sources[$magnitudeSource]['magType'] : null;
-        $quake->provisional = $magnitudeSource === null;
+        // Provisional = IPMA has not revised it yet (-99.0) and nobody else has a value.
+        $quake->provisional = $magnitudeSource === null && (bool) ($sources['ipma']['extra']['provisional'] ?? false);
         $quake->energyJ = $quake->magnitude !== null ? 10 ** (1.5 * $quake->magnitude + 4.8) : null;
 
         // Felt information is IPMA's (macroseismic survey) with USGS DYFI as backup.

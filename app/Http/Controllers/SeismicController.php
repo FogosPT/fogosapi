@@ -3,14 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Earthquake;
+use App\Models\SeismicStat;
 use App\Resources\EarthquakeResource;
 use App\Support\SeismicFeedHealth;
 use App\Support\SeismicRegion;
+use App\Support\SeismicStats;
+use App\Support\SeismicStatsBuilder;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use MongoDB\BSON\ObjectId;
 use MongoDB\BSON\UTCDateTime;
@@ -122,6 +126,140 @@ class SeismicController extends Controller
         return new JsonResponse($payload);
     }
 
+    public function stats(Request $request)
+    {
+        $region = $request->query('region', 'pt');
+        $window = $request->query('window', '30d');
+        if (!in_array($region, SeismicStatsBuilder::REGIONS, true) || !isset(SeismicStatsBuilder::WINDOWS[$window])) {
+            return new JsonResponse(['success' => false, 'errors' => ['region|window' => ['invalid']]], 422);
+        }
+
+        $payload = Cache::remember("seismic:stats:{$region}:{$window}", 300, function () use ($region, $window) {
+            $stat = SeismicStat::where('region', $region)->where('window', $window)->first();
+
+            return $stat ? [
+                'success' => true,
+                'computedAt' => $stat->computedAt?->copy()->utc()->format('Y-m-d\TH:i:s\Z'),
+                'data' => $stat->data,
+            ] : null;
+        });
+
+        if ($payload === null) {
+            Cache::forget("seismic:stats:{$region}:{$window}");
+
+            return new JsonResponse(['success' => false, 'error' => 'not_computed'], 404);
+        }
+
+        return new JsonResponse($payload);
+    }
+
+    /**
+     * Frequency–magnitude distribution, Mc and b-value for any range.
+     */
+    public function gutenbergRichter(Request $request)
+    {
+        $validator = Validator::make($request->query(), [
+            'region' => 'nullable|in:pt,'.implode(',', SeismicRegion::ALL),
+            'from' => 'required|date',
+            'to' => 'nullable|date',
+            'mc' => 'nullable|numeric',
+        ]);
+        if ($validator->fails()) {
+            return new JsonResponse(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+        $params = $validator->validated();
+
+        $payload = Cache::remember('seismic:gr:'.md5(json_encode($params)), 3600, function () use ($params) {
+            $mags = $this->regionQuery($params['region'] ?? 'pt')
+                ->where('time', '>=', Carbon::parse($params['from']))
+                ->when(isset($params['to']), fn ($q) => $q->where('time', '<=', Carbon::parse($params['to'])))
+                ->whereNotNull('magnitude')
+                ->pluck('magnitude')
+                ->map(fn ($m) => (float) $m)
+                ->all();
+
+            $mc = isset($params['mc']) ? (float) $params['mc'] : SeismicStats::completeness($mags);
+            $histogram = SeismicStats::histogram($mags);
+
+            return [
+                'success' => true,
+                'n' => count($mags),
+                'mc' => $mc,
+                'mcMethod' => isset($params['mc']) ? 'given' : 'maximum curvature + 0.2',
+                'bValue' => $mc !== null ? SeismicStats::bValue($mags, $mc) : null,
+                'histogram' => array_map(fn ($m, $n) => ['m' => (float) $m, 'n' => $n], array_keys($histogram), $histogram),
+                'cumulative' => array_map(fn ($m, $n) => ['m' => (float) $m, 'n' => $n], array_keys($c = SeismicStats::cumulative($histogram)), $c),
+            ];
+        });
+
+        return new JsonResponse($payload);
+    }
+
+    /**
+     * Epicentre density on a lat/lon grid (count, max magnitude, energy per cell).
+     */
+    public function heatmap(Request $request)
+    {
+        $validator = Validator::make($request->query(), [
+            'region' => 'nullable|in:pt,'.implode(',', SeismicRegion::ALL),
+            'from' => 'nullable|date',
+            'to' => 'nullable|date',
+            'cell' => 'nullable|numeric|min:0.02|max:2',
+        ]);
+        if ($validator->fails()) {
+            return new JsonResponse(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+        $params = $validator->validated();
+        $region = $params['region'] ?? 'pt';
+        $cell = (float) ($params['cell'] ?? ($region === SeismicRegion::MADEIRA ? 0.05 : 0.1));
+
+        $payload = Cache::remember('seismic:heat:'.md5(json_encode([$params, $cell])), 3600, function () use ($params, $region, $cell) {
+            $match = $region === 'pt'
+                ? ['region' => ['$in' => [SeismicRegion::CONTINENTE, SeismicRegion::ACORES, SeismicRegion::MADEIRA]]]
+                : ['region' => $region];
+            $match['time'] = ['$gte' => new UTCDateTime(isset($params['from']) ? Carbon::parse($params['from']) : Carbon::now()->subYear())];
+            if (isset($params['to'])) {
+                $match['time']['$lte'] = new UTCDateTime(Carbon::parse($params['to']));
+            }
+
+            $rows = DB::connection('mongodb')->getMongoDB()->selectCollection('earthquakes')->aggregate([
+                ['$match' => $match],
+                ['$group' => [
+                    // +1e-9: 37.8 / 0.1 is 377.99999… in floating point.
+                    '_id' => [
+                        'lat' => ['$floor' => ['$add' => [['$divide' => ['$lat', $cell]], 1e-9]]],
+                        'lon' => ['$floor' => ['$add' => [['$divide' => ['$lon', $cell]], 1e-9]]],
+                    ],
+                    'n' => ['$sum' => 1],
+                    'maxM' => ['$max' => '$magnitude'],
+                    'energyJ' => ['$sum' => ['$ifNull' => ['$energyJ', 0]]],
+                ]],
+            ], ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]);
+
+            $cells = [];
+            foreach ($rows as $r) {
+                $cells[] = [
+                    'lat' => round(($r['_id']['lat'] + 0.5) * $cell, 4),
+                    'lon' => round(($r['_id']['lon'] + 0.5) * $cell, 4),
+                    'n' => $r['n'],
+                    'maxM' => $r['maxM'],
+                    'energyJ' => $r['energyJ'],
+                ];
+            }
+
+            return ['success' => true, 'cell' => $cell, 'data' => $cells];
+        });
+
+        return new JsonResponse($payload);
+    }
+
+    private function regionQuery(string $region)
+    {
+        return $region === 'pt'
+            ? Earthquake::whereIn('region', [SeismicRegion::CONTINENTE, SeismicRegion::ACORES, SeismicRegion::MADEIRA])
+            : Earthquake::where('region', $region);
+    }
+
     public function sourcesHealth()
     {
         return new JsonResponse([
@@ -209,10 +347,7 @@ class SeismicController extends Controller
      */
     public static function gardnerKnopoffWindow(float $magnitude): array
     {
-        return [
-            'days' => $magnitude >= 6.5 ? 10 ** (0.032 * $magnitude + 2.7389) : 10 ** (0.5409 * $magnitude - 0.547),
-            'km' => 10 ** (0.1238 * $magnitude + 0.983),
-        ];
+        return SeismicStats::gardnerKnopoff($magnitude);
     }
 
     private function aftershocks(Earthquake $quake): array
