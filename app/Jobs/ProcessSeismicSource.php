@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Support\EarthquakeAlert;
 use App\Support\EarthquakeMerger;
 use App\Support\SeismicFeedHealth;
 use App\Tools\Seismic\SeismicSource;
@@ -45,9 +46,18 @@ class ProcessSeismicSource extends Job
         }
 
         $merger = new EarthquakeMerger();
+        $alerts = [];
         foreach ($events as $event) {
-            [, $created] = $merger->upsert($event);
+            [$quake, $created] = $merger->upsert($event);
             $this->created += $created ? 1 : 0;
+            if (EarthquakeAlert::pending($quake) !== null) {
+                $alerts[$quake->id] = true;
+            }
+        }
+
+        // The job re-checks (and claims) atomically; dispatching is cheap.
+        foreach (array_keys($alerts) as $id) {
+            dispatch(new HandleSignificantEarthquake($id));
         }
         $this->total = count($events);
 
