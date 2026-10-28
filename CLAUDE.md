@@ -104,6 +104,14 @@ The scheduler runs when `SCHEDULER_ENABLE=true`. Key jobs and their cadence:
 - `HandleWeatherWarnings` — every 15 minutes; scrapes IPMA warnings from the homepage and upserts into `weather_warnings` keyed on `(district, type, level)` — one row per active event, updated in place when IPMA republishes with a newer `reportDate`. Use `weather:collapse-warnings` to clean up rows created before the upsert switch.
 - `DetectTemperatureWaves` — daily at 05:00 (after `UpdateWeatherDataDaily`); applies the WMO 6-day rule to detect heat waves (vs 1991-2020 normals) and cold waves (vs 1971-2000 normals) per station, persists `TemperatureWave` rows, and posts a Discord message on the first detection of each event
 
+### Seismic (sismos.pt)
+Earthquakes for the sismos.pt site (`v2/seismic/*`, `SeismicController`). IPMA's seismic feed only keeps ~30 days, so we archive it.
+- `app/Tools/Seismic/*` — one `SeismicSource` per catalogue (`IpmaSeismicTool` areas 3+7, `EmscTool`, `UsgsTool`, `GeofonTool`, `IgnTool`), each parsing into a `SeismicEvent` DTO and dropping events outside `SeismicSource::BBOX`. IPMA times are UTC; `magnitud: "-99.0"` means not yet revised (stored as `magnitude=null`, `provisional=true`).
+- `App\Support\EarthquakeMerger` — one `Earthquake` per real event: match by `sources.{src}.id`, else by origin within 10 s / 30 km (doubled for M5+). Preferred solution follows `SeismicSources::PRECEDENCE_PT` (IPMA first) inside PT regions, `PRECEDENCE_OTHER` outside; magnitude from the first source with a final value; place name from IPMA when present. Failover is implicit (no IPMA report → the next source leads).
+- `App\Support\SeismicRegion` — `continente|acores|madeira|outro` by coarse polygons.
+- `App\Support\SeismicFeedHealth` — per-source freshness in cache, Discord on IPMA/EMSC outages, `primary()` for the site.
+- `ProcessSeismicSource($source)` — scheduled per source when `SEISMIC_ENABLE=true` (IPMA/EMSC 2 min, USGS 10 min, GEOFON/IGN 15 min). `php artisan seismic:sync [source] [--days=]` runs it synchronously.
+
 ### Models (MongoDB)
 All models extend `MongoDB\Laravel\Eloquent\Model`. Key models:
 - `Incident` — collection `data`; central entity. Has scopes: `isActive()`, `isFire()`, `isFMA()`, `isOtherFire()`, `whereFireId()` (handles both legacy `id` field and new `_id`). Classification constants (`NATUREZA_CODE_*`) and `STATUS_ID`/`STATUS_COLORS` are defined here. Primary key is `_id`.

@@ -1,0 +1,30 @@
+get:
+  operationId: v2GetSeismicSitemap
+  summary: Earthquake ids and slugs for sitemap generation
+  description: Pages of 5000, newest first. Cached for 1 hour.
+  tags: [Seismic]
+  parameters:
+    - { name: page, in: query, schema: { type: integer, default: 1 } }
+    - { name: minmag, in: query, schema: { type: number } }
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              page: { type: integer }
+              pages: { type: integer }
+              total: { type: integer }
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: string }
+                    slug: { type: string }
+                    region: { type: string }
+                    magnitude: { type: number, nullable: true }
+                    updated: { type: string, format: date-time }

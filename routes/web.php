@@ -130,6 +130,14 @@ Route::group(['prefix' => 'v2'], function () {
         Route::post('add/agif', '\App\Http\Controllers\WarningsController@addAgif')->middleware('write.key');
     });
 
+    Route::group(['prefix' => 'seismic'], function () {
+        Route::get('events', '\App\Http\Controllers\SeismicController@events');
+        Route::get('events/latest', '\App\Http\Controllers\SeismicController@latest');
+        Route::get('events/{id}', '\App\Http\Controllers\SeismicController@show');
+        Route::get('sources/health', '\App\Http\Controllers\SeismicController@sourcesHealth');
+        Route::get('sitemap', '\App\Http\Controllers\SeismicController@sitemap');
+    });
+
     Route::group(['prefix' => 'stats'], function () {
         Route::group(['prefix' => 'today'], function () {
             Route::get('ignitions-hourly', '\App\Http\Controllers\StatsController@ignitionsHourly');

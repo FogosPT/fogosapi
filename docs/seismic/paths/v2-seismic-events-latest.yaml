@@ -1,0 +1,25 @@
+get:
+  operationId: v2GetSeismicLatest
+  summary: Last earthquake and the last 7 days
+  description: |
+    `last` is the most recent earthquake (whatever its age); `data` holds up
+    to 200 earthquakes from the last 7 days. `primarySource` is the source
+    currently leading (IPMA unless it has been down for more than
+    `SEISMIC_STALE_MINUTES`). Cached for 30 seconds.
+  tags: [Seismic]
+  parameters:
+    - { name: region, in: query, schema: { type: string, enum: [continente, acores, madeira, outro] } }
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              primarySource: { type: string }
+              last: { $ref: '../models/Earthquake.yaml' }
+              data: { type: array, items: { $ref: '../models/Earthquake.yaml' } }
+    422:
+      $ref: '../../common/responses/422.yaml'
