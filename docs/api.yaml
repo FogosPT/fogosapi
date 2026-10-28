@@ -195,6 +195,12 @@ paths:
     $ref: './seismic/paths/v2-seismic-events-latest.yaml'
   /v2/seismic/events/{id}:
     $ref: './seismic/paths/v2-seismic-event.yaml'
+  /v2/seismic/stats:
+    $ref: './seismic/paths/v2-seismic-stats.yaml'
+  /v2/seismic/stats/gutenberg-richter:
+    $ref: './seismic/paths/v2-seismic-stats-gutenberg-richter.yaml'
+  /v2/seismic/stats/heatmap:
+    $ref: './seismic/paths/v2-seismic-stats-heatmap.yaml'
   /v2/seismic/sources/health:
     $ref: './seismic/paths/v2-seismic-sources-health.yaml'
   /v2/seismic/sitemap:

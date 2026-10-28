@@ -18,6 +18,9 @@ abstract class SeismicSource
      */
     public const BBOX = ['minLat' => 29.0, 'maxLat' => 44.5, 'minLon' => -33.0, 'maxLon' => -5.5];
 
+    /** Records in the last parsed response, before any filtering. */
+    protected int $rawCount = 0;
+
     private Client $client;
 
     public function __construct(?Client $client = null)
@@ -26,6 +29,16 @@ abstract class SeismicSource
     }
 
     abstract public function name(): string;
+
+    /**
+     * How many records the last response held before parse() dropped any
+     * (explosions, events without magnitude, outside the area). Pagination
+     * must be judged on this, not on the events returned.
+     */
+    public function rawCount(): int
+    {
+        return $this->rawCount;
+    }
 
     /**
      * @return SeismicEvent[]

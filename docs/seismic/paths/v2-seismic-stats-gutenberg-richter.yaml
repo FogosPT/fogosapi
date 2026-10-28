@@ -1,0 +1,35 @@
+get:
+  operationId: v2GetSeismicGutenbergRichter
+  summary: Frequency–magnitude distribution and b-value for any range
+  description: Computed on demand and cached for 1 hour. Mc defaults to maximum curvature + 0.2.
+  tags: [Seismic]
+  parameters:
+    - { name: region, in: query, schema: { type: string, enum: [pt, continente, acores, madeira, outro], default: pt } }
+    - { name: from, in: query, required: true, schema: { type: string, format: date-time } }
+    - { name: to, in: query, schema: { type: string, format: date-time } }
+    - { name: mc, in: query, schema: { type: number }, description: Fix the magnitude of completeness instead of estimating it. }
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              n: { type: integer }
+              mc: { type: number, nullable: true }
+              mcMethod: { type: string }
+              bValue:
+                type: object
+                nullable: true
+                properties:
+                  b: { type: number }
+                  sigma: { type: number }
+                  n: { type: integer }
+                  mc: { type: number }
+                  mean: { type: number }
+              histogram: { type: array, items: { type: object, properties: { m: { type: number }, n: { type: integer } } } }
+              cumulative: { type: array, items: { type: object, properties: { m: { type: number }, n: { type: integer } } } }
+    422:
+      $ref: '../../common/responses/422.yaml'

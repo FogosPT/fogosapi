@@ -10,9 +10,14 @@ use Carbon\Carbon;
  * Coverage in Portugal is roughly M4+, but it is the only source with DYFI,
  * moment tensors, PAGER and the tsunami flag.
  */
-class UsgsTool extends SeismicSource
+class UsgsTool extends SeismicSource implements RangeSource
 {
     public const BASE = 'https://earthquake.usgs.gov/fdsnws/event/1/query';
+
+    public function pageLimit(): int
+    {
+        return 20000;
+    }
 
     public function name(): string
     {
@@ -47,6 +52,8 @@ class UsgsTool extends SeismicSource
 
     public function parse(string $body): array
     {
+        $this->rawCount = 0;
+
         // FDSN answers 204 with an empty body when nothing matches.
         if (trim($body) === '') {
             return [];
@@ -56,6 +63,7 @@ class UsgsTool extends SeismicSource
         if (!isset($json->features) || !is_array($json->features)) {
             throw InvalidSeismicPayload::from($this->name(), $body);
         }
+        $this->rawCount = count($json->features);
 
         $events = [];
         foreach ($json->features as $f) {

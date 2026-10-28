@@ -1,0 +1,32 @@
+get:
+  operationId: v2GetSeismicHeatmap
+  summary: Epicentre density grid
+  description: Count, maximum magnitude and released energy per lat/lon cell. Defaults to the last year and 0.1° cells (0.05° for Madeira). Cached for 1 hour.
+  tags: [Seismic]
+  parameters:
+    - { name: region, in: query, schema: { type: string, enum: [pt, continente, acores, madeira, outro], default: pt } }
+    - { name: from, in: query, schema: { type: string, format: date-time } }
+    - { name: to, in: query, schema: { type: string, format: date-time } }
+    - { name: cell, in: query, schema: { type: number, minimum: 0.02, maximum: 2 } }
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              cell: { type: number }
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    lat: { type: number, description: Cell centre. }
+                    lon: { type: number }
+                    n: { type: integer }
+                    maxM: { type: number, nullable: true }
+                    energyJ: { type: number }
+    422:
+      $ref: '../../common/responses/422.yaml'

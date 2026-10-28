@@ -134,6 +134,9 @@ Route::group(['prefix' => 'v2'], function () {
         Route::get('events', '\App\Http\Controllers\SeismicController@events');
         Route::get('events/latest', '\App\Http\Controllers\SeismicController@latest');
         Route::get('events/{id}', '\App\Http\Controllers\SeismicController@show');
+        Route::get('stats', '\App\Http\Controllers\SeismicController@stats');
+        Route::get('stats/gutenberg-richter', '\App\Http\Controllers\SeismicController@gutenbergRichter');
+        Route::get('stats/heatmap', '\App\Http\Controllers\SeismicController@heatmap');
         Route::get('sources/health', '\App\Http\Controllers\SeismicController@sourcesHealth');
         Route::get('sitemap', '\App\Http\Controllers\SeismicController@sitemap');
     });
