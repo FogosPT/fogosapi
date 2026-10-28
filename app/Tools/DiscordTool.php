@@ -9,6 +9,14 @@ class DiscordTool
     // Discord rejects messages above 2000 characters.
     private const MAX_LENGTH = 2000;
 
+    /**
+     * Tests set this to [] to capture postSeismic() messages instead of
+     * calling Discord.
+     *
+     * @var null|string[]
+     */
+    public static ?array $sent = null;
+
     public static function post($message)
     {
         if (!env('DISCORD_ENABLE')) {
@@ -25,6 +33,23 @@ class DiscordTool
         }
 
         self::send(env('DISCORD_WEBHOOK_ID_AERO'), env('DISCORD_WEBHOOK_TOKEN_AERO'), $message);
+    }
+
+    /**
+     * sismos.pt earthquake alerts, on their own webhook (not the Fogos.pt
+     * channels). Gated by SEISMIC_NOTIFICATIONS_ENABLE in the caller.
+     *
+     * @param mixed $message
+     */
+    public static function postSeismic($message)
+    {
+        if (self::$sent !== null) {
+            self::$sent[] = (string) $message;
+
+            return;
+        }
+
+        self::send(env('SEISMIC_DISCORD_WEBHOOK_ID'), env('SEISMIC_DISCORD_WEBHOOK_TOKEN'), $message);
     }
 
     /**

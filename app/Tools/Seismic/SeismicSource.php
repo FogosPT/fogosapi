@@ -84,6 +84,23 @@ abstract class SeismicSource
             && $lon >= self::BBOX['minLon'] && $lon <= self::BBOX['maxLon'];
     }
 
+    /**
+     * One spelling for magnitude types across catalogues: "ml", "Ml", "L"
+     * (IPMA) → "ML"; "mw", "Mw", "W" → "MW"; "mbLg" → "MBLG"; "M" → "M".
+     */
+    public static function magType(?string $raw): ?string
+    {
+        $raw = trim((string) $raw);
+        if ($raw === '') {
+            return null;
+        }
+        if (strlen($raw) > 1 && ($raw[0] === 'M' || $raw[0] === 'm')) {
+            $raw = substr($raw, 1);
+        }
+
+        return 'M'.strtoupper($raw === 'M' || $raw === 'm' ? '' : $raw);
+    }
+
     protected static function floatOrNull(mixed $value): ?float
     {
         if ($value === null || $value === '' || !is_numeric($value)) {

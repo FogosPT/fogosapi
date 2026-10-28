@@ -83,7 +83,7 @@ class UsgsTool extends SeismicSource implements RangeSource
                 lon: (float) $c[0],
                 depth: self::floatOrNull($c[2] ?? null),
                 magnitude: self::floatOrNull($p->mag ?? null),
-                magType: !empty($p->magType) ? 'M'.strtoupper(substr($p->magType, 1)) : null,
+                magType: self::magType($p->magType ?? null),
                 place: !empty($p->place) ? (string) $p->place : null,
                 felt: !empty($p->felt) ? true : null,
                 url: !empty($p->url) ? (string) $p->url : null,

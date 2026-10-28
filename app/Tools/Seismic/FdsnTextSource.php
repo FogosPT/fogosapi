@@ -49,7 +49,7 @@ abstract class FdsnTextSource extends SeismicSource
                 lon: (float) $c[3],
                 depth: self::floatOrNull($c[4]),
                 magnitude: self::floatOrNull($c[10]),
-                magType: $c[9] !== '' ? $c[9] : null,
+                magType: self::magType($c[9]),
                 place: $c[12] !== '' ? $c[12] : null,
                 url: $this->eventUrl($c[0]),
             );

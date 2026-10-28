@@ -22,6 +22,8 @@ class Earthquake extends Model
         'time' => 'datetime',
         'firstSeenAt' => 'datetime',
         'notifiedAt' => 'datetime',
+        'notifiedMagnitude' => 'float',
+        'notifiedFelt' => 'bool',
         'felt' => 'bool',
         'provisional' => 'bool',
         'lat' => 'float',
@@ -56,5 +58,7 @@ class Earthquake extends Model
         'energyJ',
         'firstSeenAt',
         'notifiedAt',
+        'notifiedMagnitude',
+        'notifiedFelt',
     ];
 }
