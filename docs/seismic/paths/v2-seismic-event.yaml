@@ -1,0 +1,39 @@
+get:
+  operationId: v2GetSeismicEvent
+  summary: One earthquake with every source, aftershocks and local history
+  description: |
+    Adds to the Earthquake fields:
+      - `sources`: the raw report of each source (id, origin, magnitude,
+        `firstSeenAt` — when we first saw it — and source extras such as the
+        IPMA ShakeMap or USGS DYFI/products).
+      - `aftershocks`: later events inside the Gardner & Knopoff (1974)
+        space/time window of this magnitude (only for M ≥ 2.5).
+      - `nearbyHistory`: the 10 largest earlier events within 50 km.
+    Cached for 120 seconds.
+  tags: [Seismic]
+  parameters:
+    - { name: id, in: path, required: true, schema: { type: string } }
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              data:
+                allOf:
+                  - $ref: '../models/Earthquake.yaml'
+                  - type: object
+                    properties:
+                      sources: { type: object, additionalProperties: { type: object } }
+                      aftershocks:
+                        type: object
+                        properties:
+                          window: { type: object, nullable: true, properties: { days: { type: number }, km: { type: number } } }
+                          count: { type: integer }
+                          data: { type: array, items: { $ref: '../models/Earthquake.yaml' } }
+                      nearbyHistory: { type: array, items: { $ref: '../models/Earthquake.yaml' } }
+    404:
+      $ref: '../../common/responses/404.yaml'

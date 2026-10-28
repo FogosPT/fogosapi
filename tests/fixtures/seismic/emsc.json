@@ -1,0 +1,197 @@
+{
+    "type": "FeatureCollection",
+    "metadata": {
+        "count": 7
+    },
+    "features": [
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -26.292,
+                    37.872,
+                    -4.3
+                ]
+            },
+            "id": "20261020_0000283",
+            "properties": {
+                "source_id": "2077783",
+                "source_catalog": "EMSC-RTS",
+                "lastupdate": "2026-10-20T19:14:14.686391Z",
+                "time": "2026-10-20T18:59:20.9Z",
+                "flynn_region": "AZORES ISLANDS, PORTUGAL",
+                "lat": 37.872,
+                "lon": -26.292,
+                "depth": 4.3,
+                "evtype": "ke",
+                "auth": "PDA",
+                "mag": 2.5,
+                "magtype": "ml",
+                "unid": "20261020_0000283"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -26.272,
+                    37.899,
+                    -2.0
+                ]
+            },
+            "id": "20261020_0000279",
+            "properties": {
+                "source_id": "2077779",
+                "source_catalog": "EMSC-RTS",
+                "lastupdate": "2026-10-20T19:07:57.371314Z",
+                "time": "2026-10-20T18:49:53.8Z",
+                "flynn_region": "AZORES ISLANDS, PORTUGAL",
+                "lat": 37.899,
+                "lon": -26.272,
+                "depth": 2.0,
+                "evtype": "ke",
+                "auth": "PDA",
+                "mag": 2.5,
+                "magtype": "ml",
+                "unid": "20261020_0000279"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -26.265,
+                    37.858,
+                    -2.5
+                ]
+            },
+            "id": "20261020_0000274",
+            "properties": {
+                "source_id": "2077773",
+                "source_catalog": "EMSC-RTS",
+                "lastupdate": "2026-10-20T19:00:54.739677Z",
+                "time": "2026-10-20T18:45:20.4Z",
+                "flynn_region": "AZORES ISLANDS, PORTUGAL",
+                "lat": 37.858,
+                "lon": -26.265,
+                "depth": 2.5,
+                "evtype": "ke",
+                "auth": "PDA",
+                "mag": 2.5,
+                "magtype": "ml",
+                "unid": "20261020_0000274"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -26.246,
+                    37.871,
+                    -1.4
+                ]
+            },
+            "id": "20261020_0000270",
+            "properties": {
+                "source_id": "2077768",
+                "source_catalog": "EMSC-RTS",
+                "lastupdate": "2026-10-20T18:42:27.999665Z",
+                "time": "2026-10-20T18:30:58.0Z",
+                "flynn_region": "AZORES ISLANDS, PORTUGAL",
+                "lat": 37.871,
+                "lon": -26.246,
+                "depth": 1.4,
+                "evtype": "ke",
+                "auth": "PDA",
+                "mag": 3.4,
+                "magtype": "ml",
+                "unid": "20261020_0000270"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -26.268,
+                    37.796,
+                    -2.0
+                ]
+            },
+            "id": "20261020_0000272",
+            "properties": {
+                "source_id": "2077771",
+                "source_catalog": "EMSC-RTS",
+                "lastupdate": "2026-10-20T18:53:06.910889Z",
+                "time": "2026-10-20T18:26:01.5Z",
+                "flynn_region": "AZORES ISLANDS, PORTUGAL",
+                "lat": 37.796,
+                "lon": -26.268,
+                "depth": 2.0,
+                "evtype": "ke",
+                "auth": "PDA",
+                "mag": 2.6,
+                "magtype": "ml",
+                "unid": "20261020_0000272"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -26.2788,
+                    37.9318,
+                    -10.0
+                ]
+            },
+            "id": "20261020_0000263",
+            "properties": {
+                "source_id": "2077755",
+                "source_catalog": "EMSC-RTS",
+                "lastupdate": "2026-10-21T06:45:41.176814Z",
+                "time": "2026-10-20T18:07:18.92Z",
+                "flynn_region": "AZORES ISLANDS, PORTUGAL",
+                "lat": 37.9318,
+                "lon": -26.2788,
+                "depth": 10.0,
+                "evtype": "ke",
+                "auth": "EMSC",
+                "mag": 5.1,
+                "magtype": "mw",
+                "unid": "20261020_0000263"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -26.294,
+                    37.798,
+                    -7.3
+                ]
+            },
+            "id": "20261020_0000246",
+            "properties": {
+                "source_id": "2077735",
+                "source_catalog": "EMSC-RTS",
+                "lastupdate": "2026-10-20T17:13:44.145009Z",
+                "time": "2026-10-20T17:02:44.1Z",
+                "flynn_region": "AZORES ISLANDS, PORTUGAL",
+                "lat": 37.798,
+                "lon": -26.294,
+                "depth": 7.3,
+                "evtype": "ke",
+                "auth": "PDA",
+                "mag": 2.4,
+                "magtype": "ml",
+                "unid": "20261020_0000246"
+            }
+        }
+    ]
+}

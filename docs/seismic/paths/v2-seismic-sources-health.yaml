@@ -1,0 +1,23 @@
+get:
+  operationId: v2GetSeismicSourcesHealth
+  summary: Freshness of each seismic source
+  tags: [Seismic]
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              primary: { type: string, example: ipma }
+              sources:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    ok: { type: boolean }
+                    lastOkAt: { type: string, format: date-time, nullable: true }
+                    dataAt: { type: string, format: date-time, nullable: true }
+                    events: { type: integer, nullable: true }

@@ -1,0 +1,53 @@
+{
+    "type": "FeatureCollection",
+    "metadata": {
+        "generated": 1793203249000,
+        "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&minlatitude=36&maxlatitude=40.5&minlongitude=-32&maxlongitude=-24&starttime=2026-10-20T17:00:00&endtime=2026-10-20T19:00:00",
+        "title": "USGS Earthquakes",
+        "status": 200,
+        "api": "2.8.2",
+        "count": 1
+    },
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "mag": 5.1,
+                "place": "39 km W of Mosteiros, Portugal",
+                "time": 1792519638131,
+                "updated": 1792617234135,
+                "tz": null,
+                "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000u3p1",
+                "detail": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=us6000u3p1&format=geojson",
+                "felt": 14,
+                "cdi": 4.6,
+                "mmi": null,
+                "alert": null,
+                "status": "reviewed",
+                "tsunami": 0,
+                "sig": 407,
+                "net": "us",
+                "code": "6000u3p1",
+                "ids": ",us6000u3p1,",
+                "sources": ",us,",
+                "types": ",dyfi,moment-tensor,origin,phase-data,",
+                "nst": 132,
+                "dmin": 0.613,
+                "rms": 0.8,
+                "gap": 33,
+                "magType": "mww",
+                "type": "earthquake",
+                "title": "M 5.1 - 39 km W of Mosteiros, Portugal"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -26.2588,
+                    37.9575,
+                    10
+                ]
+            },
+            "id": "us6000u3p1"
+        }
+    ]
+}

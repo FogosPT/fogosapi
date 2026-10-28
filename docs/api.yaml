@@ -40,6 +40,10 @@ tags:
   - name: Moderation
     description: |
       User-submitted photo moderation queue. Protected by `PHOTO_MODERATION_KEY`.
+  - name: Seismic
+    description: |
+      Earthquakes for sismos.pt — IPMA, EMSC, USGS, GFZ GEOFON and IGN merged
+      into one catalogue (mainland Portugal, Azores, Madeira).
   - name: V2
     description: V2 incident endpoints — current generation.
 
@@ -183,6 +187,18 @@ paths:
     $ref: './fires/paths/v2-fire-simulation.yaml'
   /v2/fire/perimeters/uncorrelated:
     $ref: './fires/paths/v2-fire-perimeters-uncorrelated.yaml'
+
+  # V2 — Seismic (sismos.pt)
+  /v2/seismic/events:
+    $ref: './seismic/paths/v2-seismic-events.yaml'
+  /v2/seismic/events/latest:
+    $ref: './seismic/paths/v2-seismic-events-latest.yaml'
+  /v2/seismic/events/{id}:
+    $ref: './seismic/paths/v2-seismic-event.yaml'
+  /v2/seismic/sources/health:
+    $ref: './seismic/paths/v2-seismic-sources-health.yaml'
+  /v2/seismic/sitemap:
+    $ref: './seismic/paths/v2-seismic-sitemap.yaml'
 
   # V2 — RCM (fire risk maps)
   /v2/rcm/today:

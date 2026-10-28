@@ -1,0 +1,2 @@
+#EventID|Time|Latitude|Longitude|Depth/km|Author|Catalog|Contributor|ContributorID|MagType|Magnitude|MagAuthor|EventLocationName|EventType
+gfz2026uowt|2026-10-20T18:07:19.51|37.936|-26.277|10.0|||GFZ|gfz2026uowt|Mw|5.1||Azores Islands, Portugal|earthquake

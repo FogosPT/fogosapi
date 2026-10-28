@@ -15,6 +15,7 @@ use App\Jobs\ProcessAirplanesLivePlanes;
 use App\Jobs\ProcessFR24Planes;
 use App\Jobs\ProcessICNFNewFireData;
 use App\Jobs\ProcessRCM;
+use App\Jobs\ProcessSeismicSource;
 use App\Jobs\SendRiskPSProject;
 use App\Jobs\UpdateICNFData;
 use App\Jobs\UpdateWeatherData;
@@ -38,6 +39,7 @@ use App\Console\Commands\SyncANEPCIncidents;
 use App\Console\Commands\SyncFR24Planes;
 use App\Console\Commands\SyncMTGFireData;
 use App\Console\Commands\SyncOcorrenciasSite;
+use App\Console\Commands\SyncSeismic;
 use App\Console\Commands\TestStuff;
 use App\Http\Middleware\LiveActivityRateLimit;
 use App\Http\Middleware\PhotoModerationAuth;
@@ -63,6 +65,7 @@ return Application::configure(basePath: dirname(__DIR__))
         SyncOcorrenciasSite::class,
         SyncMTGFireData::class,
         CollapseWeatherWarnings::class,
+        SyncSeismic::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         if (env('SCHEDULER_ENABLE')) {
@@ -102,6 +105,14 @@ return Application::configure(basePath: dirname(__DIR__))
             $schedule->job(new ProcessMTGSimulation())->hourly();
 
             $schedule->job(new ProcessICNFNewFireData())->everyFiveMinutes();
+
+            if (env('SEISMIC_ENABLE')) {
+                $schedule->job(new ProcessSeismicSource('ipma'))->everyTwoMinutes();
+                $schedule->job(new ProcessSeismicSource('emsc'))->everyTwoMinutes();
+                $schedule->job(new ProcessSeismicSource('usgs'))->everyTenMinutes();
+                $schedule->job(new ProcessSeismicSource('geofon'))->everyFifteenMinutes();
+                $schedule->job(new ProcessSeismicSource('ign'))->everyFifteenMinutes();
+            }
 
             $schedule->job(new ProcessFR24Planes())->cron('*/3 * * * *');
             $schedule->job(new ProcessAirplanesLivePlanes())->cron('1-59/3 * * * *');

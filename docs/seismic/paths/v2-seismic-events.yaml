@@ -1,0 +1,32 @@
+get:
+  operationId: v2GetSeismicEvents
+  summary: Earthquakes (newest first)
+  description: |
+    Earthquakes in mainland Portugal, the Azores, Madeira and the surrounding
+    Atlantic, merged from IPMA, EMSC, USGS, GFZ GEOFON and IGN. Defaults to
+    the last 30 days. Paginate with `before` = the `next` value of the
+    previous page. Cached for 60 seconds.
+  tags: [Seismic]
+  parameters:
+    - { name: region, in: query, schema: { type: string, enum: [continente, acores, madeira, outro] } }
+    - { name: from, in: query, schema: { type: string, format: date-time }, description: Default now - 30 days. }
+    - { name: to, in: query, schema: { type: string, format: date-time } }
+    - { name: before, in: query, schema: { type: string, format: date-time }, description: Cursor (exclusive). }
+    - { name: minmag, in: query, schema: { type: number } }
+    - { name: maxmag, in: query, schema: { type: number } }
+    - { name: felt, in: query, schema: { type: boolean } }
+    - { name: bbox, in: query, schema: { type: string, example: '-18,30,-15,34' }, description: 'minLon,minLat,maxLon,maxLat' }
+    - { name: limit, in: query, schema: { type: integer, default: 500, maximum: 2000 } }
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              data: { type: array, items: { $ref: '../models/Earthquake.yaml' } }
+              next: { type: string, format: date-time, nullable: true }
+    422:
+      $ref: '../../common/responses/422.yaml'

@@ -1,0 +1,74 @@
+type: object
+description: |
+  One earthquake merged across sources. Top-level fields are the preferred
+  solution (IPMA first inside Portuguese regions, EMSC first elsewhere);
+  magnitude comes from the first source with a final value.
+properties:
+  id:
+    type: string
+    example: 6720f3a1c9e77b0012ab34cd
+  slug:
+    type: string
+    example: 2026-10-20-1807-m5-3-fossa-de-hirondelle
+  time:
+    type: string
+    format: date-time
+    description: "Origin time (UTC)."
+  lat:
+    type: number
+    example: 37.854
+  lon:
+    type: number
+    example: -26.272
+  depth:
+    type: number
+    nullable: true
+    description: "Depth in km."
+  magnitude:
+    type: number
+    nullable: true
+    description: "Null while every source is provisional."
+  magType:
+    type: string
+    nullable: true
+    example: MW
+  magnitudeSource:
+    type: string
+    nullable: true
+    enum: [ipma, emsc, usgs, geofon, ign]
+  provisional:
+    type: boolean
+    description: "IPMA has not revised the magnitude yet (-99.0) and no other source has one."
+  region:
+    type: string
+    enum: [continente, acores, madeira, outro]
+  place:
+    type: string
+    nullable: true
+    example: Fossa de Hirondelle
+  felt:
+    type: boolean
+  intensity:
+    type: string
+    nullable: true
+    description: "Maximum intensity (MMI, IPMA), e.g. \"IV/V\"."
+  intensityMax:
+    type: number
+    nullable: true
+    description: "Numeric form of `intensity` (\"IV/V\" → 4.5)."
+  local:
+    type: string
+    nullable: true
+    description: "Locality where the maximum intensity was felt."
+  shakemapUrl:
+    type: string
+    nullable: true
+  preferredSource:
+    type: string
+    enum: [ipma, emsc, usgs, geofon, ign]
+  sourceNames:
+    type: array
+    items: { type: string }
+  updated:
+    type: string
+    format: date-time
