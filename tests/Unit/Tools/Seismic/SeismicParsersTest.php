@@ -8,6 +8,7 @@ use App\Tools\Seismic\IgnTool;
 use App\Tools\Seismic\InvalidSeismicPayload;
 use App\Tools\Seismic\IpmaSeismicTool;
 use App\Tools\Seismic\SeismicEvent;
+use App\Tools\Seismic\SeismicSource;
 use App\Tools\Seismic\UsgsTool;
 use Tests\TestCase;
 
@@ -118,7 +119,7 @@ class SeismicParsersTest extends TestCase
 
         $this->assertCount(1, $events);
         $this->assertSame('gfz2026uowt', $events[0]->sourceId);
-        $this->assertSame('Mw', $events[0]->magType);
+        $this->assertSame('MW', $events[0]->magType);
         $this->assertSame(5.1, $events[0]->magnitude);
         $this->assertSame('Azores Islands, Portugal', $events[0]->place);
     }
@@ -134,6 +135,16 @@ class SeismicParsersTest extends TestCase
         $this->assertSame(2.9, $e->magnitude);
         $this->assertSame('es2026vbxxb', $e->sourceId);
         $this->assertEqualsWithDelta(36.8316, $e->lat, 1e-6);
+    }
+
+    /** @test */
+    public function magnitude_types_have_one_spelling(): void
+    {
+        $cases = ['ml' => 'ML', 'Ml' => 'ML', 'L' => 'ML', 'W' => 'MW', 'Mw' => 'MW', 'mww' => 'MWW', 'mbLg' => 'MBLG', 'md' => 'MD', 'M' => 'M', '' => null];
+        foreach ($cases as $raw => $expected) {
+            $this->assertSame($expected, SeismicSource::magType((string) $raw), "'{$raw}'");
+        }
+        $this->assertNull(SeismicSource::magType(null));
     }
 
     /** @test */

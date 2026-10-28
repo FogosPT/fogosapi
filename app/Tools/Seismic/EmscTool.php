@@ -86,7 +86,7 @@ class EmscTool extends SeismicSource implements RangeSource
                 lon: (float) $p->lon,
                 depth: self::floatOrNull($p->depth ?? null),
                 magnitude: self::floatOrNull($p->mag ?? null),
-                magType: !empty($p->magtype) ? 'M'.strtoupper(substr($p->magtype, 1)) : null,
+                magType: self::magType($p->magtype ?? null),
                 place: !empty($p->flynn_region) ? (string) $p->flynn_region : null,
                 url: 'https://www.seismicportal.eu/eventdetails.html?unid='.$unid,
                 updatedAt: !empty($p->lastupdate) ? Carbon::parse($p->lastupdate)->utc() : null,

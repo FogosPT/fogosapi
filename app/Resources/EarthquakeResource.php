@@ -2,6 +2,7 @@
 
 namespace App\Resources;
 
+use App\Tools\Seismic\SeismicSource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class EarthquakeResource extends JsonResource
@@ -16,7 +17,8 @@ class EarthquakeResource extends JsonResource
             'lon' => $this->lon,
             'depth' => $this->depth,
             'magnitude' => $this->magnitude,
-            'magType' => $this->magType,
+            // Normalised on read too: documents stored before the normalisation.
+            'magType' => SeismicSource::magType($this->magType),
             'magnitudeSource' => $this->magnitudeSource,
             'provisional' => (bool) $this->provisional,
             'region' => $this->region,

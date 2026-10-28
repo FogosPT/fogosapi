@@ -61,7 +61,7 @@ class IpmaSeismicTool extends SeismicSource
                 lon: (float) $d->lon,
                 depth: self::floatOrNull($d->depth ?? null),
                 magnitude: $provisional ? null : $magnitude,
-                magType: !empty($d->magType) ? 'M'.$d->magType : null,
+                magType: self::magType($d->magType ?? null),
                 place: !empty($d->obsRegion) ? trim(preg_replace('/\s+/', ' ', $d->obsRegion)) : null,
                 felt: isset($d->sensed) ? (bool) $d->sensed : null,
                 intensity: !empty($d->degree) ? (string) $d->degree : null,
