@@ -62,4 +62,31 @@ class ProcessSeismicSourceTest extends TestCase
         $this->assertTrue(SeismicFeedHealth::isStale('ipma'));
         $this->assertSame('emsc', SeismicFeedHealth::primary());
     }
+
+    /** @test */
+    public function an_html_error_page_behind_a_200_counts_as_a_failure(): void
+    {
+        SeismicFeedHealth::recordSuccess('emsc', 3);
+
+        $job = (new ProcessSeismicSource('ipma'))->withTool($this->ipma([
+            new Response(200, ['Content-Type' => 'text/html'], '<html><body>Service Unavailable</body></html>'),
+        ]));
+        $job->handle();
+
+        $this->assertTrue(SeismicFeedHealth::isStale('ipma'));
+        $this->assertSame('emsc', SeismicFeedHealth::primary());
+    }
+
+    /** @test */
+    public function a_valid_but_empty_feed_keeps_the_source_healthy(): void
+    {
+        $job = (new ProcessSeismicSource('ipma'))->withTool($this->ipma([
+            new Response(200, [], '{"idArea": 3, "data": []}'),
+            new Response(200, [], '{"idArea": 7, "data": []}'),
+        ]));
+        $job->handle();
+
+        $this->assertSame(0, $job->total);
+        $this->assertFalse(SeismicFeedHealth::isStale('ipma'));
+    }
 }

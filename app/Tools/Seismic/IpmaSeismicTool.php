@@ -38,7 +38,7 @@ class IpmaSeismicTool extends SeismicSource
     {
         $json = json_decode($body);
         if (!isset($json->data) || !is_array($json->data)) {
-            return [];
+            throw InvalidSeismicPayload::from($this->name(), $body);
         }
 
         $updatedAt = !empty($json->updateDate) ? Carbon::parse($json->updateDate, 'UTC') : null;

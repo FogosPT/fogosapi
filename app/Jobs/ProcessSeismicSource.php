@@ -36,6 +36,8 @@ class ProcessSeismicSource extends Job
         try {
             $events = $this->days !== null ? $tool->fetchRecent($this->days) : $tool->fetchRecent();
         } catch (\Throwable $e) {
+            // Network errors and InvalidSeismicPayload (e.g. an HTML error
+            // page behind a 200) both count as the source being down.
             Log::error('Seismic source failed', ['source' => $this->source, 'message' => $e->getMessage()]);
             SeismicFeedHealth::recordFailure($this->source, $e->getMessage());
 

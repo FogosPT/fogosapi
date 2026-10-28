@@ -29,6 +29,8 @@ abstract class SeismicSource
 
     /**
      * @return SeismicEvent[]
+     *
+     * @throws InvalidSeismicPayload when the body is not the source's format
      */
     abstract public function parse(string $body): array;
 

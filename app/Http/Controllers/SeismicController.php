@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
+use MongoDB\BSON\ObjectId;
+use MongoDB\BSON\UTCDateTime;
 
 /**
  * Earthquakes for sismos.pt (see App\Support\EarthquakeMerger for how the
@@ -28,7 +30,7 @@ class SeismicController extends Controller
             'region' => 'nullable|in:'.implode(',', SeismicRegion::ALL),
             'from' => 'nullable|date',
             'to' => 'nullable|date',
-            'before' => 'nullable|date',
+            'before' => ['nullable', 'regex:/^[0-9T:.\-+Z]+(_[a-f0-9]{24})?$/'],
             'minmag' => 'nullable|numeric',
             'maxmag' => 'nullable|numeric',
             'felt' => 'nullable|in:0,1,true,false',
@@ -45,13 +47,16 @@ class SeismicController extends Controller
 
         $payload = Cache::remember($cacheKey, 60, function () use ($params) {
             $limit = (int) ($params['limit'] ?? 500);
-            $query = $this->filtered($params)->orderBy('time', 'desc')->limit($limit + 1);
+            $query = $this->filtered($params)->orderBy('time', 'desc')->orderBy('_id', 'desc')->limit($limit + 1);
             $rows = $query->get();
 
+            // Cursor = "{time}_{id}": events sharing an origin time are
+            // ordered by _id so a page boundary between them loses nothing.
             $next = null;
             if ($rows->count() > $limit) {
                 $rows = $rows->slice(0, $limit);
-                $next = $rows->last()->time->copy()->utc()->format('Y-m-d\TH:i:s.v\Z');
+                $last = $rows->last();
+                $next = $last->time->copy()->utc()->format('Y-m-d\TH:i:s.v\Z').'_'.$last->id;
             }
 
             return [
@@ -162,15 +167,19 @@ class SeismicController extends Controller
     {
         $from = isset($params['from']) ? Carbon::parse($params['from']) : Carbon::now()->subDays(30);
         $to = isset($params['to']) ? Carbon::parse($params['to']) : null;
-        if (isset($params['before'])) {
-            $before = Carbon::parse($params['before']);
-            $to = $to === null || $before->lt($to) ? $before : $to;
-        }
 
         $query = Earthquake::where('time', '>=', $from);
 
         if ($to !== null) {
-            $query->where('time', isset($params['before']) ? '<' : '<=', $to);
+            $query->where('time', '<=', $to);
+        }
+        if (isset($params['before'])) {
+            [$time, $id] = array_pad(explode('_', $params['before'], 2), 2, null);
+            $before = new UTCDateTime(Carbon::parse($time));
+            $query->whereRaw(['$or' => array_values(array_filter([
+                ['time' => ['$lt' => $before]],
+                $id !== null ? ['time' => $before, '_id' => ['$lt' => new ObjectId($id)]] : null,
+            ]))]);
         }
         if (isset($params['region'])) {
             $query->where('region', $params['region']);

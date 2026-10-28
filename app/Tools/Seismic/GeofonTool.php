@@ -39,6 +39,15 @@ class GeofonTool extends SeismicSource
     public function parse(string $body): array
     {
         $events = [];
+        // FDSN answers 204 with an empty body when nothing matches; anything
+        // else must start with the text-format header.
+        if (trim($body) === '') {
+            return [];
+        }
+        if (!str_starts_with(ltrim($body), '#EventID')) {
+            throw InvalidSeismicPayload::from($this->name(), $body);
+        }
+
         foreach (preg_split('/\R/', trim($body)) as $line) {
             if ($line === '' || str_starts_with($line, '#')) {
                 continue;

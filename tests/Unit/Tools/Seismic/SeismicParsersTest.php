@@ -5,6 +5,7 @@ namespace Tests\Unit\Tools\Seismic;
 use App\Tools\Seismic\EmscTool;
 use App\Tools\Seismic\GeofonTool;
 use App\Tools\Seismic\IgnTool;
+use App\Tools\Seismic\InvalidSeismicPayload;
 use App\Tools\Seismic\IpmaSeismicTool;
 use App\Tools\Seismic\SeismicEvent;
 use App\Tools\Seismic\UsgsTool;
@@ -136,10 +137,28 @@ class SeismicParsersTest extends TestCase
     }
 
     /** @test */
-    public function garbage_payloads_yield_no_events(): void
+    public function garbage_payloads_are_rejected_not_treated_as_empty(): void
     {
         foreach ([new IpmaSeismicTool(), new EmscTool(), new UsgsTool(), new GeofonTool(), new IgnTool()] as $tool) {
-            $this->assertSame([], $tool->parse('<html>502 Bad Gateway</html>'), $tool->name());
+            foreach (['<html>502 Bad Gateway</html>', '{"truncated": '] as $body) {
+                try {
+                    $tool->parse($body);
+                    $this->fail($tool->name().' accepted '.$body);
+                } catch (InvalidSeismicPayload $e) {
+                    $this->assertStringStartsWith($tool->name().':', $e->getMessage());
+                }
+            }
         }
+    }
+
+    /** @test */
+    public function valid_empty_catalogues_yield_no_events(): void
+    {
+        $this->assertSame([], (new IpmaSeismicTool())->parse('{"idArea": 3, "data": []}'));
+        $this->assertSame([], (new EmscTool())->parse(''));
+        $this->assertSame([], (new UsgsTool())->parse('{"type": "FeatureCollection", "features": []}'));
+        $this->assertSame([], (new GeofonTool())->parse(''));
+        $this->assertSame([], (new GeofonTool())->parse("#EventID|Time|Latitude|Longitude|Depth/km|Author|Catalog|Contributor|ContributorID|MagType|Magnitude|MagAuthor|EventLocationName|EventType\n"));
+        $this->assertSame([], (new IgnTool())->parse('<?xml version="1.0"?><rss version="2.0"><channel><title>x</title></channel></rss>'));
     }
 }

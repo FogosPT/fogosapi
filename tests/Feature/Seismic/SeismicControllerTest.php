@@ -64,7 +64,7 @@ class SeismicControllerTest extends TestCase
 
         $page1 = $this->getJson('/v2/seismic/events?limit=2')->assertOk();
         $this->assertCount(2, $page1->json('data'));
-        $this->assertSame('2026-10-24T10:00:00.000Z', $page1->json('next'));
+        $this->assertStringStartsWith('2026-10-24T10:00:00.000Z_', $page1->json('next'));
 
         $page2 = $this->getJson('/v2/seismic/events?limit=2&before='.$page1->json('next'));
         $this->assertSame('2026-10-23T10:00:00.000Z', $page2->json('data.0.time'));
@@ -75,10 +75,44 @@ class SeismicControllerTest extends TestCase
     }
 
     /** @test */
+    public function events_sharing_an_origin_time_are_not_lost_at_a_page_boundary(): void
+    {
+        // Same second, far apart: distinct earthquakes.
+        $this->quake('2026-10-27T10:00:00Z', 37.8, -26.2, 2.0, 's1');
+        $this->quake('2026-10-27T10:00:00Z', 38.7, -9.1, 2.0, 's2');
+        $this->quake('2026-10-27T10:00:00Z', 32.6, -16.9, 2.0, 's3');
+
+        $seen = [];
+        $next = null;
+        do {
+            $res = $this->getJson('/v2/seismic/events?limit=1'.($next ? '&before='.$next : ''))->assertOk();
+            foreach ($res->json('data') as $row) {
+                $seen[] = $row['id'];
+            }
+            $next = $res->json('next');
+        } while ($next !== null && count($seen) < 10);
+
+        $this->assertCount(3, $seen);
+        $this->assertCount(3, array_unique($seen));
+    }
+
+    /** @test */
+    public function a_plain_timestamp_cursor_still_works(): void
+    {
+        $this->quake('2026-10-26T10:00:00Z', 38.7, -9.1, 2.0, 'c1');
+        $this->quake('2026-10-27T10:00:00Z', 38.8, -9.2, 2.0, 'c2');
+
+        $res = $this->getJson('/v2/seismic/events?before=2026-10-27T10:00:00.000Z')->assertOk();
+        $this->assertCount(1, $res->json('data'));
+        $this->assertSame('2026-10-26T10:00:00.000Z', $res->json('data.0.time'));
+    }
+
+    /** @test */
     public function invalid_filters_are_rejected(): void
     {
         $this->getJson('/v2/seismic/events?region=marte')->assertStatus(422);
         $this->getJson('/v2/seismic/events?bbox=1,2,3')->assertStatus(422);
+        $this->getJson('/v2/seismic/events?before=2026-10-27_nothex')->assertStatus(422);
         $this->getJson('/v2/seismic/events/latest?region=marte')->assertStatus(422);
     }
 

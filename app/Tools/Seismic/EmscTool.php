@@ -44,9 +44,14 @@ class EmscTool extends SeismicSource
 
     public function parse(string $body): array
     {
+        // FDSN answers 204 with an empty body when nothing matches.
+        if (trim($body) === '') {
+            return [];
+        }
+
         $json = json_decode($body);
         if (!isset($json->features) || !is_array($json->features)) {
-            return [];
+            throw InvalidSeismicPayload::from($this->name(), $body);
         }
 
         $events = [];

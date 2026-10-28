@@ -31,8 +31,8 @@ class IgnTool extends SeismicSource
         $xml = simplexml_load_string($body);
         libxml_use_internal_errors($previous);
 
-        if ($xml === false || !isset($xml->channel->item)) {
-            return [];
+        if ($xml === false || !isset($xml->channel)) {
+            throw InvalidSeismicPayload::from($this->name(), $body);
         }
 
         $events = [];

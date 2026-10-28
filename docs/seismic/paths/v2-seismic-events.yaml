@@ -11,7 +11,10 @@ get:
     - { name: region, in: query, schema: { type: string, enum: [continente, acores, madeira, outro] } }
     - { name: from, in: query, schema: { type: string, format: date-time }, description: Default now - 30 days. }
     - { name: to, in: query, schema: { type: string, format: date-time } }
-    - { name: before, in: query, schema: { type: string, format: date-time }, description: Cursor (exclusive). }
+    - name: before
+      in: query
+      schema: { type: string, example: '2026-10-24T10:00:00.000Z_6720f3a1c9e77b0012ab34cd' }
+      description: "Cursor (exclusive): the `next` value of the previous page, `{time}_{id}`. A bare timestamp also works."
     - { name: minmag, in: query, schema: { type: number } }
     - { name: maxmag, in: query, schema: { type: number } }
     - { name: felt, in: query, schema: { type: boolean } }
@@ -27,6 +30,6 @@ get:
             properties:
               success: { type: boolean }
               data: { type: array, items: { $ref: '../models/Earthquake.yaml' } }
-              next: { type: string, format: date-time, nullable: true }
+              next: { type: string, nullable: true, description: 'Cursor for the next page ({time}_{id}).' }
     422:
       $ref: '../../common/responses/422.yaml'
