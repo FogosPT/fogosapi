@@ -6,7 +6,10 @@ use App\Support\EarthquakeMerger;
 use App\Tools\Seismic\RangeSource;
 use App\Tools\Seismic\SeismicSources;
 use Carbon\Carbon;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Console\Command;
+use Illuminate\Support\Sleep;
+use App\Tools\Seismic\SeismicEvent;
 
 /**
  * Imports the historical catalogue into `earthquakes` in time chunks.
@@ -25,11 +28,20 @@ class BackfillSeismic extends Command
         {--to= : last year (or date); default now}
         {--minmag= : minimum magnitude}
         {--chunk= : month|year (default: month for emsc, year otherwise)}
-        {--sleep=1 : seconds to wait between requests}';
+        {--sleep= : seconds to wait between requests (default: 10 for isc, 1 otherwise)}
+        {--retries=8 : attempts per chunk; rate limits (429/503) back off up to 15 min}';
 
     protected $description = 'Import historical earthquakes (ISC, EMSC, USGS) into earthquakes';
 
+    /** Pause between requests when --sleep is not given; the ISC rate-limits per IP. */
+    private const DEFAULT_SLEEP = ['isc' => 10.0];
+
+    /** Longest wait between attempts, seconds. */
+    private const MAX_BACKOFF = 900;
+
     private EarthquakeMerger $merger;
+
+    private float $sleep = 1.0;
 
     /** @var string[] */
     private array $failed = [];
@@ -63,6 +75,7 @@ class BackfillSeismic extends Command
         $to = $this->option('to') !== null ? self::bound($this->option('to'), true) : Carbon::now('UTC');
         $chunk = $this->option('chunk') ?? ($name === 'emsc' ? 'month' : 'year');
         $minMag = $this->option('minmag') !== null ? (float) $this->option('minmag') : null;
+        $this->sleep = $this->option('sleep') !== null ? (float) $this->option('sleep') : (self::DEFAULT_SLEEP[$name] ?? 1.0);
         $this->merger = new EarthquakeMerger();
 
         for ($start = $from->copy(); $start->lt($to);) {
@@ -89,7 +102,7 @@ class BackfillSeismic extends Command
     private function importRange(RangeSource $tool, Carbon $from, Carbon $to, ?float $minMag): array
     {
         try {
-            $events = retry(3, fn () => $tool->fetchRange($from, $to, $minMag), fn (int $attempt) => $attempt * 5000 * (int) $this->option('sleep'));
+            $events = $this->fetchWithRetry($tool, $from, $to, $minMag);
         } catch (\Throwable $e) {
             $this->failed[] = $from->format('Y-m-d\TH:i').'/'.$to->format('Y-m-d\TH:i');
             $this->warn('  '.$e->getMessage());
@@ -121,11 +134,63 @@ class BackfillSeismic extends Command
         return [count($events), $created];
     }
 
+    /**
+     * @return SeismicEvent[]
+     */
+    private function fetchWithRetry(RangeSource $tool, Carbon $from, Carbon $to, ?float $minMag): array
+    {
+        $attempts = max(1, (int) $this->option('retries'));
+        for ($attempt = 1;; ++$attempt) {
+            try {
+                return $tool->fetchRange($from, $to, $minMag);
+            } catch (\Throwable $e) {
+                $wait = self::retryDelay($e, $attempt);
+                if ($wait === null || $attempt >= $attempts) {
+                    throw $e;
+                }
+                $status = $e instanceof RequestException && $e->getResponse() ? 'HTTP '.$e->getResponse()->getStatusCode() : class_basename($e);
+                $this->warn(sprintf('  %s — nova tentativa em %ds (%d/%d)', $status, $wait, $attempt, $attempts));
+                Sleep::for($wait)->seconds();
+            }
+        }
+    }
+
+    /**
+     * Seconds to wait before the next attempt, or null when retrying is
+     * pointless (4xx other than 408/429).
+     *
+     * - 429 / 503: the server's Retry-After when present, otherwise 1, 2, 4…
+     *   minutes (the ISC sends none and rate-limits per IP).
+     * - Network errors, timeouts, other 5xx: 10, 20, 40… seconds.
+     * Both capped at MAX_BACKOFF.
+     */
+    public static function retryDelay(\Throwable $e, int $attempt): ?int
+    {
+        $response = $e instanceof RequestException ? $e->getResponse() : null;
+        $status = $response?->getStatusCode();
+
+        if ($status === 429 || $status === 503) {
+            $header = $response->getHeaderLine('Retry-After');
+            if ($header !== '') {
+                $seconds = is_numeric($header) ? (int) $header : (int) Carbon::now()->diffInSeconds(Carbon::parse($header), false);
+
+                return min(self::MAX_BACKOFF, max(1, $seconds));
+            }
+
+            return min(self::MAX_BACKOFF, 60 * 2 ** ($attempt - 1));
+        }
+
+        if ($status !== null && $status >= 400 && $status < 500 && $status !== 408) {
+            return null;
+        }
+
+        return min(self::MAX_BACKOFF, 10 * 2 ** ($attempt - 1));
+    }
+
     private function pause(): void
     {
-        $seconds = (float) $this->option('sleep');
-        if ($seconds > 0) {
-            usleep((int) ($seconds * 1_000_000));
+        if ($this->sleep > 0) {
+            Sleep::for($this->sleep)->seconds();
         }
     }
 

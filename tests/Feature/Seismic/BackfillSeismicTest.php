@@ -6,7 +6,13 @@ use App\Models\Earthquake;
 use App\Tools\Seismic\RangeSource;
 use App\Tools\Seismic\SeismicEvent;
 use App\Tools\Seismic\SeismicSource;
+use App\Console\Commands\BackfillSeismic;
 use Carbon\Carbon;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
+use Illuminate\Support\Sleep;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 
@@ -19,6 +25,9 @@ class FakeRangeSource extends SeismicSource implements RangeSource
     /** @var array<int, array{string, string}> */
     public array $calls = [];
     public int $failuresLeft = 0;
+
+    /** What to throw while failuresLeft > 0. */
+    public ?\Closure $failure = null;
 
     /** Drop one record per response, as EMSC parse() drops explosions. */
     public bool $dropOne = false;
@@ -47,7 +56,7 @@ class FakeRangeSource extends SeismicSource implements RangeSource
     {
         $this->calls[] = [$from->format('Y-m-d H:i'), $to->format('Y-m-d H:i')];
         if ($this->failuresLeft-- > 0) {
-            throw new \RuntimeException('503');
+            throw $this->failure ? ($this->failure)() : new \RuntimeException('503');
         }
 
         $events = [];
@@ -76,6 +85,57 @@ class BackfillSeismicTest extends TestCase
         parent::setUp();
         $this->fake = new FakeRangeSource();
         $this->app->instance('seismic.source.emsc', $this->fake);
+        $this->app->instance('seismic.source.isc', $this->fake);
+        Sleep::fake();
+    }
+
+    private static function http(int $status, array $headers = []): ClientException
+    {
+        return new ClientException("HTTP {$status}", new Request('GET', 'https://www.isc.ac.uk/fdsnws/event/1/query'), new Response($status, $headers));
+    }
+
+    /** @test */
+    public function rate_limits_back_off_until_the_catalogue_answers(): void
+    {
+        // The ISC sends no Retry-After: 1 min, 2 min, 4 min…
+        $this->fake->failuresLeft = 3;
+        $this->fake->failure = fn () => self::http(429);
+
+        $this->artisan('seismic:backfill emsc --from=2020-01-01 --to=2020-01-10 --sleep=0')
+            ->expectsOutputToContain('HTTP 429 — nova tentativa em 60s (1/8)')
+            ->assertSuccessful();
+
+        $this->assertSame(9, Earthquake::count());
+        Sleep::assertSequence([Sleep::for(60)->seconds(), Sleep::for(120)->seconds(), Sleep::for(240)->seconds()]);
+    }
+
+    /** @test */
+    public function retry_after_is_honoured_and_capped(): void
+    {
+        $this->assertSame(30, BackfillSeismic::retryDelay(self::http(429, ['Retry-After' => '30']), 1));
+        $this->assertSame(900, BackfillSeismic::retryDelay(self::http(503, ['Retry-After' => '7200']), 1));
+        $this->assertSame(900, BackfillSeismic::retryDelay(self::http(429), 10));
+        Carbon::setTestNow('2026-11-02T10:00:00Z');
+        $this->assertSame(90, BackfillSeismic::retryDelay(self::http(429, ['Retry-After' => 'Mon, 02 Nov 2026 10:01:30 GMT']), 1));
+        Carbon::setTestNow();
+    }
+
+    /** @test */
+    public function client_errors_are_not_retried_but_network_errors_are(): void
+    {
+        $this->assertNull(BackfillSeismic::retryDelay(self::http(400), 1));
+        $this->assertNull(BackfillSeismic::retryDelay(self::http(404), 1));
+        $this->assertSame(10, BackfillSeismic::retryDelay(new ConnectException('timeout', new Request('GET', 'https://x')), 1));
+        $this->assertSame(20, BackfillSeismic::retryDelay(new \RuntimeException('boom'), 2));
+    }
+
+    /** @test */
+    public function the_isc_is_polled_slowly_by_default(): void
+    {
+        $this->artisan('seismic:backfill isc --from=2020-01-01 --to=2020-01-05')->assertSuccessful();
+
+        // One request (4 days < one page), then the 10 s pause.
+        Sleep::assertSequence([Sleep::for(10.0)->seconds()]);
     }
 
     /** @test */
