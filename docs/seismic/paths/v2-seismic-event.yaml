@@ -9,6 +9,8 @@ get:
       - `aftershocks`: later events inside the Gardner & Knopoff (1974)
         space/time window of this magnitude (only for M ≥ 2.5).
       - `nearbyHistory`: the 10 largest earlier events within 50 km.
+      - `nearestPlaces`: up to 3 Portuguese places — the nearest parish, the
+        nearest municipality seat and the next parish of another municipality.
     Cached for 120 seconds.
   tags: [Seismic]
   parameters:
@@ -35,5 +37,6 @@ get:
                           count: { type: integer }
                           data: { type: array, items: { $ref: '../models/Earthquake.yaml' } }
                       nearbyHistory: { type: array, items: { $ref: '../models/Earthquake.yaml' } }
+                      nearestPlaces: { type: array, items: { $ref: '../models/Place.yaml' } }
     404:
       $ref: '../../common/responses/404.yaml'

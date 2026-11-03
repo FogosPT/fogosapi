@@ -42,6 +42,8 @@ use App\Console\Commands\SyncOcorrenciasSite;
 use App\Console\Commands\SyncSeismic;
 use App\Console\Commands\BackfillSeismic;
 use App\Console\Commands\ComputeSeismicStats;
+use App\Console\Commands\FillSeismicPlaces;
+use App\Console\Commands\ImportSeismicPlaces;
 use App\Console\Commands\TestStuff;
 use App\Http\Middleware\LiveActivityRateLimit;
 use App\Http\Middleware\PhotoModerationAuth;
@@ -70,6 +72,8 @@ return Application::configure(basePath: dirname(__DIR__))
         SyncSeismic::class,
         BackfillSeismic::class,
         ComputeSeismicStats::class,
+        ImportSeismicPlaces::class,
+        FillSeismicPlaces::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         if (env('SCHEDULER_ENABLE')) {

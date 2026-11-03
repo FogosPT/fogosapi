@@ -118,8 +118,12 @@ class EarthquakeMerger
 
         $quake->preferredSource = $preferred;
         $quake->time = Carbon::parse($origin['time']);
+        $moved = $quake->nearestPlaces === null || $quake->lat !== (float) $origin['lat'] || $quake->lon !== (float) $origin['lon'];
         $quake->lat = (float) $origin['lat'];
         $quake->lon = (float) $origin['lon'];
+        if ($moved) {
+            $quake->nearestPlaces = SeismicPlaces::nearest($quake->lat, $quake->lon);
+        }
         $quake->location = ['type' => 'Point', 'coordinates' => [(float) $origin['lon'], (float) $origin['lat']]];
         $quake->depth = $origin['depth'] ?? $this->firstValue($sources, $present, 'depth');
         $quake->region = SeismicRegion::classify($quake->lat, $quake->lon);
