@@ -69,6 +69,8 @@ properties:
   sourceNames:
     type: array
     items: { type: string }
+  nearest:
+    $ref: './Place.yaml'
   updated:
     type: string
     format: date-time

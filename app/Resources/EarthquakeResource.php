@@ -30,6 +30,8 @@ class EarthquakeResource extends JsonResource
             'shakemapUrl' => $this->shakemapUrl,
             'preferredSource' => $this->preferredSource,
             'sourceNames' => array_keys($this->sources ?? []),
+            // Nearest Portuguese place (SeismicPlaces): {name, municipality, kind, km, bearing}.
+            'nearest' => $this->nearestPlaces[0] ?? null,
             'updated' => $this->updated?->copy()->utc()->format('Y-m-d\TH:i:s\Z'),
         ];
     }

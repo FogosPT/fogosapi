@@ -60,5 +60,6 @@ class Earthquake extends Model
         'notifiedAt',
         'notifiedMagnitude',
         'notifiedFelt',
+        'nearestPlaces',
     ];
 }

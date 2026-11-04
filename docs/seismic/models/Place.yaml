@@ -1,0 +1,12 @@
+type: object
+nullable: true
+description: |
+  A Portuguese place near the epicentre (gazetteer of municipalities and civil
+  parishes from Wikidata). `bearing` is the direction from the place to the
+  epicentre, so the epicentre is "`km` km to the `bearing` of `name`".
+properties:
+  name: { type: string, example: Vinhais }
+  municipality: { type: string, example: Vinhais }
+  kind: { type: string, enum: [freguesia, concelho] }
+  km: { type: number, example: 12.4 }
+  bearing: { type: string, enum: [N, NE, E, SE, S, SO, O, NO] }

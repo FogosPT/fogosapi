@@ -111,6 +111,7 @@ class SeismicController extends Controller
 
             $data = (new EarthquakeResource($quake))->resolve();
             $data['sources'] = $quake->sources;
+            $data['nearestPlaces'] = $quake->nearestPlaces ?? [];
             $data['aftershocks'] = $this->aftershocks($quake);
             $data['nearbyHistory'] = $this->nearbyHistory($quake);
 
