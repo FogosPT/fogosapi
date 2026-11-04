@@ -17,9 +17,6 @@ class SeismicPlaces
     /** Points of the compass, Portuguese abbreviations (O = oeste). */
     private const COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
 
-    /** Candidates gathered before picking (several parishes + seats). */
-    private const POOL = 40;
-
     /** @var null|array<string, array<int, array>> */
     private static ?array $grid = null;
 
@@ -33,52 +30,45 @@ class SeismicPlaces
 
     /**
      * The nearest parish, the nearest municipality seat (when it is another
-     * place) and the next nearest parish of another municipality — at most
-     * $n. Bearing is from the place to the epicentre ("12 km a SO de …").
+     * place) and the nearest parish of yet another municipality — at most
+     * $n. Each is searched for on its own, so a dense cluster of parishes of
+     * one municipality never hides the seat or the neighbouring municipality.
+     * Bearing is from the place to the epicentre ("12 km a SO de …").
      *
      * @return array<int, array{name: string, municipality: string, kind: string, km: float, bearing: string}>
      */
     public static function nearest(float $lat, float $lon, int $n = 3): array
     {
-        $candidates = self::candidates($lat, $lon);
-        if (!$candidates) {
-            return [];
-        }
-
-        $parishes = array_values(array_filter($candidates, fn ($c) => $c['kind'] === 'freguesia'));
-        $seats = array_values(array_filter($candidates, fn ($c) => $c['kind'] === 'concelho'));
+        $parish = self::closest($lat, $lon, fn ($p) => $p[2] === 'f');
+        $seat = self::closest($lat, $lon, fn ($p) => $p[2] === 'c');
 
         $out = [];
-        if ($parishes) {
-            $out[] = $parishes[0];
+        if ($parish) {
+            $out[] = $parish;
         }
-        if ($seats && (!$out || $seats[0]['name'] !== $out[0]['name'])) {
-            $out[] = $seats[0];
+        if ($seat && (!$parish || $seat['name'] !== $parish['name'])) {
+            $out[] = $seat;
         }
-        foreach ($parishes as $p) {
-            if (count($out) >= $n) {
-                break;
-            }
-            if (!in_array($p['municipality'], array_column($out, 'municipality'), true)) {
-                $out[] = $p;
-            }
-        }
-        if (!$out) {
-            $out = $candidates;
+
+        $seen = array_column($out, 'municipality');
+        $other = self::closest($lat, $lon, fn ($p) => $p[2] === 'f' && !in_array($p[1], $seen, true));
+        if ($other) {
+            $out[] = $other;
         }
 
         return array_slice($out, 0, $n);
     }
 
     /**
-     * Places sorted by distance. Rings of grid cells are added outward until
-     * the pool is full and the ring is already farther than its worst member.
+     * The nearest place matching $accept, or null. Rings of grid cells are
+     * searched outward until the best match found is closer than anything
+     * the next ring could hold.
      */
-    private static function candidates(float $lat, float $lon): array
+    private static function closest(float $lat, float $lon, callable $accept): ?array
     {
         self::load();
         if (!self::$grid) {
-            return [];
+            return null;
         }
 
         [$minRow, $maxRow, $minCol, $maxCol] = self::$bounds;
@@ -88,44 +78,44 @@ class SeismicPlaces
         // km per cell, the smaller (east–west) side.
         $cellKm = self::CELL * 111.2 * cos(deg2rad(min(abs($lat) + 5, 89)));
 
-        $found = [];
-        $km = [];
+        $best = null;
+        $bestKm = INF;
         for ($ring = 0; $ring <= $maxRing; ++$ring) {
             for ($r = $row - $ring; $r <= $row + $ring; ++$r) {
                 $edge = abs($r - $row) === $ring;
                 $step = $edge ? 1 : 2 * $ring;
                 for ($c = $col - $ring; $c <= $col + $ring; $c += max(1, $step)) {
                     foreach (self::$grid["{$r}:{$c}"] ?? [] as $p) {
-                        $found[] = $p;
-                        $km[] = EarthquakeMerger::distanceKm($p[3], $p[4], $lat, $lon);
+                        if (!$accept($p)) {
+                            continue;
+                        }
+                        $km = EarthquakeMerger::distanceKm($p[3], $p[4], $lat, $lon);
+                        if ($km < $bestKm) {
+                            $best = $p;
+                            $bestKm = $km;
+                        }
                     }
                 }
             }
-
-            if (count($km) >= self::POOL) {
-                $sorted = $km;
-                sort($sorted);
-                // Anything not yet seen is at least this ring away.
-                if ($sorted[self::POOL - 1] <= $ring * $cellKm) {
-                    break;
-                }
+            // Anything not yet seen is at least this ring away.
+            if ($best !== null && $bestKm <= $ring * $cellKm) {
+                break;
             }
         }
 
-        asort($km);
-        $out = [];
-        foreach (array_slice($km, 0, self::POOL, true) as $i => $d) {
-            [$name, $municipality, $kind, $plat, $plon] = $found[$i];
-            $out[] = [
-                'name' => $name,
-                'municipality' => $municipality,
-                'kind' => $kind === 'c' ? 'concelho' : 'freguesia',
-                'km' => round($d, 1),
-                'bearing' => self::bearing($plat, $plon, $lat, $lon),
-            ];
+        if ($best === null) {
+            return null;
         }
 
-        return $out;
+        [$name, $municipality, $kind, $plat, $plon] = $best;
+
+        return [
+            'name' => $name,
+            'municipality' => $municipality,
+            'kind' => $kind === 'c' ? 'concelho' : 'freguesia',
+            'km' => round($bestKm, 1),
+            'bearing' => self::bearing($plat, $plon, $lat, $lon),
+        ];
     }
 
     /** Initial great-circle bearing from point 1 to point 2, as a compass point. */

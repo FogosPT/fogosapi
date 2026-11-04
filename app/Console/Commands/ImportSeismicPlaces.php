@@ -9,7 +9,9 @@ use Illuminate\Console\Command;
 /**
  * Regenerates resources/data/seismic/places-pt.json from Wikidata (CC0):
  * current municipalities (Q13217644, coordinate = seat) and civil parishes
- * (Q1131296) of Portugal, without the dissolved ones (P576).
+ * (Q1131296) of Portugal, without the dissolved ones (P576). Lisbon's parishes
+ * are attached to the city item (Q597) rather than to a municipality, so the
+ * parish query accepts it explicitly.
  */
 class ImportSeismicPlaces extends Command
 {
@@ -23,6 +25,8 @@ class ImportSeismicPlaces extends Command
           ?item wdt:P31 wd:Q13217644 ; wdt:P625 ?coord ; rdfs:label ?name .
           FILTER(LANG(?name) = "pt")
           FILTER NOT EXISTS { ?item wdt:P576 [] }
+          # Lafões (a historical sub-region) is also tagged as a municipality.
+          FILTER NOT EXISTS { ?item wdt:P31 wd:Q82794 }
           OPTIONAL { ?item wdt:P1082 ?pop }
         }
         SPARQL;
@@ -31,7 +35,9 @@ class ImportSeismicPlaces extends Command
     public const PARISHES = <<<'SPARQL'
         SELECT ?item ?name ?munName ?coord ?pop WHERE {
           ?item wdt:P31 wd:Q1131296 ; wdt:P625 ?coord ; wdt:P131 ?mun ; rdfs:label ?name .
-          ?mun wdt:P31 wd:Q13217644 ; rdfs:label ?munName .
+          # Lisbon's parishes point at the city (Q597), which is not typed as a municipality.
+          { ?mun wdt:P31 wd:Q13217644 } UNION { VALUES ?mun { wd:Q597 } }
+          ?mun rdfs:label ?munName .
           FILTER(LANG(?name) = "pt" && LANG(?munName) = "pt")
           FILTER NOT EXISTS { ?item wdt:P576 [] }
           FILTER NOT EXISTS { ?mun wdt:P576 [] }

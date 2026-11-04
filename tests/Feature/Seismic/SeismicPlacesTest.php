@@ -91,4 +91,38 @@ class SeismicPlacesTest extends TestCase
         // --missing skips what is already filled.
         $this->artisan('seismic:places --missing')->expectsOutputToContain('0 earthquakes')->assertSuccessful();
     }
+
+    /** @test */
+    public function the_municipality_seat_is_found_even_among_many_parishes(): void
+    {
+        // Codex review: near Guarda the 40 nearest entries were all parishes.
+        $places = SeismicPlaces::nearest(40.5747, -7.0794);
+
+        $seats = array_values(array_filter($places, fn ($p) => $p['kind'] === 'concelho'));
+        $this->assertCount(1, $seats);
+        $this->assertSame('Guarda', $seats[0]['name']);
+        $this->assertLessThan(20, $seats[0]['km']);
+    }
+
+    /** @test */
+    public function the_third_place_is_from_another_municipality(): void
+    {
+        // Codex review: around Barcelos every candidate parish was from Barcelos.
+        $places = SeismicPlaces::nearest(41.5333, -8.6167);
+
+        $this->assertCount(3, $places);
+        $this->assertNotSame($places[0]['municipality'], $places[2]['municipality']);
+        $this->assertNotContains($places[2]['municipality'], array_column(array_slice($places, 0, 2), 'municipality'));
+    }
+
+    /** @test */
+    public function lisbon_parishes_are_in_the_gazetteer(): void
+    {
+        // Codex review: central Lisbon came out as Almada.
+        $places = SeismicPlaces::nearest(38.72, -9.14);
+
+        $this->assertSame('freguesia', $places[0]['kind']);
+        $this->assertSame('Lisboa', $places[0]['municipality']);
+        $this->assertLessThan(3, $places[0]['km']);
+    }
 }
