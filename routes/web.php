@@ -95,6 +95,8 @@ Route::group(['prefix' => 'v2'], function () {
         Route::get('thunders', '\App\Http\Controllers\WeatherController@thunders');
         Route::get('stations', '\App\Http\Controllers\WeatherController@stations');
         Route::get('stations/ipma', '\App\Http\Controllers\WeatherController@stationsIpma');
+        Route::get('stations/{id}/observations', '\App\Http\Controllers\WeatherController@stationObservations')->where('id', '[0-9]+');
+        Route::get('stations/{id}/daily', '\App\Http\Controllers\WeatherController@stationDaily')->where('id', '[0-9]+');
         Route::get('daily', '\App\Http\Controllers\WeatherController@daily');
         Route::get('observations', '\App\Http\Controllers\WeatherController@observations');
         Route::get('waves', '\App\Http\Controllers\WeatherController@waves');

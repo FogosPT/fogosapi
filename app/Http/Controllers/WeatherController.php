@@ -197,6 +197,154 @@ class WeatherController extends Controller
         return new JsonResponse($buckets);
     }
 
+    private const OBSERVATION_FIELDS = [
+        'temperatura',
+        'humidade',
+        'pressao',
+        'precAcumulada',
+        'intensidadeVento',
+        'intensidadeVentoKM',
+        'idDireccVento',
+        'radiacao',
+    ];
+
+    private const DAILY_FIELDS = [
+        'temp_min',
+        'temp_med',
+        'temp_max',
+        'hum_min',
+        'hum_med',
+        'hum_max',
+        'prec_quant',
+        'prec_max_inst',
+        'rad_total',
+        'pressao',
+        'vento_int_med',
+        'vento_int_max_inst',
+        'vento_dir_max',
+        'idDireccVento',
+    ];
+
+    /**
+     * Hourly observations of one station, oldest first.
+     * GET v2/weather/stations/{id}/observations?hours=48 (1-168).
+     */
+    public function stationObservations(Request $request, string $id)
+    {
+        $hours = $this->boundedInt($request, 'hours', 48, 1, 168);
+        if ($hours === null) {
+            return response()->json(['success' => false, 'error' => 'invalid_hours'], 422);
+        }
+
+        $station = WeatherStation::whereStationId((int) $id)->first();
+        if (!$station) {
+            abort(404);
+        }
+
+        $cacheKey = 'weather:station:'.(int) $id.':observations:'.$hours;
+
+        return response()->json(Cache::remember($cacheKey, 600, function () use ($id, $hours, $station) {
+            $rows = WeatherData::whereIn('stationId', $this->stationIdVariants($id))
+                ->where('date', '>=', Carbon::now('UTC')->subHours($hours))
+                ->orderBy('date', 'asc')
+                ->get();
+
+            return $this->stationPayload($station) + [
+                'observations' => $rows->map(fn (WeatherData $row) => [
+                    'date' => Carbon::parse($row->date)->setTimezone('UTC')->format('Y-m-d\TH:i:s\Z'),
+                ] + $this->pick($row, self::OBSERVATION_FIELDS))->values(),
+            ];
+        }));
+    }
+
+    /**
+     * Daily summaries (IPMA daily observations) of one station, oldest first.
+     * IPMA publishes them with ~2 days of delay. `date` is the local
+     * (Europe/Lisbon) calendar day.
+     * GET v2/weather/stations/{id}/daily?days=30 (1-90).
+     */
+    public function stationDaily(Request $request, string $id)
+    {
+        $days = $this->boundedInt($request, 'days', 30, 1, 90);
+        if ($days === null) {
+            return response()->json(['success' => false, 'error' => 'invalid_days'], 422);
+        }
+
+        $station = WeatherStation::whereStationId((int) $id)->first();
+        if (!$station) {
+            abort(404);
+        }
+
+        $cacheKey = 'weather:station:'.(int) $id.':daily:'.$days;
+
+        return response()->json(Cache::remember($cacheKey, 3600, function () use ($id, $days, $station) {
+            $since = Carbon::now('Europe/Lisbon')->startOfDay()->subDays($days);
+
+            $rows = WeatherDataDaily::whereIn('stationId', $this->stationIdVariants($id))
+                ->where('date', '>=', $since)
+                ->orderBy('date', 'asc')
+                ->get();
+
+            return $this->stationPayload($station) + [
+                'daily' => $rows->map(fn (WeatherDataDaily $row) => [
+                    'date' => Carbon::parse($row->date)->setTimezone('Europe/Lisbon')->format('Y-m-d'),
+                ] + $this->pick($row, self::DAILY_FIELDS))->values(),
+            ];
+        }));
+    }
+
+    /**
+     * Integer query param within [min, max]; default when absent, null when invalid.
+     */
+    private function boundedInt(Request $request, string $key, int $default, int $min, int $max): ?int
+    {
+        if (!$request->has($key)) {
+            return $default;
+        }
+
+        $value = filter_var($request->query($key), FILTER_VALIDATE_INT);
+        if ($value === false || $value < $min || $value > $max) {
+            return null;
+        }
+
+        return $value;
+    }
+
+    /**
+     * weatherData / weatherDataDaily store stationId as a string, but older
+     * rows (and the stations collection) use ints — match both.
+     */
+    private function stationIdVariants(string $id): array
+    {
+        return [(string) (int) $id, (int) $id];
+    }
+
+    private function stationPayload(WeatherStation $station): array
+    {
+        return [
+            'stationId' => (int) ($station->stationId ?? $station->id),
+            'location' => $station->location,
+            'place' => $station->place,
+            'coordinates' => $station->coordinates,
+        ];
+    }
+
+    /**
+     * Selected numeric fields; missing readings (null or IPMA's -99) become null.
+     *
+     * @param mixed $row
+     */
+    private function pick($row, array $fields): array
+    {
+        $out = [];
+        foreach ($fields as $f) {
+            $v = $row->{$f} ?? null;
+            $out[$f] = ($v === null || (float) $v === -99.0) ? null : $v;
+        }
+
+        return $out;
+    }
+
     public function waves()
     {
         $cacheKey = 'weather:waves';

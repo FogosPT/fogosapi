@@ -171,6 +171,10 @@ paths:
     $ref: './weather/paths/v2-weather-stations.yaml'
   /v2/weather/stations/ipma:
     $ref: './weather/paths/v2-weather-stations-ipma.yaml'
+  /v2/weather/stations/{id}/observations:
+    $ref: './weather/paths/v2-weather-stations-id-observations.yaml'
+  /v2/weather/stations/{id}/daily:
+    $ref: './weather/paths/v2-weather-stations-id-daily.yaml'
   /v2/weather/daily:
     $ref: './weather/paths/v2-weather-daily.yaml'
   /v2/weather/observations:
