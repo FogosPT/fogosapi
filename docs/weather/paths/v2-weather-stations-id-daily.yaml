@@ -1,0 +1,72 @@
+get:
+  operationId: v2GetWeatherStationDaily
+  summary: Daily summaries of one IPMA weather station
+  description: |
+    IPMA daily observations for a single station, oldest first. IPMA publishes
+    them with roughly two days of delay. `date` is the Europe/Lisbon calendar
+    day. Missing values are `null`. Cached for 1 hour.
+  tags:
+    - Weather
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: IPMA station id (`idEstacao`)
+      schema:
+        type: integer
+        example: 1210881
+    - name: days
+      in: query
+      required: false
+      description: Window size in days, counted back from today
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 90
+        default: 30
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              stationId:
+                type: integer
+              location:
+                type: string
+              place:
+                type: string
+              coordinates:
+                type: array
+                items:
+                  type: number
+              daily:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    date:
+                      type: string
+                      format: date
+                    temp_min: { type: number, nullable: true }
+                    temp_med: { type: number, nullable: true }
+                    temp_max: { type: number, nullable: true }
+                    hum_min: { type: number, nullable: true }
+                    hum_med: { type: number, nullable: true }
+                    hum_max: { type: number, nullable: true }
+                    prec_quant: { type: number, nullable: true, description: mm }
+                    prec_max_inst: { type: number, nullable: true }
+                    rad_total: { type: number, nullable: true }
+                    pressao: { type: number, nullable: true }
+                    vento_int_med: { type: number, nullable: true }
+                    vento_int_max_inst: { type: number, nullable: true }
+                    vento_dir_max: { type: number, nullable: true }
+                    idDireccVento: { type: integer, nullable: true }
+    404:
+      $ref: '../../common/responses/404.yaml'
+    422:
+      $ref: '../../common/responses/422.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

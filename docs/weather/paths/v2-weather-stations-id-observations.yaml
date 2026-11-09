@@ -1,0 +1,93 @@
+get:
+  operationId: v2GetWeatherStationObservations
+  summary: Hourly observations of one IPMA weather station
+  description: |
+    Hourly readings for a single station, oldest first. Missing readings are
+    `null` (unlike `/v2/weather/observations`, which uses IPMA's `-99`).
+    Cached for 10 minutes.
+  tags:
+    - Weather
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: IPMA station id (`idEstacao`)
+      schema:
+        type: integer
+        example: 1210881
+    - name: hours
+      in: query
+      required: false
+      description: Window size in hours, counted back from now
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 168
+        default: 48
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              stationId:
+                type: integer
+              location:
+                type: string
+              place:
+                type: string
+                enum: [Portugal, Madeira, Açores]
+              coordinates:
+                type: array
+                description: '[lng, lat]'
+                items:
+                  type: number
+              observations:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    date:
+                      type: string
+                      format: date-time
+                      description: Start of the hour, UTC
+                    temperatura:
+                      type: number
+                      nullable: true
+                      description: °C
+                    humidade:
+                      type: number
+                      nullable: true
+                      description: '%'
+                    pressao:
+                      type: number
+                      nullable: true
+                      description: hPa
+                    precAcumulada:
+                      type: number
+                      nullable: true
+                      description: mm in the hour
+                    intensidadeVento:
+                      type: number
+                      nullable: true
+                      description: m/s
+                    intensidadeVentoKM:
+                      type: number
+                      nullable: true
+                      description: km/h
+                    idDireccVento:
+                      type: integer
+                      nullable: true
+                      description: 0 calm, 1 N, 2 NE, 3 E, 4 SE, 5 S, 6 SW, 7 W, 8 NW, 9 N
+                    radiacao:
+                      type: number
+                      nullable: true
+                      description: kJ/m²
+    404:
+      $ref: '../../common/responses/404.yaml'
+    422:
+      $ref: '../../common/responses/422.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'
