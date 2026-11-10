@@ -41,7 +41,7 @@ php artisan weather:import-normals
 php artisan weather:import-normals --period=1991-2020
 php artisan weather:import-normals --period=1971-2000
 
-# Collapse historical duplicate weather warnings (idempotent; --dry-run to preview)
+# Delete exact duplicate weather warnings (idempotent; --dry-run to preview)
 php artisan weather:collapse-warnings --dry-run
 php artisan weather:collapse-warnings
 ```
@@ -101,7 +101,7 @@ The scheduler runs when `SCHEDULER_ENABLE=true`. Key jobs and their cadence:
 - `UpdateWeatherDataDaily` — daily; aggregates daily weather summaries
 - `ProcessRCM` — hourly + daily twice; fetches fire danger (Risco de Combustão de Materiais) maps
 - `HourlySummary` / `DailySummary` — summary notifications
-- `HandleWeatherWarnings` — every 15 minutes; scrapes IPMA warnings from the homepage and upserts into `weather_warnings` keyed on `(district, type, level)` — one row per active event, updated in place when IPMA republishes with a newer `reportDate`. Use `weather:collapse-warnings` to clean up rows created before the upsert switch.
+- `HandleWeatherWarnings` — every 15 minutes; scrapes IPMA warnings from the homepage. The feed is a full snapshot, so each run reconciles the active rows of `weather_warnings` with it: one row per warning window, windows of the same `(district, type, level)` paired in start order and updated in place (IPMA shifts `startTime`/extends `endTime` on republish), new windows created (the STB Telegram observer fires on create), and active rows missing from the feed — replaced (yellow → orange → red) or cancelled — get `supersededAt` and are no longer served. Empty feeds and feeds older than the stored `reportDate` are ignored. Reads filter `supersededAt` null and `endTime >= now`. `weather:collapse-warnings` only removes exact duplicates.
 - `DetectTemperatureWaves` — daily at 05:00 (after `UpdateWeatherDataDaily`); applies the WMO 6-day rule to detect heat waves (vs 1991-2020 normals) and cold waves (vs 1971-2000 normals) per station, persists `TemperatureWave` rows, and posts a Discord message on the first detection of each event
 
 ### Seismic (sismos.pt)

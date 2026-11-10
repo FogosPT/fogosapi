@@ -65,7 +65,7 @@ Todos os endpoints listados em §3 devolvem, para cada incidente, um novo campo:
 ### Garantias
 
 - **Ordenação:** ascendente por `startTime`.
-- **Dedup / collapse:** um aviso IPMA re-publicado (mesmo distrito/tipo/nível, `startTime`/`endTime` estendidos) só aparece **uma vez** — o backend colapsa por `(idAreaAviso, awarenessTypeName, awarenessLevelID)` e devolve a versão mais recente (a com maior `reportDate`, fallback `startTime`). O frontend nunca vê duplicados nem versões antigas do mesmo aviso.
+- **Dedup / substituição:** uma entrada por janela de aviso. Um aviso re-publicado pelo IPMA (`startTime`/`endTime` ajustados) é actualizado no lugar e só aparece **uma vez**. Quando o IPMA substitui um aviso (ex.: amarelo → laranja → vermelho) ou o cancela, o anterior deixa de ser devolvido — só fica o que está no feed actual do IPMA. Janelas distintas do mesmo nível (ex.: laranja hoje de manhã e laranja amanhã) são entradas distintas.
 - **Frescura:** o job `HandleWeatherWarnings` corre a cada 15 minutos, portanto os dados têm no máximo ~15 min de latência.
 - **Array vazio:** `[]` é o valor devolvido quando:
   - o distrito do incidente não tem avisos activos, ou

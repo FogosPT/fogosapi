@@ -11,22 +11,31 @@ use Tests\TestCase;
 class WeatherWarningCollapseTest extends TestCase
 {
     /** @test */
-    public function it_collapses_republished_versions_of_the_same_warning(): void
+    public function it_drops_exact_duplicates_keeping_the_latest_report(): void
     {
         $warnings = new Collection([
-            $this->warning('GDA', 'Tempo Quente', 'yellow', '2026-09-22T09:00:00', '2026-09-23T18:00:00', '2026-09-22T08:00:00'),
-            $this->warning('GDA', 'Tempo Quente', 'yellow', '2026-09-22T09:00:00', '2026-09-24T05:00:00', '2026-09-22T11:00:00'),
+            $this->warning('GDA', 'Tempo Quente', 'yellow', '2026-09-22T09:00:00', '2026-09-24T18:00:00', '2026-09-22T08:00:00'),
             $this->warning('GDA', 'Tempo Quente', 'yellow', '2026-09-22T09:00:00', '2026-09-24T18:00:00', '2026-09-22T14:00:00'),
-            $this->warning('GDA', 'Tempo Quente', 'yellow', '2026-09-22T11:16:00', '2026-09-24T18:00:00', '2026-09-22T18:00:00'),
-            $this->warning('GDA', 'Tempo Quente', 'yellow', '2026-09-22T18:10:00', '2026-09-24T18:00:00', '2026-09-23T00:00:00'),
-            $this->warning('GDA', 'Tempo Quente', 'yellow', '2026-09-23T01:20:00', '2026-09-24T18:00:00', '2026-09-23T02:00:00'),
         ]);
+        $warnings[1]->text = 'latest';
 
         $rows = WeatherWarningCollapse::collapse($warnings);
 
         $this->assertCount(1, $rows);
-        $this->assertSame('2026-09-23T01:20:00', $rows[0]['startTime']);
-        $this->assertSame('2026-09-24T18:00:00', $rows[0]['endTime']);
+        $this->assertSame('latest', $rows[0]['text']);
+    }
+
+    /** @test */
+    public function it_keeps_separate_windows_of_the_same_level(): void
+    {
+        $warnings = new Collection([
+            $this->warning('LSB', 'Precipitação', 'orange', '2026-11-10T07:19:00', '2026-11-10T09:00:00'),
+            $this->warning('LSB', 'Precipitação', 'orange', '2026-11-11T05:00:00', '2026-11-11T18:00:00'),
+        ]);
+
+        $rows = WeatherWarningCollapse::collapse($warnings);
+
+        $this->assertSame(['2026-11-10T07:19:00', '2026-11-11T05:00:00'], array_column($rows, 'startTime'));
     }
 
     /** @test */
@@ -42,21 +51,6 @@ class WeatherWarningCollapseTest extends TestCase
         $rows = WeatherWarningCollapse::collapse($warnings);
 
         $this->assertCount(4, $rows);
-    }
-
-    /** @test */
-    public function it_falls_back_to_latest_start_time_when_report_date_is_missing(): void
-    {
-        $warnings = new Collection([
-            $this->warning('CBR', 'Vento', 'yellow', '2026-09-22T06:00:00', '2026-09-23T12:00:00', null),
-            $this->warning('CBR', 'Vento', 'yellow', '2026-09-22T18:00:00', '2026-09-23T20:00:00', null),
-        ]);
-
-        $rows = WeatherWarningCollapse::collapse($warnings);
-
-        $this->assertCount(1, $rows);
-        $this->assertSame('2026-09-22T18:00:00', $rows[0]['startTime']);
-        $this->assertSame('2026-09-23T20:00:00', $rows[0]['endTime']);
     }
 
     /** @test */

@@ -22,7 +22,7 @@ class WarningsController extends Controller
 {
     public function ipma()
     {
-        $warnings = WeatherWarning::where('endTime', '>=', Carbon::now())->get();
+        $warnings = WeatherWarning::whereNull('supersededAt')->where('endTime', '>=', Carbon::now())->get();
 
         return new JsonResponse(WeatherWarningCollapse::collapse($warnings));
     }

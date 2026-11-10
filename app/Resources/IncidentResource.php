@@ -113,7 +113,7 @@ class IncidentResource extends JsonResource
         if (self::$activeWeatherWarningsByArea === null) {
             self::$activeWeatherWarningsByArea = [];
 
-            $warnings = WeatherWarning::where('endTime', '>=', Carbon::now())->get();
+            $warnings = WeatherWarning::whereNull('supersededAt')->where('endTime', '>=', Carbon::now())->get();
             $collapsed = WeatherWarningCollapse::collapse($warnings);
 
             foreach ($collapsed as $row) {
