@@ -120,6 +120,25 @@ class HandleWeatherWarningsTest extends TestCase
     }
 
     /** @test */
+    public function an_older_version_of_a_warning_does_not_overwrite_a_newer_one(): void
+    {
+        $this->sync([
+            $this->item('STB', 'Vento', 'red', '2026-11-11T09:00:00', '2026-11-11T21:00:00', '2026-11-10T07:18:40'),
+            $this->item('MRM', 'Vento', 'orange', '2026-11-10T21:00:00', '2026-11-11T12:00:00', '2026-11-10T06:14:54', 'Rajadas até 100 km/h.'),
+        ]);
+        // Cached snapshot: same newest report for STB, older version of the Madeira warning.
+        $this->sync([
+            $this->item('STB', 'Vento', 'red', '2026-11-11T09:00:00', '2026-11-11T21:00:00', '2026-11-10T07:18:40'),
+            $this->item('MRM', 'Vento', 'orange', '2026-11-10T18:00:00', '2026-11-11T06:00:00', '2026-11-09T22:00:00', 'Rajadas até 80 km/h.'),
+        ]);
+
+        $madeira = WeatherWarning::where('district', 'MRM')->first();
+        $this->assertSame('Rajadas até 100 km/h.', $madeira->text);
+        $this->assertSame('2026-11-11 12:00', $madeira->endTime->format('Y-m-d H:i'));
+        $this->assertNull($madeira->supersededAt);
+    }
+
+    /** @test */
     public function expired_windows_in_the_feed_are_not_stored(): void
     {
         $this->sync([

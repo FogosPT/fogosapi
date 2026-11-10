@@ -28,7 +28,8 @@ class HandleWeatherWarnings extends Job
      *  - active rows no longer in the feed get `supersededAt` and stop being
      *    served.
      * An empty feed, or one older than what we already have (cached page),
-     * is ignored so a bad fetch never wipes the active warnings.
+     * is ignored so a bad fetch never wipes the active warnings, and a row is
+     * never overwritten by an older version of itself.
      */
     public function sync(?array $items): void
     {
@@ -63,6 +64,13 @@ class HandleWeatherWarnings extends Job
 
             foreach ($windows->values() as $i => $d) {
                 $warning = $existing->get($i) ?? new WeatherWarning();
+
+                // A mixed cached snapshot can pass isStale() (same newest
+                // report) while carrying an older version of this warning.
+                if ($warning->exists && $this->isOlder($d, $warning)) {
+                    continue;
+                }
+
                 $warning->district   = $d->idAreaAviso;
                 $warning->type       = $d->awarenessTypeName;
                 $warning->level      = $d->awarenessLevelID;
@@ -95,6 +103,14 @@ class HandleWeatherWarnings extends Job
         }
 
         return $existingReport !== null && $incomingReport < $existingReport;
+    }
+
+    private function isOlder(object $incoming, WeatherWarning $existing): bool
+    {
+        $incomingReport = $this->timestamp($incoming->reportDate ?? null);
+        $existingReport = $this->timestamp($existing->reportDate ?? null);
+
+        return $incomingReport !== null && $existingReport !== null && $incomingReport < $existingReport;
     }
 
     private function key(?string $district, ?string $type, ?string $level): string
