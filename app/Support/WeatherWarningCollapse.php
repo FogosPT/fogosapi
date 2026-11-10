@@ -9,13 +9,13 @@ use Illuminate\Support\Collection;
 class WeatherWarningCollapse
 {
     /**
-     * IPMA republishes the same warning (same district+type+level) with
-     * shifted startTime/endTime each time it extends the window. Because
-     * `control` hashes those times, each republish becomes a new DB row.
-     * On read we collapse them: one entry per (district, type, level),
-     * keeping the version with the highest `reportDate` (fallback: latest
-     * `startTime`). Output rows are the same IPMA-shaped array used by
-     * /v2/warnings/ipma and IncidentResource::weatherWarnings.
+     * Shapes active warnings as the IPMA-style array used by /v2/warnings/ipma
+     * and IncidentResource::weatherWarnings, one entry per warning window.
+     * HandleWeatherWarnings keeps a single active row per window (republishes
+     * update it in place, replaced warnings get `supersededAt`), so this only
+     * drops exact duplicates (same district, type, level and window), keeping
+     * the highest `reportDate`. Different windows of the same level (e.g.
+     * orange this morning and again tomorrow) are distinct entries.
      *
      * @param Collection<int, WeatherWarning> $warnings
      * @return array<int, array<string, mixed>>
@@ -25,7 +25,13 @@ class WeatherWarningCollapse
         $bestByKey = [];
 
         foreach ($warnings as $w) {
-            $key = implode('|', [(string) $w->district, (string) $w->type, (string) $w->level]);
+            $key = implode('|', [
+                (string) $w->district,
+                (string) $w->type,
+                (string) $w->level,
+                Carbon::parse($w->startTime)->timestamp,
+                Carbon::parse($w->endTime)->timestamp,
+            ]);
             $incumbent = $bestByKey[$key] ?? null;
             if ($incumbent === null || self::isNewer($w, $incumbent)) {
                 $bestByKey[$key] = $w;
@@ -53,14 +59,7 @@ class WeatherWarningCollapse
         $candReport = self::reportTimestamp($candidate);
         $incReport  = self::reportTimestamp($incumbent);
 
-        if ($candReport !== null && $incReport !== null && $candReport !== $incReport) {
-            return $candReport > $incReport;
-        }
-
-        $candStart = Carbon::parse($candidate->startTime)->timestamp;
-        $incStart  = Carbon::parse($incumbent->startTime)->timestamp;
-
-        return $candStart > $incStart;
+        return $candReport !== null && ($incReport === null || $candReport > $incReport);
     }
 
     private static function reportTimestamp(WeatherWarning $w): ?int

@@ -7,16 +7,17 @@ use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 /**
- * One-shot cleanup for weather_warnings duplicates accumulated before the
- * ingestion moved to upsert-on-(district, type, level). Groups rows by the
- * business key, keeps the winner (highest reportDate; falls back to latest
- * startTime), and deletes the losers. Idempotent — safe to run repeatedly.
+ * Cleanup for exact weather_warnings duplicates (same district, type, level
+ * and window). Keeps the winner (highest reportDate) and deletes the losers.
+ * Separate windows of the same level are distinct warnings and are kept;
+ * replaced warnings are flagged `supersededAt` by HandleWeatherWarnings, not
+ * deleted. Idempotent — safe to run repeatedly.
  */
 class CollapseWeatherWarnings extends Command
 {
     protected $signature = 'weather:collapse-warnings {--dry-run : Report what would be deleted without touching the DB}';
 
-    protected $description = 'Collapse duplicate IPMA weather warnings created before the upsert-based ingestion.';
+    protected $description = 'Delete exact duplicate IPMA weather warnings (same district, type, level and window).';
 
     public function handle(): int
     {
@@ -26,6 +27,8 @@ class CollapseWeatherWarnings extends Command
             (string) $w->district,
             (string) $w->type,
             (string) $w->level,
+            (string) $w->startTime?->timestamp,
+            (string) $w->endTime?->timestamp,
         ]));
 
         $totalGroups = 0;
