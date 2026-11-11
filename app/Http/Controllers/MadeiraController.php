@@ -238,7 +238,7 @@ class MadeiraController extends Controller
     private function occurrence(MadeiraOccurrence $o): array
     {
         return [
-            'id' => $o->key,
+            'id' => $o->occurrenceId ?? $o->key,
             'copies' => $o->copies,
             'start' => $this->iso($o->start),
             'natureCode' => $o->natureCode,

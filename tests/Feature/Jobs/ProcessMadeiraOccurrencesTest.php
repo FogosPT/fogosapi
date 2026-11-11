@@ -126,7 +126,7 @@ class ProcessMadeiraOccurrencesTest extends TestCase
         $job = $this->job([$this->page($shifted)]);
         $job->handle();
 
-        $this->assertSame(0, $job->created + $job->updated + $job->removed);
+        $this->assertSame(0, $job->created + $job->changed + $job->updated + $job->removed);
         $this->assertSame(MadeiraOccurrence::count(), MadeiraOccurrenceRevision::count());
     }
 
@@ -173,25 +173,95 @@ class ProcessMadeiraOccurrencesTest extends TestCase
     }
 
     /** @test */
-    public function an_edit_in_the_source_removes_the_old_version_and_adds_the_new(): void
+    public function an_edit_keeps_the_occurrence_and_logs_the_change(): void
     {
         $rows = $this->rows();
         $this->job([$this->page($rows)])->handle();
-        $before = MadeiraOccurrence::count();
+        $occurrenceId = MadeiraOccurrence::where('key', ProcessMadeiraOccurrences::key($rows[0]))->first()->occurrenceId;
+        $published = MadeiraOccurrence::whereNull('removedAt')->count();
 
         $edited = $rows;
         $edited[0]['viaturas'] = 7;
+        $edited[0]['bombeiros'] = 12;
 
         $job = $this->job([$this->page($rows), $this->page($edited)]);
         $job->handle(); // identical
-        $this->assertSame(0, $job->created + $job->updated + $job->removed);
+        $this->assertSame(0, $job->created + $job->changed + $job->updated + $job->removed);
         $job->handle();
 
-        $this->assertSame(1, $job->created);
-        $this->assertSame(1, $job->removed);
-        $this->assertSame($before + 1, MadeiraOccurrence::count());
-        $this->assertNotNull(MadeiraOccurrence::where('key', ProcessMadeiraOccurrences::key($rows[0]))->first()->removedAt);
-        $this->assertSame(7, MadeiraOccurrence::where('key', ProcessMadeiraOccurrences::key($edited[0]))->first()->vehicles);
+        $this->assertSame([0, 1, 0], [$job->created, $job->changed, $job->removed]);
+        $this->assertSame($published, MadeiraOccurrence::whereNull('removedAt')->count());
+
+        $old = MadeiraOccurrence::where('key', ProcessMadeiraOccurrences::key($rows[0]))->first();
+        $new = MadeiraOccurrence::where('key', ProcessMadeiraOccurrences::key($edited[0]))->first();
+        $this->assertNotNull($old->removedAt);
+        $this->assertSame($new->key, $old->replacedBy);
+        $this->assertNull($new->removedAt);
+        $this->assertSame($old->key, $new->previousKey);
+        $this->assertSame($occurrenceId, $new->occurrenceId);
+        $this->assertSame(7, $new->vehicles);
+
+        $log = MadeiraOccurrenceRevision::where('occurrenceId', $occurrenceId)->orderBy('_id')->get();
+        $this->assertSame(['added', 'changed'], $log->pluck('change')->all());
+        $this->assertSame([
+            'firefighters' => [$rows[0]['bombeiros'], 12],
+            'vehicles' => [$rows[0]['viaturas'], 7],
+        ], $log[1]->changes);
+        $this->assertSame(7, $log[1]->payload['viaturas']);
+    }
+
+    /** @test */
+    public function a_reclassified_nature_is_linked_by_the_start_time(): void
+    {
+        $rows = $this->rows();
+        $this->job([$this->page($rows)])->handle();
+        $occurrenceId = MadeiraOccurrence::where('key', ProcessMadeiraOccurrences::key($rows[0]))->first()->occurrenceId;
+
+        $edited = $rows;
+        $edited[0]['codigo'] = '9999';
+        $edited[0]['tipologiafonte'] = 'Reclassificada';
+        $this->job([$this->page($edited)])->handle();
+
+        $new = MadeiraOccurrence::where('key', ProcessMadeiraOccurrences::key($edited[0]))->first();
+        $this->assertSame($occurrenceId, $new->occurrenceId);
+        $this->assertSame(
+            ['natureCode' => [$rows[0]['codigo'], '9999'], 'nature' => [$rows[0]['tipologiafonte'], 'Reclassificada']],
+            MadeiraOccurrenceRevision::where('occurrenceId', $occurrenceId)->where('change', 'changed')->first()->changes
+        );
+    }
+
+    /** @test */
+    public function ambiguous_edits_are_not_linked(): void
+    {
+        // Two occurrences with the same start and nature, both edited in the
+        // same run: no way to tell which became which.
+        $a = $this->rows()[0];
+        $b = ['objectid' => $a['objectid'] + 1, 'freguesia' => 'Outra', 'codigocaop' => '310101'] + $a;
+        $this->job([$this->page([$a, $b])])->handle();
+
+        $a2 = ['viaturas' => 9] + $a;
+        $b2 = ['viaturas' => 9] + $b;
+        $job = $this->job([$this->page([$a2, $b2])]);
+        $job->handle();
+
+        $this->assertSame([2, 0, 2], [$job->created, $job->changed, $job->removed]);
+        $this->assertSame(4, MadeiraOccurrence::pluck('occurrenceId')->unique()->count());
+    }
+
+    /** @test */
+    public function a_chain_of_edits_keeps_one_occurrence_id(): void
+    {
+        $row = $this->rows()[0];
+        $versions = [$row, ['viaturas' => 3] + $row, ['viaturas' => 3, 'freguesia' => 'Monte', 'codigocaop' => '310302'] + $row];
+
+        foreach ($versions as $v) {
+            $this->job([$this->page([$v])])->handle();
+        }
+
+        $this->assertSame(1, MadeiraOccurrence::whereNull('removedAt')->count());
+        $this->assertSame(1, MadeiraOccurrence::pluck('occurrenceId')->unique()->count());
+        $this->assertSame(['added', 'changed', 'changed'], MadeiraOccurrenceRevision::orderBy('_id')->pluck('change')->all());
+        $this->assertSame('Monte', MadeiraOccurrence::whereNull('removedAt')->first()->parish);
     }
 
     /** @test */
@@ -210,7 +280,7 @@ class ProcessMadeiraOccurrencesTest extends TestCase
 
         $this->job([$this->page($rows)])->handle();
         $this->assertNull(MadeiraOccurrence::where('key', $gone)->first()->removedAt);
-        $this->assertSame(['added', 'removed', 'added'], MadeiraOccurrenceRevision::where('key', $gone)->orderBy('_id')->pluck('change')->all());
+        $this->assertSame(['added', 'removed', 'restored'], MadeiraOccurrenceRevision::where('key', $gone)->orderBy('_id')->pluck('change')->all());
     }
 
     /** @test */
@@ -228,7 +298,7 @@ class ProcessMadeiraOccurrencesTest extends TestCase
         $this->job([new Response(200, [], json_encode(['error' => ['code' => 500, 'message' => 'oops']]))])->handle();
         $this->job([new Response(503, [], 'down')])->handle();
         $this->job([$this->page([])])->handle();
-        $this->job([$this->page(array_slice($rows, 0, 10))])->handle(); // far fewer than stored
+        $this->job([$this->page(array_slice($rows, 0, 10))])->handle(); // far fewer than stored: run skipped
 
         $this->assertSame(0, MadeiraOccurrence::whereNotNull('removedAt')->count());
         $this->assertSame($revisions, MadeiraOccurrenceRevision::count());

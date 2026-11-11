@@ -8,9 +8,10 @@ use MongoDB\Laravel\Eloquent\Model;
  * One version (content) of an SRPC-RAM (Madeira) occurrence, from the public
  * statistics view of their ArcGIS (see App\Jobs\ProcessMadeiraOccurrences).
  * The source has no occurrence number and its objectid is positional, so
- * `key` is a hash of the content: an edit in the source is a new row here
- * and the old one gets `removedAt`. `copies` = identical rows in the source.
- * Additions and removals are logged in MadeiraOccurrenceRevision.
+ * `key` is a hash of the content and `occurrenceId` is ours, kept across
+ * edits: an edit is a new version (`previousKey`) and the old one gets
+ * `removedAt` + `replacedBy`. `copies` = identical rows in the source.
+ * Every change is logged in MadeiraOccurrenceRevision.
  */
 class MadeiraOccurrence extends Model
 {
@@ -49,6 +50,9 @@ class MadeiraOccurrence extends Model
 
     protected $fillable = [
         'key',
+        'occurrenceId',
+        'previousKey',
+        'replacedBy',
         'copies',
         'start',
         'natureCode',

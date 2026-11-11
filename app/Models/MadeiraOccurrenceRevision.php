@@ -5,10 +5,12 @@ namespace App\Models;
 use MongoDB\Laravel\Eloquent\Model;
 
 /**
- * Log of a Madeira occurrence content (`key`): `change` = `added` (first
- * seen, with the raw ArcGIS attributes in `payload`, or back after a
- * removal), `removed` (no longer published) or `copies` (number of identical
- * rows changed).
+ * Change log of a Madeira occurrence (`occurrenceId`), one row per change:
+ *  - `added`: first seen, raw ArcGIS attributes in `payload`;
+ *  - `changed`: edited in the source, new version `key` replacing
+ *    `previousKey`, `changes` = field => [before, after], raw in `payload`;
+ *  - `removed`: no longer published; `restored`: published again;
+ *  - `copies`: number of identical rows changed.
  */
 class MadeiraOccurrenceRevision extends Model
 {
@@ -26,8 +28,11 @@ class MadeiraOccurrenceRevision extends Model
     ];
 
     protected $fillable = [
+        'occurrenceId',
         'key',
+        'previousKey',
         'change',
+        'changes',
         'copies',
         'payload',
     ];

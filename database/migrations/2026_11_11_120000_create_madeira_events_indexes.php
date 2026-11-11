@@ -24,9 +24,10 @@ return new class () extends Migration {
             'key_unique' => [['key' => 1], ['unique' => true]],
             'start_idx' => [['removedAt' => 1, 'start' => -1], []],
             'municipality_start_idx' => [['municipalityCode' => 1, 'start' => -1], []],
+            'occurrenceId_idx' => [['occurrenceId' => 1], []],
         ],
         'madeiraOccurrenceRevisions' => [
-            'key_idx' => [['key' => 1, 'created' => 1], []],
+            'occurrenceId_idx' => [['occurrenceId' => 1, 'created' => 1], []],
         ],
         'madeiraFeedRevisions' => [
             'hash_unique' => [['hash' => 1], ['unique' => true]],

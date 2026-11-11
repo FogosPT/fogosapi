@@ -15,18 +15,22 @@ use Illuminate\Support\Facades\Log;
  *
  * The objectid is NOT an identifier: the view is synced by position, so when
  * a row is added or edited the following rows shift to other objectids.
- * Rows are therefore keyed by their content (`key` = sha1 of every attribute
- * but objectid and the sync time `atualizadoem`). An edit in the source is a
- * version that disappears plus a new one; nothing links the two.
+ * Rows are therefore stored by content (`key` = sha1 of every attribute but
+ * objectid and the sync time `atualizadoem`; `copies` = identical rows), and
+ * each occurrence gets its own stable `occurrenceId`.
  *
- * Each run reads the whole table (paginated) and:
- *  - creates a `madeiraOccurrences` row for every new content (`copies` =
- *    identical rows in the source), logged as `added` in the revisions;
- *  - flags contents no longer published with `removedAt` (logged `removed`),
- *    and clears it if they come back.
- * The endpoints serve the published contents; the history is every content
- * ever seen with its revisions. A run that fails half-way, or returns far
- * fewer rows than we hold, removes nothing.
+ * Each run diffs the whole table (paginated) against the published contents.
+ * A content that disappears and one that appears in the same run are the
+ * same occurrence edited when they are the only pair with the same start and
+ * nature (means, parish or corporations changed) or, failing that, the same
+ * start (nature reclassified): the new content inherits the `occurrenceId`
+ * and the old one gets `removedAt` + `replacedBy`. Everything else is a new
+ * occurrence or a removal. Every change is logged in
+ * `madeiraOccurrenceRevisions` (added / changed with a field diff / removed /
+ * restored / copies).
+ *
+ * The endpoints serve the published contents. A run that fails half-way, or
+ * returns far fewer rows than we hold, writes nothing.
  */
 class ProcessMadeiraOccurrences extends Job
 {
@@ -36,8 +40,12 @@ class ProcessMadeiraOccurrences extends Job
     public $timeout = 120;
 
     public int $created = 0;
+    public int $changed = 0;
     public int $updated = 0;
     public int $removed = 0;
+
+    /** Fields compared in the `changes` diff of a `changed` revision. */
+    private const DIFF_FIELDS = ['start', 'natureCode', 'nature', 'firefighters', 'vehicles', 'parishCode', 'parish', 'entities'];
 
     public function __construct() {}
 
@@ -130,53 +138,24 @@ class ProcessMadeiraOccurrences extends Job
             return;
         }
 
-        // Identical rows (same time, nature, parish, means…) are kept as one
-        // content with `copies`.
+        // Identical rows (same time, nature, parish, means…) are one content
+        // with `copies`.
         $incoming = [];
         foreach ($rows as $row) {
             $key = self::key($row);
             $incoming[$key] ??= ['row' => $row, 'copies' => 0];
             $incoming[$key]['copies']++;
-            // The latest sync time among the copies.
             if (($row['atualizadoem'] ?? 0) > ($incoming[$key]['row']['atualizadoem'] ?? 0)) {
                 $incoming[$key]['row']['atualizadoem'] = $row['atualizadoem'];
             }
         }
 
         $existing = MadeiraOccurrence::all()->keyBy('key');
-
-        foreach ($incoming as $key => ['row' => $row, 'copies' => $copies]) {
-            $occurrence = $existing->get($key);
-            $updatedAt = $this->time($row['atualizadoem'] ?? null);
-
-            if (!$occurrence) {
-                MadeiraOccurrence::create($this->normalize($row) + ['key' => $key, 'copies' => $copies, 'removedAt' => null]);
-                MadeiraOccurrenceRevision::create(['key' => $key, 'change' => 'added', 'copies' => $copies, 'payload' => self::content($row)]);
-                $this->created++;
-
-                continue;
-            }
-
-            $returned = $occurrence->removedAt !== null;
-            $changed = $returned || $occurrence->copies !== $copies;
-
-            if (!$changed && $occurrence->sourceUpdatedAt?->getTimestampMs() === $updatedAt?->getTimestampMs()) {
-                continue;
-            }
-
-            $occurrence->fill(['copies' => $copies, 'removedAt' => null, 'sourceUpdatedAt' => $updatedAt])->save();
-
-            if ($changed) {
-                MadeiraOccurrenceRevision::create(['key' => $key, 'change' => $returned ? 'added' : 'copies', 'copies' => $copies]);
-                $this->updated++;
-            }
-        }
-
         $published = $existing->filter(fn (MadeiraOccurrence $o) => !$o->removedAt);
 
         // A short (but valid) response would otherwise remove most of the table.
         if (count($incoming) < $published->count() / 2) {
-            Log::warning('[ProcessMadeiraOccurrences] response much smaller than stored, not removing', [
+            Log::warning('[ProcessMadeiraOccurrences] response much smaller than stored, skipping run', [
                 'rows' => count($incoming),
                 'stored' => $published->count(),
             ]);
@@ -184,17 +163,137 @@ class ProcessMadeiraOccurrences extends Job
             return;
         }
 
-        foreach ($published as $key => $occurrence) {
-            if (isset($incoming[$key])) {
+        // Contents that appear (new or back after a removal) and disappear.
+        $appeared = [];
+        foreach ($incoming as $key => ['row' => $row, 'copies' => $copies]) {
+            $occurrence = $existing->get($key);
+
+            if (!$occurrence || $occurrence->removedAt) {
+                $occurrence ??= new MadeiraOccurrence(['key' => $key]);
+                $occurrence->fill($this->normalize($row) + ['copies' => $copies, 'removedAt' => null, 'replacedBy' => null]);
+                $appeared[$key] = ['occurrence' => $occurrence, 'row' => $row];
+
                 continue;
             }
 
-            $occurrence->removedAt = Carbon::now();
+            $updatedAt = $this->time($row['atualizadoem'] ?? null);
+            if ($occurrence->copies === $copies && $occurrence->sourceUpdatedAt?->getTimestampMs() === $updatedAt?->getTimestampMs()) {
+                continue;
+            }
+
+            if ($occurrence->copies !== $copies) {
+                $this->log($occurrence, 'copies', ['copies' => $copies]);
+                $this->updated++;
+            }
+
+            $occurrence->fill(['copies' => $copies, 'sourceUpdatedAt' => $updatedAt])->save();
+        }
+
+        $disappeared = $published->reject(fn (MadeiraOccurrence $o, $key) => isset($incoming[$key]));
+
+        $links = $this->link(collect($appeared)->pluck('occurrence'), $disappeared->values());
+
+        foreach ($appeared as $key => ['occurrence' => $occurrence, 'row' => $row]) {
+            $previous = $links[$key] ?? null;
+            $wasRemoved = $occurrence->exists;
+
+            if ($previous) {
+                $occurrence->occurrenceId = $previous->occurrenceId ?? $previous->key;
+                $occurrence->previousKey = $previous->key;
+            } else {
+                $occurrence->occurrenceId ??= $key;
+            }
             $occurrence->save();
 
-            MadeiraOccurrenceRevision::create(['key' => $key, 'change' => 'removed', 'copies' => 0]);
-            $this->removed++;
+            if ($previous) {
+                $this->log($occurrence, 'changed', [
+                    'previousKey' => $previous->key,
+                    'changes' => $this->diff($previous, $occurrence),
+                    'payload' => self::content($row),
+                ]);
+                $this->changed++;
+            } elseif ($wasRemoved) {
+                $this->log($occurrence, 'restored');
+                $this->updated++;
+            } else {
+                $this->log($occurrence, 'added', ['payload' => self::content($row)]);
+                $this->created++;
+            }
         }
+
+        $replacedBy = collect($links)->mapWithKeys(fn (MadeiraOccurrence $old, $newKey) => [$old->key => $newKey]);
+
+        foreach ($disappeared as $key => $occurrence) {
+            $occurrence->removedAt = Carbon::now();
+            $occurrence->replacedBy = $replacedBy->get($key);
+            $occurrence->save();
+
+            if (!$occurrence->replacedBy) {
+                $this->log($occurrence, 'removed', ['copies' => 0]);
+                $this->removed++;
+            }
+        }
+    }
+
+    /**
+     * Pairs appeared ↔ disappeared contents that are the same occurrence
+     * edited: first by (start, nature), then by start alone, and only when
+     * the pair is unique on both sides. Contents with copies are ambiguous
+     * and never linked.
+     *
+     * @return array<string, MadeiraOccurrence> new key → previous version
+     */
+    private function link($appeared, $disappeared): array
+    {
+        $links = [];
+        $taken = [];
+
+        $passes = [
+            fn (MadeiraOccurrence $o) => $o->start?->getTimestampMs().'|'.$o->natureCode,
+            fn (MadeiraOccurrence $o) => (string) $o->start?->getTimestampMs(),
+        ];
+
+        foreach ($passes as $by) {
+            $new = $appeared->filter(fn ($o) => $o->copies === 1 && !isset($links[$o->key]))->groupBy($by);
+            $old = $disappeared->filter(fn ($o) => $o->copies === 1 && !isset($taken[$o->key]))->groupBy($by);
+
+            foreach ($new as $group => $candidates) {
+                if ($group === '' || $candidates->count() !== 1 || $old->get($group)?->count() !== 1) {
+                    continue;
+                }
+
+                $previous = $old->get($group)->first();
+                $links[$candidates->first()->key] = $previous;
+                $taken[$previous->key] = true;
+            }
+        }
+
+        return $links;
+    }
+
+    /** field => [before, after], for the fields that changed. */
+    private function diff(MadeiraOccurrence $before, MadeiraOccurrence $after): array
+    {
+        $value = fn (MadeiraOccurrence $o, string $f) => $f === 'start' ? $o->start?->toIso8601ZuluString() : $o->{$f};
+
+        $changes = [];
+        foreach (self::DIFF_FIELDS as $field) {
+            if ($value($before, $field) !== $value($after, $field)) {
+                $changes[$field] = [$value($before, $field), $value($after, $field)];
+            }
+        }
+
+        return $changes;
+    }
+
+    private function log(MadeiraOccurrence $occurrence, string $change, array $extra = []): void
+    {
+        MadeiraOccurrenceRevision::create(array_merge([
+            'occurrenceId' => $occurrence->occurrenceId ?? $occurrence->key,
+            'key' => $occurrence->key,
+            'change' => $change,
+            'copies' => $occurrence->copies,
+        ], $extra));
     }
 
     /**
