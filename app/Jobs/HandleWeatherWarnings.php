@@ -114,6 +114,23 @@ class HandleWeatherWarnings extends Job
                 }
             }
 
+            // Leftover rows that duplicate each other (same level, overlapping)
+            // stand for one warning: keep the newest, retire the rest silently.
+            $rows = collect($rows)->sortByDesc(fn (WeatherWarning $w) => $this->timestamp($w->reportDate ?? null))->all();
+            foreach (array_keys($rows) as $ri) {
+                if (!isset($rows[$ri])) {
+                    continue;
+                }
+                $row = $rows[$ri];
+                foreach ($rows as $rj => $other) {
+                    if ($rj !== $ri && $other->level === $row->level && $this->overlap($this->span($row), $this->span($other)) > 0) {
+                        $other->supersededAt = Carbon::now();
+                        $other->save();
+                        unset($rows[$rj]);
+                    }
+                }
+            }
+
             // 3. level changes against leftover rows
             foreach ($this->pair($windows, $rows, false) as [$wi, $ri]) {
                 $old = $rows[$ri];

@@ -10,7 +10,7 @@ get:
     Only warnings whose `endTime` is in the future are returned; green-level
     warnings are never persisted upstream of this endpoint. Two entries of the
     same `idAreaAviso` + `awarenessTypeName` never overlap in time: overlapping
-    windows are cut so the newest report (then the higher level) wins. Results
+    windows are cut so the higher level (then the newest report) wins, and pieces already over are dropped. Results
     are ordered by `startTime` ascending.
   tags:
     - Warnings

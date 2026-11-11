@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use MongoDB\BSON\UTCDateTime;
 use MongoDB\Driver\Exception\CommandException;
 
 return new class () extends Migration {
@@ -25,6 +26,13 @@ return new class () extends Migration {
                 }
             }
         }
+
+        // The event log starts now: rows that already ended must never get a
+        // `terminado` (WeatherWarningEventRecorder::recordEnded).
+        DB::connection('mongodb')->getMongoDB()->selectCollection('weather_warnings')->updateMany(
+            ['endedAt' => null, 'endTime' => ['$lt' => new UTCDateTime()]],
+            ['$set' => ['endedAt' => new UTCDateTime()]]
+        );
 
         try {
             DB::connection('mongodb')->getMongoDB()->selectCollection('weather_warnings')

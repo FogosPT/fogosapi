@@ -51,7 +51,7 @@ class WarningsController extends Controller
         if ($from->greaterThan($to)) {
             return new JsonResponse(['error' => 'invalid_date'], 422);
         }
-        if ($from->diffInDays($to, true) > self::HISTORY_MAX_DAYS) {
+        if ((int) $from->copy()->startOfDay()->diffInDays($to->copy()->startOfDay(), true) > self::HISTORY_MAX_DAYS) {
             return new JsonResponse(['error' => 'range_too_large'], 422);
         }
 

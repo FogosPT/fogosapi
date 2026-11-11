@@ -82,6 +82,12 @@ class WarningsHistoryTest extends TestCase
     }
 
     /** @test */
+    public function a_31_day_range_of_whole_days_is_accepted(): void
+    {
+        $this->getJson('/v2/warnings/ipma/history?from=2026-10-01&to=2026-11-01')->assertOk();
+    }
+
+    /** @test */
     public function rejects_invalid_dates(): void
     {
         $this->getJson('/v2/warnings/ipma/history?from=ontem')

@@ -14,9 +14,9 @@ class WeatherWarningCollapse
      * Shapes active warnings as the IPMA-style array used by /v2/warnings/ipma
      * and IncidentResource::weatherWarnings, one entry per warning window.
      * Two entries of the same (district, type) never cover the same instant:
-     * per group, windows are taken in precedence order (newest reportDate,
-     * then higher level) and each one only keeps the time not already claimed
-     * by a stronger one — so a nested orange splits the yellow around it and
+     * per group, windows are taken in precedence order (higher level — never
+     * under-report — then newest reportDate) and each one only keeps the time
+     * not already claimed by a stronger one (pieces already over are dropped) — so a nested orange splits the yellow around it and
      * an exact duplicate disappears. Disjoint windows of the same level (e.g.
      * orange this morning and again tomorrow) are distinct entries.
      *
@@ -35,11 +35,16 @@ class WeatherWarningCollapse
             usort($group, static fn (WeatherWarning $a, WeatherWarning $b) => self::precedence($b) <=> self::precedence($a));
 
             $claimed = [];
+            $now = Carbon::now()->timestamp;
             foreach ($group as $w) {
                 $start = Carbon::parse($w->startTime)->timestamp;
                 $end   = Carbon::parse($w->endTime)->timestamp;
 
                 foreach (self::subtract([[$start, $end]], $claimed) as [$from, $to]) {
+                    // A piece left of a still-active row can already be over.
+                    if ($to < $now) {
+                        continue;
+                    }
                     $rows[] = [
                         'text'              => $w->text,
                         'awarenessTypeName' => $w->type,
@@ -88,7 +93,7 @@ class WeatherWarningCollapse
     /** @return array{int, int} */
     private static function precedence(WeatherWarning $w): array
     {
-        return [self::reportTimestamp($w) ?? PHP_INT_MIN, self::LEVEL_RANK[$w->level] ?? 0];
+        return [self::LEVEL_RANK[$w->level] ?? 0, self::reportTimestamp($w) ?? PHP_INT_MIN];
     }
 
     private static function reportTimestamp(WeatherWarning $w): ?int

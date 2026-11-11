@@ -16,6 +16,13 @@ class WeatherWarningEventRecorder
     /** A warning dropped from the feed this close to its end has ended, not been withdrawn. */
     public const END_GRACE_MINUTES = 30;
 
+    /**
+     * Only rows that ended this recently get a `terminado` from recordEnded():
+     * rows written before the log existed never had `endedAt`, and must not
+     * flood the history with orphan endings (the migration also backfills it).
+     */
+    public const ENDED_LOOKBACK_HOURS = 24;
+
     public function record(WeatherWarningDiff $diff, Carbon $now): void
     {
         $occurred = $diff->reportDate ? Carbon::parse($diff->reportDate) : $now;
@@ -64,6 +71,7 @@ class WeatherWarningEventRecorder
         $rows = WeatherWarning::whereNull('supersededAt')
             ->whereNull('endedAt')
             ->where('endTime', '<', $now)
+            ->where('endTime', '>=', $now->copy()->subHours(self::ENDED_LOOKBACK_HOURS))
             ->get();
 
         foreach ($rows as $w) {

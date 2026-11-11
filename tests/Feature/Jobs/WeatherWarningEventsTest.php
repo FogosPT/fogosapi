@@ -217,6 +217,60 @@ class WeatherWarningEventsTest extends TestCase
         $this->assertSame(1, WeatherWarning::whereNull('supersededAt')->count());
     }
 
+    /** @test */
+    public function rows_that_expired_before_the_log_started_get_no_terminado(): void
+    {
+        $old = new WeatherWarning();
+        $old->district = 'LSB';
+        $old->type = 'Vento';
+        $old->level = 'yellow';
+        $old->reportDate = '2026-11-05T07:00:00';
+        $old->text = 'antigo';
+        $old->startTime = '2026-11-05T09:00:00';
+        $old->endTime = '2026-11-06T09:00:00';
+        $old->save();
+
+        $this->sync([$this->item('STB', 'Vento', 'yellow', '2026-11-10T09:00:00', '2026-11-10T18:00:00', '2026-11-10T07:00:00')]);
+
+        $this->assertSame(['emitido'], $this->events()->pluck('kind')->all());
+    }
+
+    /** @test */
+    public function duplicate_rows_produce_one_event_when_the_level_changes(): void
+    {
+        $this->duplicateRows('STB', 'Vento', 'yellow', '2026-11-10T09:00:00', '2026-11-10T18:00:00');
+
+        $this->sync([$this->item('STB', 'Vento', 'orange', '2026-11-10T09:00:00', '2026-11-10T18:00:00', '2026-11-10T07:30:00')]);
+
+        $this->assertSame(['agravado'], $this->events()->pluck('kind')->all());
+        $this->assertSame(1, WeatherWarning::whereNull('supersededAt')->count());
+    }
+
+    /** @test */
+    public function duplicate_rows_produce_one_event_when_the_warning_is_dropped(): void
+    {
+        $this->duplicateRows('STB', 'Vento', 'yellow', '2026-11-10T09:00:00', '2026-11-10T18:00:00');
+
+        $this->sync([$this->item('FAR', 'Vento', 'yellow', '2026-11-10T09:00:00', '2026-11-10T18:00:00', '2026-11-10T07:30:00')]);
+
+        $this->assertSame(['emitido', 'retirado'], $this->events()->pluck('kind')->sort()->values()->all());
+    }
+
+    private function duplicateRows(string $district, string $type, string $level, string $start, string $end): void
+    {
+        foreach ([1, 2] as $_) {
+            $w = new WeatherWarning();
+            $w->district = $district;
+            $w->type = $type;
+            $w->level = $level;
+            $w->reportDate = '2026-11-10T07:00:00';
+            $w->text = 'Rajadas até 120 km/h.';
+            $w->startTime = $start;
+            $w->endTime = $end;
+            $w->save();
+        }
+    }
+
     private function events()
     {
         return WeatherWarningEvent::orderBy('detectedAt')->orderBy('_id')->get();
