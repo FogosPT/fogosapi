@@ -223,6 +223,8 @@ paths:
     $ref: './madeira/paths/v2-madeira-event-timeline.yaml'
   /v2/madeira/occurrences:
     $ref: './madeira/paths/v2-madeira-occurrences.yaml'
+  /v2/madeira/occurrences/{id}/history:
+    $ref: './madeira/paths/v2-madeira-occurrence-history.yaml'
 
   # V2 — RCM (fire risk maps)
   /v2/rcm/today:

@@ -149,6 +149,7 @@ Route::group(['prefix' => 'v2'], function () {
         Route::get('events/{id}', '\App\Http\Controllers\MadeiraController@show');
         Route::get('events/{id}/timeline', '\App\Http\Controllers\MadeiraController@timeline');
         Route::get('occurrences', '\App\Http\Controllers\MadeiraController@occurrences');
+        Route::get('occurrences/{id}/history', '\App\Http\Controllers\MadeiraController@occurrenceHistory');
     });
 
     Route::group(['prefix' => 'stats'], function () {

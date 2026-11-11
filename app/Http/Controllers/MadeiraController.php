@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MadeiraEvent;
 use App\Models\MadeiraEventSnapshot;
 use App\Models\MadeiraOccurrence;
+use App\Models\MadeiraOccurrenceRevision;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -144,6 +145,57 @@ class MadeiraController extends Controller
         });
 
         return new JsonResponse($payload);
+    }
+
+    /**
+     * Every change of one occurrence, oldest first, plus its current version
+     * (`current: null` once the source stopped publishing it).
+     * GET v2/madeira/occurrences/{id}/history
+     */
+    public function occurrenceHistory(string $id)
+    {
+        if (!preg_match('/^[a-f0-9]{40}$/', $id)) {
+            return new JsonResponse(['success' => false, 'error' => 'not_found'], 404);
+        }
+
+        $payload = Cache::remember('madeira:occurrence:'.$id.':history', 60, function () use ($id) {
+            $log = MadeiraOccurrenceRevision::where('occurrenceId', $id)->orderBy('_id', 'asc')->get();
+            if ($log->isEmpty()) {
+                return null;
+            }
+
+            $versions = MadeiraOccurrence::whereIn('key', $log->pluck('key')->unique()->values()->all())->get()->keyBy('key');
+            $current = $versions->first(fn (MadeiraOccurrence $o) => !$o->removedAt);
+
+            return [
+                'success' => true,
+                'id' => $id,
+                'current' => $current ? $this->occurrence($current) : null,
+                'history' => $log->map(fn (MadeiraOccurrenceRevision $r) => [
+                    'time' => $this->iso($r->created),
+                    'change' => $r->change,
+                    'changes' => $r->change === 'changed' ? $this->changes($r->changes ?? []) : null,
+                    'copies' => $r->copies,
+                    'version' => in_array($r->change, ['added', 'changed', 'restored'], true) && $versions->has($r->key)
+                        ? $this->occurrence($versions->get($r->key))
+                        : null,
+                ])->values(),
+            ];
+        });
+
+        if ($payload === null) {
+            Cache::forget('madeira:occurrence:'.$id.':history');
+
+            return new JsonResponse(['success' => false, 'error' => 'not_found'], 404);
+        }
+
+        return new JsonResponse($payload);
+    }
+
+    /** field => [before, after] → {field: {before, after}} */
+    private function changes(array $changes): object
+    {
+        return (object) collect($changes)->map(fn ($c) => ['before' => $c[0] ?? null, 'after' => $c[1] ?? null])->all();
     }
 
     private function find(string $id): ?MadeiraEvent

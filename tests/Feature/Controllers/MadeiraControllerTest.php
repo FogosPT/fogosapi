@@ -20,6 +20,7 @@ class MadeiraControllerTest extends TestCase
         parent::setUp();
 
         Queue::fake();
+        Carbon::setTestNow(Carbon::parse('2026-11-11T09:30:00Z'));
 
         $feed = json_decode(file_get_contents(base_path('tests/fixtures/madeira/dados.json')), true);
         $job = new ProcessMadeiraEvents();
@@ -28,8 +29,6 @@ class MadeiraControllerTest extends TestCase
 
         $occurrences = json_decode(file_get_contents(base_path('tests/fixtures/madeira/ocorrencias.json')), true);
         (new ProcessMadeiraOccurrences())->sync(array_column($occurrences['features'], 'attributes'));
-
-        Carbon::setTestNow(Carbon::parse('2026-11-11T09:30:00Z'));
 
         $this->id = md5('Depressão Charles – Precipitação e vento forte|2026-11-10T20:00');
     }
@@ -119,6 +118,62 @@ class MadeiraControllerTest extends TestCase
         $this->getJson('v2/madeira/occurrences?parish=abc')->assertStatus(422);
         $this->getJson('v2/madeira/occurrences?limit=5000')->assertStatus(422);
         $this->getJson('v2/madeira/occurrences?from=ontem')->assertStatus(422);
+    }
+
+    /** @test */
+    public function occurrence_history_lists_every_change_with_the_current_version(): void
+    {
+        $rows = array_column(json_decode(file_get_contents(base_path('tests/fixtures/madeira/ocorrencias.json')), true)['features'], 'attributes');
+        $original = collect($rows)->firstWhere('objectid', 16015);
+        $id = $this->occurrenceKey(16015);
+
+        $edit = function (array $changes) use ($rows) {
+            Carbon::setTestNow(Carbon::now()->addMinutes(5));
+            (new ProcessMadeiraOccurrences())->sync(array_map(fn ($r) => $r['objectid'] === 16015 ? $changes + $r : $r, $rows));
+        };
+        $edit(['viaturas' => 5, 'bombeiros' => 11]);
+        $edit(['viaturas' => 5, 'bombeiros' => 11, 'entidades' => 'CMOS,BMSC,BVM']);
+
+        $this->getJson('v2/madeira/occurrences/'.$id.'/history')
+            ->assertOk()
+            ->assertJsonPath('id', $id)
+            ->assertJsonPath('current.id', $id)
+            ->assertJsonPath('current.vehicles', 5)
+            ->assertJsonPath('current.entities', ['CMOS', 'BMSC', 'BVM'])
+            ->assertJsonCount(3, 'history')
+            ->assertJsonPath('history.0.change', 'added')
+            ->assertJsonPath('history.0.time', '2026-11-11T09:30:00Z')
+            ->assertJsonPath('history.0.version.vehicles', $original['viaturas'])
+            ->assertJsonPath('history.0.changes', null)
+            ->assertJsonPath('history.1.change', 'changed')
+            ->assertJsonPath('history.1.time', '2026-11-11T09:35:00Z')
+            ->assertJsonPath('history.1.changes', [
+                'firefighters' => ['before' => $original['bombeiros'], 'after' => 11],
+                'vehicles' => ['before' => $original['viaturas'], 'after' => 5],
+            ])
+            ->assertJsonPath('history.1.version.vehicles', 5)
+            ->assertJsonPath('history.2.changes.entities', ['before' => ['CMOS', 'BMSC'], 'after' => ['CMOS', 'BMSC', 'BVM']]);
+
+        // The list keeps serving the same id, with the current version.
+        $this->getJson('v2/madeira/occurrences?parish=310803')->assertOk()
+            ->assertJsonPath('data', fn ($data) => collect($data)->firstWhere('id', $id)['vehicles'] === 5);
+    }
+
+    /** @test */
+    public function a_removed_occurrence_keeps_its_history_without_a_current_version(): void
+    {
+        $rows = array_column(json_decode(file_get_contents(base_path('tests/fixtures/madeira/ocorrencias.json')), true)['features'], 'attributes');
+        $id = $this->occurrenceKey(16015);
+        (new ProcessMadeiraOccurrences())->sync(array_values(array_filter($rows, fn ($r) => $r['objectid'] !== 16015)));
+
+        $this->getJson('v2/madeira/occurrences/'.$id.'/history')
+            ->assertOk()
+            ->assertJsonPath('current', null)
+            ->assertJsonPath('history.1.change', 'removed')
+            ->assertJsonPath('history.1.version', null);
+
+        $this->getJson('v2/madeira/occurrences/'.str_repeat('a', 40).'/history')->assertNotFound();
+        $this->getJson('v2/madeira/occurrences/16015/history')->assertNotFound();
     }
 
     /** @test */
