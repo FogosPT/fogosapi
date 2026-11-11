@@ -5,8 +5,10 @@ namespace App\Jobs;
 use App\Models\MadeiraEvent;
 use App\Models\MadeiraEventSnapshot;
 use App\Models\MadeiraFeedRevision;
+use App\Support\MadeiraFeedHealth;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use MongoDB\Driver\Exception\BulkWriteException;
@@ -23,11 +25,14 @@ use MongoDB\Driver\Exception\BulkWriteException;
  * revisions and snapshots. Feed times are Madeira local time. A feed older
  * than what is stored (cached response) does not touch the events.
  */
-class ProcessMadeiraEvents extends Job
+class ProcessMadeiraEvents extends Job implements ShouldBeUnique
 {
     public const TIMEZONE = 'Atlantic/Madeira';
 
     public $timeout = 60;
+
+    /** Lock released when the job ends; this only bounds a crashed worker. */
+    public $uniqueFor = 90;
 
     public function __construct() {}
 
@@ -63,25 +68,32 @@ class ProcessMadeiraEvents extends Job
         try {
             $response = $client->get($url);
         } catch (\Throwable $e) {
-            Log::warning('[ProcessMadeiraEvents] request failed: '.$e->getMessage());
+            $this->reportFailure('request failed: '.$e->getMessage());
 
             return;
         }
 
         if ($response->getStatusCode() !== 200) {
-            Log::warning('[ProcessMadeiraEvents] feed returned '.$response->getStatusCode());
+            $this->reportFailure('HTTP '.$response->getStatusCode());
 
             return;
         }
 
         $payload = json_decode((string) $response->getBody(), true);
         if (!is_array($payload)) {
-            Log::warning('[ProcessMadeiraEvents] feed returned invalid JSON');
+            $this->reportFailure('invalid JSON');
 
             return;
         }
 
         $this->sync($payload);
+        MadeiraFeedHealth::recordSuccess('events');
+    }
+
+    private function reportFailure(string $reason): void
+    {
+        Log::warning('[ProcessMadeiraEvents] '.$reason);
+        MadeiraFeedHealth::recordFailure('events', $reason);
     }
 
     public function sync(array $payload): ?MadeiraEvent

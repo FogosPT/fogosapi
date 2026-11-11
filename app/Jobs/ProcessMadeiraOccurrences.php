@@ -4,8 +4,10 @@ namespace App\Jobs;
 
 use App\Models\MadeiraOccurrence;
 use App\Models\MadeiraOccurrenceRevision;
+use App\Support\MadeiraFeedHealth;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -32,12 +34,18 @@ use Illuminate\Support\Facades\Log;
  * The endpoints serve the published contents. A run that fails half-way, or
  * returns far fewer rows than we hold, writes nothing.
  */
-class ProcessMadeiraOccurrences extends Job
+class ProcessMadeiraOccurrences extends Job implements ShouldBeUnique
 {
     private const PAGE_SIZE = 2000;
     private const MAX_PAGES = 50;
 
     public $timeout = 120;
+
+    /** Lock released when the job ends; this only bounds a crashed worker. */
+    public $uniqueFor = 180;
+
+    /** Why the last fetch failed, for the health alert. */
+    private ?string $failure = null;
 
     public int $created = 0;
     public int $changed = 0;
@@ -70,10 +78,16 @@ class ProcessMadeiraOccurrences extends Job
 
         $rows = $this->fetch($url);
         if ($rows === null) {
+            MadeiraFeedHealth::recordFailure('occurrences', $this->failure ?? 'unknown');
+
             return;
         }
 
-        $this->sync($rows);
+        if ($this->sync($rows)) {
+            MadeiraFeedHealth::recordSuccess('occurrences');
+        } else {
+            MadeiraFeedHealth::recordFailure('occurrences', $this->failure ?? 'unknown');
+        }
     }
 
     /**
@@ -100,7 +114,8 @@ class ProcessMadeiraOccurrences extends Job
                     'f' => 'json',
                 ]]);
             } catch (\Throwable $e) {
-                Log::warning('[ProcessMadeiraOccurrences] request failed: '.$e->getMessage());
+                $this->failure = 'request failed: '.$e->getMessage();
+                Log::warning('[ProcessMadeiraOccurrences] '.$this->failure);
 
                 return null;
             }
@@ -108,7 +123,9 @@ class ProcessMadeiraOccurrences extends Job
             $data = json_decode((string) $response->getBody(), true);
             // ArcGIS reports errors as `{"error": …}` behind a 200.
             if ($response->getStatusCode() !== 200 || !is_array($data) || isset($data['error']) || !isset($data['features'])) {
-                Log::warning('[ProcessMadeiraOccurrences] invalid response', ['status' => $response->getStatusCode(), 'page' => $page]);
+                $this->failure = 'invalid response (HTTP '.$response->getStatusCode().', page '.$page.')'
+                    .(isset($data['error']['message']) ? ': '.$data['error']['message'] : '');
+                Log::warning('[ProcessMadeiraOccurrences] '.$this->failure);
 
                 return null;
             }
@@ -124,18 +141,23 @@ class ProcessMadeiraOccurrences extends Job
             }
         }
 
-        Log::warning('[ProcessMadeiraOccurrences] too many pages, skipping run');
+        $this->failure = 'more than '.self::MAX_PAGES.' pages';
+        Log::warning('[ProcessMadeiraOccurrences] '.$this->failure);
 
         return null;
     }
 
     /**
      * @param array $rows raw ArcGIS attributes of the whole table
+     *
+     * @return bool false when the table looked wrong and nothing was written
      */
-    public function sync(array $rows): void
+    public function sync(array $rows): bool
     {
         if (!$rows) {
-            return;
+            $this->failure = 'empty table';
+
+            return false;
         }
 
         // Identical rows (same time, nature, parish, means…) are one content
@@ -155,12 +177,10 @@ class ProcessMadeiraOccurrences extends Job
 
         // A short (but valid) response would otherwise remove most of the table.
         if (count($incoming) < $published->count() / 2) {
-            Log::warning('[ProcessMadeiraOccurrences] response much smaller than stored, skipping run', [
-                'rows' => count($incoming),
-                'stored' => $published->count(),
-            ]);
+            $this->failure = 'table much smaller than stored ('.count($incoming).' of '.$published->count().' occurrences), not synced';
+            Log::warning('[ProcessMadeiraOccurrences] '.$this->failure);
 
-            return;
+            return false;
         }
 
         // Contents that appear (new or back after a removal) and disappear.
@@ -233,6 +253,8 @@ class ProcessMadeiraOccurrences extends Job
                 $this->removed++;
             }
         }
+
+        return true;
     }
 
     /**

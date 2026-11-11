@@ -5,6 +5,10 @@ namespace Tests\Feature\Jobs;
 use App\Jobs\ProcessMadeiraOccurrences;
 use App\Models\MadeiraOccurrence;
 use App\Models\MadeiraOccurrenceRevision;
+use App\Support\MadeiraFeedHealth;
+use Carbon\Carbon;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Support\Facades\Cache;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\MockHandler;
@@ -302,6 +306,34 @@ class ProcessMadeiraOccurrencesTest extends TestCase
 
         $this->assertSame(0, MadeiraOccurrence::whereNotNull('removedAt')->count());
         $this->assertSame($revisions, MadeiraOccurrenceRevision::count());
+    }
+
+    /** @test */
+    public function failures_and_short_tables_count_towards_the_health_alert(): void
+    {
+        Cache::flush();
+        Carbon::setTestNow(Carbon::parse('2026-11-11T12:00:00Z'));
+
+        $rows = $this->rows();
+        $this->job([$this->page($rows)])->handle();
+        $this->assertFalse(MadeiraFeedHealth::isStale('occurrences'));
+
+        Carbon::setTestNow(Carbon::parse('2026-11-11T12:40:00Z'));
+        $this->job([$this->page(array_slice($rows, 0, 10))])->handle();
+        $this->assertTrue(MadeiraFeedHealth::isStale('occurrences'));
+        $this->assertTrue(Cache::has('madeira:health:occurrences:announced'));
+
+        $this->job([$this->page($rows)])->handle();
+        $this->assertFalse(MadeiraFeedHealth::isStale('occurrences'));
+        $this->assertFalse(Cache::has('madeira:health:occurrences:announced'));
+
+        Carbon::setTestNow();
+    }
+
+    /** @test */
+    public function the_job_is_unique(): void
+    {
+        $this->assertInstanceOf(ShouldBeUnique::class, new ProcessMadeiraOccurrences());
     }
 
     /** @test */

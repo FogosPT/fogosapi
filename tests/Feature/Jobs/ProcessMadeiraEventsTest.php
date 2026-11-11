@@ -6,6 +6,10 @@ use App\Jobs\ProcessMadeiraEvents;
 use App\Models\MadeiraEvent;
 use App\Models\MadeiraEventSnapshot;
 use App\Models\MadeiraFeedRevision;
+use App\Support\MadeiraFeedHealth;
+use Carbon\Carbon;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Support\Facades\Cache;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\MockHandler;
@@ -244,6 +248,32 @@ class ProcessMadeiraEventsTest extends TestCase
 
         $this->assertSame(0, MadeiraEvent::count());
         $this->assertSame(0, MadeiraEventSnapshot::count());
+    }
+
+    /** @test */
+    public function failures_count_towards_the_health_alert(): void
+    {
+        Cache::flush();
+        Carbon::setTestNow(Carbon::parse('2026-11-11T12:00:00Z'));
+
+        $this->job([new Response(200, [], json_encode($this->feed()))])->handle();
+
+        Carbon::setTestNow(Carbon::parse('2026-11-11T12:40:00Z'));
+        $this->job([new Response(502, [], 'Bad Gateway')])->handle();
+        $this->assertTrue(Cache::has('madeira:health:events:announced'));
+
+        // A valid feed, even without an event, is the source working.
+        $this->job([new Response(200, [], json_encode(['evento' => null]))])->handle();
+        $this->assertFalse(Cache::has('madeira:health:events:announced'));
+        $this->assertFalse(MadeiraFeedHealth::isStale('events'));
+
+        Carbon::setTestNow();
+    }
+
+    /** @test */
+    public function the_job_is_unique(): void
+    {
+        $this->assertInstanceOf(ShouldBeUnique::class, new ProcessMadeiraEvents());
     }
 
     /** @test */
