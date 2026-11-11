@@ -22,13 +22,30 @@ class ProcessMadeiraEventsTest extends TestCase
     {
         parent::setUp();
 
-        putenv('MADEIRA_EVENTS_URL=https://madeira.test/dados');
+        $this->setUrl('https://madeira.test/dados');
     }
 
     protected function tearDown(): void
     {
-        putenv('MADEIRA_EVENTS_URL');
+        $this->setUrl(null);
         parent::tearDown();
+    }
+
+    /**
+     * env() reads $_SERVER/$_ENV before getenv(), and Dotenv fills them from
+     * .env (CI copies .env.example, which has MADEIRA_EVENTS_URL empty).
+     */
+    private function setUrl(?string $url): void
+    {
+        if ($url === null) {
+            unset($_SERVER['MADEIRA_EVENTS_URL'], $_ENV['MADEIRA_EVENTS_URL']);
+            putenv('MADEIRA_EVENTS_URL');
+
+            return;
+        }
+
+        $_SERVER['MADEIRA_EVENTS_URL'] = $_ENV['MADEIRA_EVENTS_URL'] = $url;
+        putenv('MADEIRA_EVENTS_URL='.$url);
     }
 
     private function feed(array $overrides = []): array
@@ -152,7 +169,7 @@ class ProcessMadeiraEventsTest extends TestCase
     /** @test */
     public function nothing_is_fetched_without_the_url(): void
     {
-        putenv('MADEIRA_EVENTS_URL');
+        $this->setUrl(null);
 
         $mock = new MockHandler([new Response(200, [], json_encode($this->feed()))]);
         (new ProcessMadeiraEvents())->withClient(new Client(['handler' => HandlerStack::create($mock)]))->handle();
