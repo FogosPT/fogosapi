@@ -104,6 +104,13 @@ The scheduler runs when `SCHEDULER_ENABLE=true`. Key jobs and their cadence:
 - `HandleWeatherWarnings` — every 15 minutes; scrapes IPMA warnings from the homepage. The feed is a full snapshot, so each run reconciles the active rows of `weather_warnings` with it: one row per warning window, windows of the same `(district, type, level)` paired in start order and updated in place (IPMA shifts `startTime`/extends `endTime` on republish), new windows created (the STB Telegram observer fires on create), and active rows missing from the feed — replaced (yellow → orange → red) or cancelled — get `supersededAt` and are no longer served. Empty feeds and feeds older than the stored `reportDate` are ignored. Reads filter `supersededAt` null and `endTime >= now`. `weather:collapse-warnings` only removes exact duplicates.
 - `DetectTemperatureWaves` — daily at 05:00 (after `UpdateWeatherDataDaily`); applies the WMO 6-day rule to detect heat waves (vs 1991-2020 normals) and cold waves (vs 1971-2000 normals) per station, persists `TemperatureWave` rows, and posts a Discord message on the first detection of each event
 
+### Madeira (SRPC-RAM events)
+`ProcessMadeiraEvents` polls the SRPC-RAM events feed every 2 minutes. The URL is **only** in `MADEIRA_EVENTS_URL` (kept out of the public code; empty → the job skips). The feed is a snapshot of the current adverse-weather event with aggregates only — per municipality (`oc`/`op`/`mt` + ANEPC nature codes), per nature and per hour — never individual occurrences, so nothing is written to `Incident`. Feed times are `Atlantic/Madeira` local, stored UTC.
+- `MadeiraEvent` (`madeiraEvents`) — one document per event, `eventId = md5(title|start)` (a new start time is a new event), overwritten with the latest aggregates. Every other event still `active` is closed when the feed carries a different one; `estado != ATIVO` → `active=false`. A feed older than the newest stored `sourceUpdatedAt` is ignored.
+- `MadeiraEventSnapshot` (`madeiraEventSnapshots`) — one KPI row per `(eventId, time)` (`time` = the feed's `atualizado`), for the evolution of active occurrences, operationals and ground assets.
+- API (`MadeiraController`, 60 s cache): `v2/madeira/events[?limit=]`, `events/current` (`data: null` when none), `events/{id}`, `events/{id}/timeline`.
+- The feed also carries IPMA warnings, ECMWF forecasts and SRPC communiqués; they are deliberately not ingested.
+
 ### Seismic (sismos.pt)
 Earthquakes for the sismos.pt site (`v2/seismic/*`, `SeismicController`). IPMA's seismic feed only keeps ~30 days, so we archive it.
 - `app/Tools/Seismic/*` — one `SeismicSource` per catalogue (`IpmaSeismicTool` areas 3+7, `EmscTool`, `UsgsTool`, `GeofonTool`, `IgnTool`), each parsing into a `SeismicEvent` DTO and dropping events outside `SeismicSource::BBOX`. IPMA times are UTC; `magnitud: "-99.0"` means not yet revised (stored as `magnitude=null`, `provisional=true`).
@@ -156,6 +163,7 @@ Several features are toggled via `.env`:
 - `TELEGRAM_ENABLE`, `TWITTER_ENABLE`, `FACEBOOK_ENABLE`, `DISCORD_ENABLE`, `NOTIFICATIONS_ENABLE` — social/notification channels
 - `TROLL_MODE` — returns fake data for unauthorized API consumers (checks against whitelisted user-agents/referers)
 - `PROXY_ENABLE` / `PROXY_URL` — route outbound requests through a proxy
+- `MADEIRA_EVENTS_URL` — SRPC-RAM (Madeira) events feed; empty disables `ProcessMadeiraEvents`
 - `PHOTO_MODERATION_KEY` — header token guarding the photo moderation endpoints
 - `PHOTO_UPLOAD_MAX_BYTES`, `PHOTO_RATE_PER_IP_PER_MINUTE`, `PHOTO_RATE_PER_INCIDENT_PER_IP_PER_HOUR`, `PHOTO_RATE_PER_INCIDENT_GLOBAL_PER_HOUR`, `PHOTO_PENDING_PER_INCIDENT_CAP` — photo upload limits and rate gates
 - `MINIO_ENDPOINT`, `MINIO_PUBLIC_BASE_URL`, `MINIO_BUCKET`, `MINIO_REGION`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD` — MinIO/S3 storage configuration

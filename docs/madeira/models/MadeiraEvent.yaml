@@ -1,0 +1,41 @@
+allOf:
+  - $ref: './MadeiraEventSummary.yaml'
+  - type: object
+    properties:
+      recommendations: { type: array, items: { type: string } }
+      municipalities:
+        type: array
+        items:
+          type: object
+          properties:
+            name: { type: string, example: Funchal, description: '"Sem concelho" for occurrences without one' }
+            occurrences: { type: integer }
+            operationals: { type: integer }
+            groundAssets: { type: integer }
+            natures:
+              type: array
+              items:
+                type: object
+                properties:
+                  code: { type: string }
+                  description: { type: string, nullable: true }
+                  occurrences: { type: integer }
+      natures:
+        type: array
+        items:
+          type: object
+          properties:
+            code: { type: string, example: '3315', description: 'ANEPC nature code' }
+            description: { type: string }
+            occurrences: { type: integer }
+            percentage: { type: number }
+      hourly:
+        type: array
+        items:
+          type: object
+          properties:
+            time: { type: string, format: date-time }
+            occurrences: { type: integer }
+            cumulative: { type: integer }
+      notes: { type: string, nullable: true }
+      source: { type: string, nullable: true }

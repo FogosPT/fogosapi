@@ -1,0 +1,18 @@
+get:
+  operationId: v2GetMadeiraEvent
+  summary: One SRPC-RAM (Madeira) event
+  tags: [Madeira]
+  parameters:
+    - { name: id, in: path, required: true, schema: { type: string, pattern: '^[a-f0-9]{32}$' } }
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              data: { $ref: '../models/MadeiraEvent.yaml' }
+    404:
+      $ref: '../../common/responses/404.yaml'

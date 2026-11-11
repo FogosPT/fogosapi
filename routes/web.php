@@ -143,6 +143,13 @@ Route::group(['prefix' => 'v2'], function () {
         Route::get('sitemap', '\App\Http\Controllers\SeismicController@sitemap');
     });
 
+    Route::group(['prefix' => 'madeira'], function () {
+        Route::get('events', '\App\Http\Controllers\MadeiraController@events');
+        Route::get('events/current', '\App\Http\Controllers\MadeiraController@current');
+        Route::get('events/{id}', '\App\Http\Controllers\MadeiraController@show');
+        Route::get('events/{id}/timeline', '\App\Http\Controllers\MadeiraController@timeline');
+    });
+
     Route::group(['prefix' => 'stats'], function () {
         Route::group(['prefix' => 'today'], function () {
             Route::get('ignitions-hourly', '\App\Http\Controllers\StatsController@ignitionsHourly');

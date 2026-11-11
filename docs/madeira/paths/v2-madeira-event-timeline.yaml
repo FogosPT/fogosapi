@@ -1,0 +1,33 @@
+get:
+  operationId: v2GetMadeiraEventTimeline
+  summary: KPIs of a Madeira event over time
+  description: |
+    One row per update of the source (every few minutes while the event is
+    active), oldest first, to plot active occurrences, operationals and
+    ground assets during the event. Cached for 60 seconds.
+  tags: [Madeira]
+  parameters:
+    - { name: id, in: path, required: true, schema: { type: string, pattern: '^[a-f0-9]{32}$' } }
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              eventId: { type: string }
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    time: { type: string, format: date-time }
+                    occurrences: { type: integer }
+                    activeOccurrences: { type: integer }
+                    operationals: { type: integer }
+                    groundAssets: { type: integer }
+                    municipalities: { type: integer }
+    404:
+      $ref: '../../common/responses/404.yaml'

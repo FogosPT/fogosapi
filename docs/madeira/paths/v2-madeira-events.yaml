@@ -1,0 +1,22 @@
+get:
+  operationId: v2GetMadeiraEvents
+  summary: SRPC-RAM (Madeira) events, newest first
+  description: |
+    Adverse-weather events of the Madeira civil protection (SRPC-RAM), polled
+    every 2 minutes. Summaries only; use `/v2/madeira/events/{id}` for the
+    breakdowns. Cached for 60 seconds.
+  tags: [Madeira]
+  parameters:
+    - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              data: { type: array, items: { $ref: '../models/MadeiraEventSummary.yaml' } }
+    422:
+      $ref: '../../common/responses/422.yaml'
