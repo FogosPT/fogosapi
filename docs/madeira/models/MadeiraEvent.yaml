@@ -72,6 +72,9 @@ allOf:
             code: { type: string, nullable: true }
             name: { type: string, nullable: true }
             municipality: { type: string, nullable: true }
+            lat: { type: number, nullable: true, description: Centroid of the parish (CAOP) }
+            lng: { type: number, nullable: true }
+            location: { type: string, nullable: true, enum: [parish] }
             occurrences: { type: integer }
             firefighters: { type: integer }
             vehicles: { type: integer }

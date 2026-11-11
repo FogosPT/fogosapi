@@ -34,5 +34,10 @@ Dados de terceiros incluídos no repositório (mantêm as suas licenças)
 resources/data/seismic/places-pt.json
     Concelhos e freguesias de Portugal, de Wikidata — CC0 1.0 (domínio público).
 
-Os dados servidos pela API (ANEPC, ICNF, IPMA, EMSC, USGS, GFZ, IGN, ISC, …)
+resources/data/madeira/parishes.json
+    Freguesias da Região Autónoma da Madeira e respetivos centroides, calculados
+    a partir da Carta Administrativa Oficial de Portugal (CAOP 2024.1), Direção-
+    Geral do Território — CC BY 4.0.
+
+Os dados servidos pela API (ANEPC, ICNF, IPMA, SRPC-RAM, EMSC, USGS, GFZ, IGN, ISC, …)
 não fazem parte do repositório e seguem os termos de cada fonte.

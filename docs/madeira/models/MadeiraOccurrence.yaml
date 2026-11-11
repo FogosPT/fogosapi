@@ -18,5 +18,8 @@ properties:
   parish: { type: string, nullable: true, example: Caniço }
   municipalityCode: { type: string, nullable: true, example: '3108' }
   municipality: { type: string, nullable: true, example: Santa Cruz }
+  lat: { type: number, nullable: true, example: 32.65485, description: 'Approximate: centroid of the parish (CAOP). Null without a known parish.' }
+  lng: { type: number, nullable: true, example: -16.8389 }
+  location: { type: string, nullable: true, enum: [parish], description: 'Precision of lat/lng: always the parish centroid, never the exact place' }
   entities: { type: array, items: { type: string }, example: [CMOS, BMSC], description: 'Corporations involved' }
   updatedAt: { type: string, format: date-time, nullable: true, description: Last sync of the source }
