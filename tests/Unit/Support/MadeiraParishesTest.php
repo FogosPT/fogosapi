@@ -4,6 +4,10 @@ namespace Tests\Unit\Support;
 
 use App\Console\Commands\ImportMadeiraParishes;
 use App\Support\MadeiraParishes;
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
 use Tests\TestCase;
 
 class MadeiraParishesTest extends TestCase
@@ -48,6 +52,25 @@ class MadeiraParishesTest extends TestCase
         $this->assertNull(MadeiraParishes::find('310899', null));
         $this->assertNull(MadeiraParishes::find(null, null));
         $this->assertNull(MadeiraParishes::find('310899', 'Lisboa'));
+    }
+
+    /** @test */
+    public function a_bad_wfs_answer_leaves_the_table_unchanged(): void
+    {
+        // Review of #101: the importer used to write before checking the count.
+        $before = file_get_contents(MadeiraParishes::path());
+        $parish = ['type' => 'Feature', 'properties' => ['dtmnfr' => '310310', 'freguesia' => 'Sé', 'municipio' => 'Funchal'],
+            'geometry' => ['type' => 'Polygon', 'coordinates' => [[[-16.92, 32.64], [-16.91, 32.64], [-16.91, 32.65], [-16.92, 32.64]]]]];
+
+        foreach ([['features' => []], ['features' => [$parish]], ['error' => 'x']] as $answer) {
+            $this->app->instance(Client::class, new Client(['handler' => HandlerStack::create(new MockHandler([
+                new Response(200, [], json_encode($answer)),
+            ]))]));
+
+            $this->artisan('madeira:parishes-import')->assertFailed();
+            $this->assertSame($before, file_get_contents(MadeiraParishes::path()));
+            $this->assertFileDoesNotExist(MadeiraParishes::path().'.tmp');
+        }
     }
 
     /** @test */

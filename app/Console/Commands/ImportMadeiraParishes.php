@@ -28,9 +28,12 @@ class ImportMadeiraParishes extends Command
     /** South of this latitude only the Desertas and Selvagens. */
     private const MIN_LAT = 32.6;
 
+    /** Parishes of the RAM in the CAOP; anything else leaves the table as it is. */
+    public const EXPECTED = 54;
+
     public function handle(): int
     {
-        $response = (new Client(['timeout' => 120, 'headers' => ['User-Agent' => 'Fogos.pt/3.0']]))->get(self::WFS, ['query' => [
+        $response = $this->client()->get(self::WFS, ['query' => [
             'service' => 'WFS',
             'version' => '2.0.0',
             'request' => 'GetFeature',
@@ -64,14 +67,24 @@ class ImportMadeiraParishes extends Command
             ];
         }
 
+        // Check before writing: a partial or empty answer must not replace
+        // the working table (every API response reads it).
+        if (count($parishes) !== self::EXPECTED) {
+            $this->error('Got '.count($parishes).' parishes instead of '.self::EXPECTED.'; '.MadeiraParishes::path().' left unchanged');
+
+            return self::FAILURE;
+        }
+
         ksort($parishes, SORT_STRING);
         $title = $this->caopVersion();
 
         $json = fn ($v) => json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $rows = array_map(fn ($code) => '        '.$json((string) $code).': '.$json($parishes[$code]), array_keys($parishes));
 
-        // One parish per line, so a regeneration diffs per parish.
-        file_put_contents(MadeiraParishes::path(), implode("\n", [
+        // One parish per line, so a regeneration diffs per parish. Written
+        // next to the table and renamed, so a reader never sees half a file.
+        $tmp = MadeiraParishes::path().'.tmp';
+        file_put_contents($tmp, implode("\n", [
             '{',
             '    "source": '.$json(($title ?? 'CAOP').' — Direção-Geral do Território (CC BY 4.0), '.gmdate('Y-m-d')).',',
             '    "fields": '.$json(['name', 'municipality', 'lat', 'lon (area centroid of the largest polygon on Madeira/Porto Santo)']).',',
@@ -80,10 +93,19 @@ class ImportMadeiraParishes extends Command
             '    }',
             '}',
         ])."\n");
+        rename($tmp, MadeiraParishes::path());
 
         $this->info(count($parishes).' parishes written to '.MadeiraParishes::path());
 
-        return count($parishes) === 54 ? self::SUCCESS : self::FAILURE;
+        return self::SUCCESS;
+    }
+
+    /** Bound in tests to fake the WFS. */
+    private function client(): Client
+    {
+        return $this->laravel->bound(Client::class)
+            ? $this->laravel->make(Client::class)
+            : new Client(['timeout' => 120, 'headers' => ['User-Agent' => 'Fogos.pt/3.0']]);
     }
 
     /**
@@ -131,7 +153,7 @@ class ImportMadeiraParishes extends Command
     private function caopVersion(): ?string
     {
         try {
-            $xml = (string) (new Client(['timeout' => 30]))->get(self::WFS, ['query' => ['service' => 'WFS', 'request' => 'GetCapabilities']])->getBody();
+            $xml = (string) $this->client()->get(self::WFS, ['query' => ['service' => 'WFS', 'request' => 'GetCapabilities']])->getBody();
 
             return preg_match('/CAOP\s*[\d.]+/', $xml, $m) ? $m[0] : null;
         } catch (\Throwable) {
