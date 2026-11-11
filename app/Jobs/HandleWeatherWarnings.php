@@ -4,7 +4,9 @@ namespace App\Jobs;
 
 use App\Models\WeatherWarning;
 use App\Support\WeatherWarningDiff;
+use App\Support\WeatherWarningEventRecorder;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class HandleWeatherWarnings extends Job
 {
@@ -22,8 +24,8 @@ class HandleWeatherWarnings extends Job
      * upgrades a warning (yellow → orange → red) or cancels it, the old one
      * simply stops appearing. So each run reconciles the active rows with the
      * snapshot, per (district, type), one row per warning window:
-     *  1. windows are paired with the active row of the same level they
-     *     overlap most, which is updated in place (IPMA moves startTime to
+     *  1. windows are paired with an overlapping active row of the same
+     *     level (earliest window first), which is updated in place (IPMA moves startTime to
      *     "now" and extends endTime on every republish);
      *  2. leftover active rows overlapping a kept row of the same level are
      *     duplicates and get `supersededAt` silently;
@@ -149,11 +151,22 @@ class HandleWeatherWarnings extends Job
         $reportDate = collect($items)->pluck('reportDate')->filter()
             ->sortBy(fn ($r) => $this->timestamp($r))->last();
 
-        return new WeatherWarningDiff($created, $levelChanges, $updated, $removed, $reportDate);
+        $diff = new WeatherWarningDiff($created, $levelChanges, $updated, $removed, $reportDate);
+
+        try {
+            $recorder = app(WeatherWarningEventRecorder::class);
+            $recorder->record($diff, Carbon::now());
+            $recorder->recordEnded(Carbon::now());
+        } catch (\Throwable $e) {
+            Log::warning('weather warning events not recorded: '.$e->getMessage());
+            report($e);
+        }
+
+        return $diff;
     }
 
     /**
-     * Greedy pairing of feed windows with rows by largest strict overlap.
+     * Greedy pairing of feed windows with rows they strictly overlap.
      *
      * @return array<int, array{int|string, int|string}> [window index, row index]
      */
@@ -168,12 +181,17 @@ class HandleWeatherWarnings extends Job
                 }
                 $overlap = $this->overlap($span, $this->span($row));
                 if ($overlap > 0) {
-                    $candidates[] = [$overlap, $wi, $ri];
+                    $candidates[] = [$overlap, $wi, $ri, $span[0]];
                 }
             }
         }
 
-        usort($candidates, fn ($a, $b) => $b[0] <=> $a[0]);
+        // Same level: a row continues as the earliest window it overlaps, so
+        // a split (yellow 09–24 → 09–12 + 18–24) reads as "shortened" plus a
+        // new window. Other levels: the largest overlap is the replacement.
+        usort($candidates, $sameLevel
+            ? fn ($a, $b) => [$a[3], $b[0]] <=> [$b[3], $a[0]]
+            : fn ($a, $b) => $b[0] <=> $a[0]);
 
         $pairs = $usedW = $usedR = [];
         foreach ($candidates as [, $wi, $ri]) {

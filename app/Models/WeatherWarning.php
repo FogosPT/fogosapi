@@ -23,6 +23,7 @@ class WeatherWarning extends Model
         'startTime' => 'datetime',
         'endTime'   => 'datetime',
         'supersededAt' => 'datetime',
+        'endedAt'   => 'datetime',
     ];
 
     protected $fillable = [
