@@ -3,6 +3,8 @@
 namespace Tests\Feature\Controllers;
 
 use App\Jobs\ProcessMadeiraEvents;
+use App\Jobs\ProcessMadeiraOccurrences;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -24,7 +26,18 @@ class MadeiraControllerTest extends TestCase
         $job->sync($feed);
         $job->sync(array_replace_recursive($feed, ['atualizado' => '2026-11-11T09:30', 'kpi' => ['ativas' => 12]]));
 
+        $occurrences = json_decode(file_get_contents(base_path('tests/fixtures/madeira/ocorrencias.json')), true);
+        (new ProcessMadeiraOccurrences())->sync(array_column($occurrences['features'], 'attributes'));
+
+        Carbon::setTestNow(Carbon::parse('2026-11-11T09:30:00Z'));
+
         $this->id = md5('Depressão Charles – Precipitação e vento forte|2026-11-10T20:00');
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
     }
 
     /** @test */
@@ -46,6 +59,56 @@ class MadeiraControllerTest extends TestCase
             ->assertJsonCount(5, 'data.communiques')
             ->assertJsonPath('data.communiques.0.official', true)
             ->assertJsonPath('data.communiques.0.time', '2026-11-10T15:27:00Z');
+    }
+
+    /** @test */
+    public function the_event_detail_adds_parishes_entities_and_top_occurrences(): void
+    {
+        $response = $this->getJson('v2/madeira/events/'.$this->id)->assertOk();
+
+        // Occurrences inside the period with one of the event's natures.
+        $this->assertSame(214, collect($response->json('data.parishes'))->sum('occurrences'));
+        $response
+            ->assertJsonPath('data.parishes.0.code', '310403')
+            ->assertJsonPath('data.parishes.0.name', 'Machico')
+            ->assertJsonPath('data.parishes.0.municipality', 'Machico')
+            ->assertJsonPath('data.parishes.0.occurrences', 28)
+            ->assertJsonPath('data.entities.0', ['code' => 'CMOS', 'occurrences' => 85])
+            ->assertJsonCount(10, 'data.topOccurrences')
+            ->assertJsonPath('data.topOccurrences.0.id', 16015)
+            ->assertJsonPath('data.topOccurrences.0.vehicles', 3)
+            ->assertJsonPath('data.topOccurrences.0.firefighters', 6)
+            ->assertJsonPath('data.topOccurrences.0.parish', 'Caniço')
+            ->assertJsonPath('data.topOccurrences.0.entities', ['CMOS', 'BMSC']);
+
+        $this->assertNotNull(collect($response->json('data.parishes'))->firstWhere('code', null), 'occurrences without parish are grouped');
+    }
+
+    /** @test */
+    public function occurrences_default_to_the_last_24_hours_newest_first(): void
+    {
+        $this->getJson('v2/madeira/occurrences')
+            ->assertOk()
+            ->assertJsonCount(224, 'data')
+            ->assertJsonPath('data.0.id', 16172)
+            ->assertJsonStructure(['data' => [['id', 'start', 'natureCode', 'nature', 'firefighters', 'vehicles', 'parishCode', 'parish', 'municipalityCode', 'municipality', 'entities', 'updatedAt']]]);
+    }
+
+    /** @test */
+    public function occurrences_can_be_filtered_and_are_validated(): void
+    {
+        $this->getJson('v2/madeira/occurrences?municipality=3103')->assertOk()->assertJsonCount(48, 'data');
+        $this->getJson('v2/madeira/occurrences?nature=3315&from=2026-01-01')->assertOk()->assertJsonCount(61, 'data');
+        $this->getJson('v2/madeira/occurrences?parish=310403&limit=5')->assertOk()
+            ->assertJsonCount(5, 'data')
+            ->assertJsonPath('data.0.municipality', 'Machico');
+        $this->getJson('v2/madeira/occurrences?from=2026-11-11T09:00:00Z&to=2026-11-11T09:10:00Z')->assertOk()
+            ->assertJsonPath('data', fn ($rows) => collect($rows)->every(fn ($r) => $r['start'] >= '2026-11-11T09:00:00Z' && $r['start'] <= '2026-11-11T09:10:00Z') && count($rows) > 0);
+
+        $this->getJson('v2/madeira/occurrences?municipality=1106')->assertStatus(422);
+        $this->getJson('v2/madeira/occurrences?parish=abc')->assertStatus(422);
+        $this->getJson('v2/madeira/occurrences?limit=5000')->assertStatus(422);
+        $this->getJson('v2/madeira/occurrences?from=ontem')->assertStatus(422);
     }
 
     /** @test */

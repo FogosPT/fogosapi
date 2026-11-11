@@ -1,0 +1,19 @@
+type: object
+description: |
+  One SRPC-RAM (Madeira) occurrence from the public statistics view of their
+  ArcGIS (source: Preventech). No location beyond the parish, no status and
+  no occurrence number. Firefighters and vehicles are summed per occurrence
+  (the same person or vehicle can count in several). Times are UTC.
+properties:
+  id: { type: integer, description: 'objectid of the source view', example: 16015 }
+  start: { type: string, format: date-time, description: Time of the alert }
+  natureCode: { type: string, example: '4305', description: ANEPC nature code }
+  nature: { type: string, nullable: true, example: Limpeza de Via e Sinalização de Perigo }
+  firefighters: { type: integer, nullable: true }
+  vehicles: { type: integer, nullable: true }
+  parishCode: { type: string, nullable: true, example: '310803', description: 'CAOP code; null when the source has no parish' }
+  parish: { type: string, nullable: true, example: Caniço }
+  municipalityCode: { type: string, nullable: true, example: '3108' }
+  municipality: { type: string, nullable: true, example: Santa Cruz }
+  entities: { type: array, items: { type: string }, example: [CMOS, BMSC], description: 'Corporations involved' }
+  updatedAt: { type: string, format: date-time, nullable: true, description: Last sync of the source }

@@ -4,14 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\MadeiraEvent;
 use App\Models\MadeiraEventSnapshot;
+use App\Models\MadeiraOccurrence;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Validator;
 
 /**
- * SRPC-RAM (Madeira) adverse-weather events, ingested by ProcessMadeiraEvents.
+ * SRPC-RAM (Madeira) adverse-weather events (ProcessMadeiraEvents) and the
+ * individual occurrences of their ArcGIS statistics view
+ * (ProcessMadeiraOccurrences). Current versions only; history stays in the
+ * revision collections.
  */
 class MadeiraController extends Controller
 {
@@ -98,6 +104,48 @@ class MadeiraController extends Controller
         }));
     }
 
+    /**
+     * Occurrences currently published by the source, newest first. Without
+     * `from`, the last 24 hours.
+     * GET v2/madeira/occurrences?from=&to=&municipality=3103&parish=310302&nature=3315&limit=500
+     */
+    public function occurrences(Request $request)
+    {
+        $validator = Validator::make($request->query(), [
+            'from' => 'nullable|date',
+            'to' => 'nullable|date',
+            'municipality' => 'nullable|in:'.implode(',', array_keys(MadeiraOccurrence::MUNICIPALITIES)),
+            'parish' => ['nullable', 'regex:/^3[12]\d{4}$/'],
+            'nature' => ['nullable', 'regex:/^\d{4}$/'],
+            'limit' => 'nullable|integer|min:1|max:2000',
+        ]);
+
+        if ($validator->fails()) {
+            return new JsonResponse(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $params = $validator->validated();
+
+        $payload = Cache::remember('madeira:occurrences:'.md5(json_encode($params)), 60, function () use ($params) {
+            $from = isset($params['from']) ? Carbon::parse($params['from']) : Carbon::now()->subDay();
+
+            $rows = MadeiraOccurrence::whereNull('removedAt')
+                ->where('start', '>=', $from)
+                ->when($params['to'] ?? null, fn ($q, $to) => $q->where('start', '<=', Carbon::parse($to)))
+                ->when($params['municipality'] ?? null, fn ($q, $m) => $q->where('municipalityCode', $m))
+                ->when($params['parish'] ?? null, fn ($q, $p) => $q->where('parishCode', $p))
+                ->when($params['nature'] ?? null, fn ($q, $n) => $q->where('natureCode', $n))
+                ->orderBy('start', 'desc')
+                ->orderBy('sourceId', 'desc')
+                ->limit((int) ($params['limit'] ?? 500))
+                ->get();
+
+            return ['success' => true, 'data' => $rows->map(fn (MadeiraOccurrence $o) => $this->occurrence($o))->values()];
+        });
+
+        return new JsonResponse($payload);
+    }
+
     private function find(string $id): ?MadeiraEvent
     {
         if (!preg_match('/^[a-f0-9]{32}$/', $id)) {
@@ -135,6 +183,72 @@ class MadeiraController extends Controller
             'communiques' => $event->communiques ?? [],
             'notes' => $event->notes,
             'source' => $event->source,
+        ] + $this->occurrenceBreakdowns($event);
+    }
+
+    /**
+     * Breakdowns the aggregate feed lacks, from the individual occurrences:
+     * those inside the event period whose nature is one of the event's (the
+     * selection SRPC-RAM uses for the event).
+     */
+    private function occurrenceBreakdowns(MadeiraEvent $event): array
+    {
+        $codes = collect($event->natures ?? [])->pluck('code')->filter()->values()->all();
+
+        $rows = MadeiraOccurrence::whereNull('removedAt')
+            ->where('start', '>=', $event->start)
+            ->where('start', '<=', $event->end ?? Carbon::now())
+            ->when($codes, fn ($q) => $q->whereIn('natureCode', $codes))
+            ->get();
+
+        return [
+            'parishes' => $rows->groupBy(fn (MadeiraOccurrence $o) => $o->parishCode ?? '')
+                ->map(fn (Collection $group, $code) => [
+                    'code' => $code === '' ? null : (string) $code,
+                    'name' => $code === '' ? null : $this->mostCommon($group->pluck('parish')),
+                    'municipality' => $group->first()->municipality,
+                    'occurrences' => $group->count(),
+                    'firefighters' => $group->sum('firefighters'),
+                    'vehicles' => $group->sum('vehicles'),
+                ])
+                ->sortByDesc('occurrences')
+                ->values()
+                ->all(),
+            'entities' => $rows->flatMap(fn (MadeiraOccurrence $o) => $o->entities ?? [])
+                ->countBy()
+                ->sortDesc()
+                ->map(fn ($n, $code) => ['code' => (string) $code, 'occurrences' => $n])
+                ->values()
+                ->all(),
+            'topOccurrences' => $rows->sortBy([['vehicles', 'desc'], ['firefighters', 'desc'], ['start', 'asc']])
+                ->take(10)
+                ->map(fn (MadeiraOccurrence $o) => $this->occurrence($o))
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /** The source spells some parishes differently; the most frequent wins. */
+    private function mostCommon(Collection $names): ?string
+    {
+        return $names->filter()->countBy()->sortDesc()->keys()->first();
+    }
+
+    private function occurrence(MadeiraOccurrence $o): array
+    {
+        return [
+            'id' => $o->sourceId,
+            'start' => $this->iso($o->start),
+            'natureCode' => $o->natureCode,
+            'nature' => $o->nature,
+            'firefighters' => $o->firefighters,
+            'vehicles' => $o->vehicles,
+            'parishCode' => $o->parishCode,
+            'parish' => $o->parish,
+            'municipalityCode' => $o->municipalityCode,
+            'municipality' => $o->municipality,
+            'entities' => $o->entities ?? [],
+            'updatedAt' => $this->iso($o->sourceUpdatedAt),
         ];
     }
 

@@ -61,5 +61,31 @@ allOf:
             text: { type: string, nullable: true, description: 'Excerpt' }
             link: { type: string, nullable: true }
             official: { type: boolean }
+      parishes:
+        type: array
+        description: |
+          From the individual occurrences inside the event period whose nature
+          is one of the event's. `code: null` groups occurrences without a parish.
+        items:
+          type: object
+          properties:
+            code: { type: string, nullable: true }
+            name: { type: string, nullable: true }
+            municipality: { type: string, nullable: true }
+            occurrences: { type: integer }
+            firefighters: { type: integer }
+            vehicles: { type: integer }
+      entities:
+        type: array
+        description: Corporations involved, by number of occurrences (same selection as `parishes`).
+        items:
+          type: object
+          properties:
+            code: { type: string, example: BMSC }
+            occurrences: { type: integer }
+      topOccurrences:
+        type: array
+        description: The 10 occurrences with the most vehicles, then firefighters (same selection as `parishes`).
+        items: { $ref: './MadeiraOccurrence.yaml' }
       notes: { type: string, nullable: true }
       source: { type: string, nullable: true }
