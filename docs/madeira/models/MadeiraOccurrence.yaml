@@ -2,10 +2,12 @@ type: object
 description: |
   One SRPC-RAM (Madeira) occurrence from the public statistics view of their
   ArcGIS (source: Preventech). No location beyond the parish, no status and
-  no occurrence number. Firefighters and vehicles are summed per occurrence
+  no occurrence number: `id` is a hash of the content, so it changes when
+  SRPC-RAM edits the occurrence (e.g. fills in the parish). Firefighters and vehicles are summed per occurrence
   (the same person or vehicle can count in several). Times are UTC.
 properties:
-  id: { type: integer, description: 'objectid of the source view', example: 16015 }
+  id: { type: string, description: 'Hash of the content (the source has no stable id)', example: 3b9f0c1e2d4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c }
+  copies: { type: integer, description: 'Identical rows in the source (same time, nature, parish and means)', example: 1 }
   start: { type: string, format: date-time, description: Time of the alert }
   natureCode: { type: string, example: '4305', description: ANEPC nature code }
   nature: { type: string, nullable: true, example: Limpeza de Via e Sinalização de Perigo }

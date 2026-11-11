@@ -34,6 +34,13 @@ class MadeiraControllerTest extends TestCase
         $this->id = md5('Depressão Charles – Precipitação e vento forte|2026-11-10T20:00');
     }
 
+    private function occurrenceKey(int $objectid): string
+    {
+        $data = json_decode(file_get_contents(base_path('tests/fixtures/madeira/ocorrencias.json')), true);
+
+        return ProcessMadeiraOccurrences::key(collect(array_column($data['features'], 'attributes'))->firstWhere('objectid', $objectid));
+    }
+
     protected function tearDown(): void
     {
         Carbon::setTestNow();
@@ -75,7 +82,7 @@ class MadeiraControllerTest extends TestCase
             ->assertJsonPath('data.parishes.0.occurrences', 28)
             ->assertJsonPath('data.entities.0', ['code' => 'CMOS', 'occurrences' => 85])
             ->assertJsonCount(10, 'data.topOccurrences')
-            ->assertJsonPath('data.topOccurrences.0.id', 16015)
+            ->assertJsonPath('data.topOccurrences.0.id', $this->occurrenceKey(16015))
             ->assertJsonPath('data.topOccurrences.0.vehicles', 3)
             ->assertJsonPath('data.topOccurrences.0.firefighters', 6)
             ->assertJsonPath('data.topOccurrences.0.parish', 'Caniço')
@@ -87,11 +94,14 @@ class MadeiraControllerTest extends TestCase
     /** @test */
     public function occurrences_default_to_the_last_24_hours_newest_first(): void
     {
-        $this->getJson('v2/madeira/occurrences')
+        // 224 rows, 3 of them identical to another: 221 contents.
+        $response = $this->getJson('v2/madeira/occurrences');
+        $this->assertSame(224, collect($response->json('data'))->sum('copies'));
+        $response
             ->assertOk()
-            ->assertJsonCount(224, 'data')
-            ->assertJsonPath('data.0.id', 16172)
-            ->assertJsonStructure(['data' => [['id', 'start', 'natureCode', 'nature', 'firefighters', 'vehicles', 'parishCode', 'parish', 'municipalityCode', 'municipality', 'entities', 'updatedAt']]]);
+            ->assertJsonCount(221, 'data')
+            ->assertJsonPath('data.0.id', $this->occurrenceKey(16172))
+            ->assertJsonStructure(['data' => [['id', 'copies', 'start', 'natureCode', 'nature', 'firefighters', 'vehicles', 'parishCode', 'parish', 'municipalityCode', 'municipality', 'entities', 'updatedAt']]]);
     }
 
     /** @test */

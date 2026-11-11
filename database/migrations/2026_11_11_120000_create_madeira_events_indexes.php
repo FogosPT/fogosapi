@@ -9,7 +9,7 @@ return new class () extends Migration {
     /**
      * Indexes for the SRPC-RAM (Madeira) events: lookup by eventId, listings
      * newest first, one KPI snapshot per (event, feed update) and one raw
-     * feed revision per distinct payload; occurrences by objectid and time.
+     * feed revision per distinct payload; occurrences by content key and time.
      */
     private const INDEXES = [
         'madeiraEvents' => [
@@ -21,12 +21,12 @@ return new class () extends Migration {
             'eventId_time_unique' => [['eventId' => 1, 'time' => 1], ['unique' => true]],
         ],
         'madeiraOccurrences' => [
-            'sourceId_unique' => [['sourceId' => 1], ['unique' => true]],
+            'key_unique' => [['key' => 1], ['unique' => true]],
             'start_idx' => [['removedAt' => 1, 'start' => -1], []],
             'municipality_start_idx' => [['municipalityCode' => 1, 'start' => -1], []],
         ],
         'madeiraOccurrenceRevisions' => [
-            'sourceId_idx' => [['sourceId' => 1, 'created' => 1], []],
+            'key_idx' => [['key' => 1, 'created' => 1], []],
         ],
         'madeiraFeedRevisions' => [
             'hash_unique' => [['hash' => 1], ['unique' => true]],

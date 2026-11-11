@@ -136,7 +136,7 @@ class MadeiraController extends Controller
                 ->when($params['parish'] ?? null, fn ($q, $p) => $q->where('parishCode', $p))
                 ->when($params['nature'] ?? null, fn ($q, $n) => $q->where('natureCode', $n))
                 ->orderBy('start', 'desc')
-                ->orderBy('sourceId', 'desc')
+                ->orderBy('key', 'desc')
                 ->limit((int) ($params['limit'] ?? 500))
                 ->get();
 
@@ -207,20 +207,21 @@ class MadeiraController extends Controller
                     'code' => $code === '' ? null : (string) $code,
                     'name' => $code === '' ? null : $this->mostCommon($group->pluck('parish')),
                     'municipality' => $group->first()->municipality,
-                    'occurrences' => $group->count(),
-                    'firefighters' => $group->sum('firefighters'),
-                    'vehicles' => $group->sum('vehicles'),
+                    'occurrences' => $group->sum(fn (MadeiraOccurrence $o) => $o->copies ?? 1),
+                    'firefighters' => $group->sum(fn (MadeiraOccurrence $o) => ($o->firefighters ?? 0) * ($o->copies ?? 1)),
+                    'vehicles' => $group->sum(fn (MadeiraOccurrence $o) => ($o->vehicles ?? 0) * ($o->copies ?? 1)),
                 ])
                 ->sortByDesc('occurrences')
                 ->values()
                 ->all(),
-            'entities' => $rows->flatMap(fn (MadeiraOccurrence $o) => $o->entities ?? [])
+            'entities' => $rows->flatMap(fn (MadeiraOccurrence $o) => array_fill(0, $o->copies ?? 1, $o->entities ?? []))
+                ->flatten()
                 ->countBy()
                 ->sortDesc()
                 ->map(fn ($n, $code) => ['code' => (string) $code, 'occurrences' => $n])
                 ->values()
                 ->all(),
-            'topOccurrences' => $rows->sortBy([['vehicles', 'desc'], ['firefighters', 'desc'], ['start', 'asc']])
+            'topOccurrences' => $rows->sortBy([['vehicles', 'desc'], ['firefighters', 'desc'], ['start', 'asc'], ['key', 'asc']])
                 ->take(10)
                 ->map(fn (MadeiraOccurrence $o) => $this->occurrence($o))
                 ->values()
@@ -237,7 +238,8 @@ class MadeiraController extends Controller
     private function occurrence(MadeiraOccurrence $o): array
     {
         return [
-            'id' => $o->sourceId,
+            'id' => $o->key,
+            'copies' => $o->copies,
             'start' => $this->iso($o->start),
             'natureCode' => $o->natureCode,
             'nature' => $o->nature,

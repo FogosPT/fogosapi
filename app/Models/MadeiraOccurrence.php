@@ -5,11 +5,12 @@ namespace App\Models;
 use MongoDB\Laravel\Eloquent\Model;
 
 /**
- * One SRPC-RAM (Madeira) occurrence, current version, from the public
+ * One version (content) of an SRPC-RAM (Madeira) occurrence, from the public
  * statistics view of their ArcGIS (see App\Jobs\ProcessMadeiraOccurrences).
- * No geometry, status or occurrence number: `sourceId` is the view's
- * objectid. Every version is kept in MadeiraOccurrenceRevision; `removedAt`
- * is set when the source stops publishing the row.
+ * The source has no occurrence number and its objectid is positional, so
+ * `key` is a hash of the content: an edit in the source is a new row here
+ * and the old one gets `removedAt`. `copies` = identical rows in the source.
+ * Additions and removals are logged in MadeiraOccurrenceRevision.
  */
 class MadeiraOccurrence extends Model
 {
@@ -36,7 +37,7 @@ class MadeiraOccurrence extends Model
     ];
 
     protected $casts = [
-        'sourceId' => 'int',
+        'copies' => 'int',
         'start' => 'datetime',
         'firefighters' => 'int',
         'vehicles' => 'int',
@@ -47,7 +48,8 @@ class MadeiraOccurrence extends Model
     ];
 
     protected $fillable = [
-        'sourceId',
+        'key',
+        'copies',
         'start',
         'natureCode',
         'nature',
@@ -59,7 +61,6 @@ class MadeiraOccurrence extends Model
         'municipality',
         'entities',
         'sourceUpdatedAt',
-        'hash',
         'removedAt',
     ];
 }

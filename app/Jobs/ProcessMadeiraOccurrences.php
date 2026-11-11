@@ -11,13 +11,22 @@ use Illuminate\Support\Facades\Log;
 /**
  * Polls the public statistics view of the SRPC-RAM (Madeira) ArcGIS
  * (`MADEIRA_OCCURRENCES_URL`, the layer URL, kept out of the code): one row
- * per occurrence, without geometry, status or occurrence number. Each run
- * reads the whole table (paginated) and:
- *  - creates/updates `madeiraOccurrences` (current version, by objectid);
- *  - adds a `madeiraOccurrenceRevisions` row for every new or changed version;
- *  - flags rows no longer published with `removedAt` (and a revision).
- * A run that fails half-way, or returns far fewer rows than we hold, writes
- * no removals, so a bad response never wipes the table.
+ * per occurrence, without geometry, status or occurrence number.
+ *
+ * The objectid is NOT an identifier: the view is synced by position, so when
+ * a row is added or edited the following rows shift to other objectids.
+ * Rows are therefore keyed by their content (`key` = sha1 of every attribute
+ * but objectid and the sync time `atualizadoem`). An edit in the source is a
+ * version that disappears plus a new one; nothing links the two.
+ *
+ * Each run reads the whole table (paginated) and:
+ *  - creates a `madeiraOccurrences` row for every new content (`copies` =
+ *    identical rows in the source), logged as `added` in the revisions;
+ *  - flags contents no longer published with `removedAt` (logged `removed`),
+ *    and clears it if they come back.
+ * The endpoints serve the published contents; the history is every content
+ * ever seen with its revisions. A run that fails half-way, or returns far
+ * fewer rows than we hold, removes nothing.
  */
 class ProcessMadeiraOccurrences extends Job
 {
@@ -121,55 +130,88 @@ class ProcessMadeiraOccurrences extends Job
             return;
         }
 
-        $existing = MadeiraOccurrence::all()->keyBy('sourceId');
-        $seen = [];
-
+        // Identical rows (same time, nature, parish, means…) are kept as one
+        // content with `copies`.
+        $incoming = [];
         foreach ($rows as $row) {
-            $id = (int) $row['objectid'];
-            $seen[$id] = true;
+            $key = self::key($row);
+            $incoming[$key] ??= ['row' => $row, 'copies' => 0];
+            $incoming[$key]['copies']++;
+            // The latest sync time among the copies.
+            if (($row['atualizadoem'] ?? 0) > ($incoming[$key]['row']['atualizadoem'] ?? 0)) {
+                $incoming[$key]['row']['atualizadoem'] = $row['atualizadoem'];
+            }
+        }
 
-            ksort($row);
-            $hash = sha1(json_encode($row));
+        $existing = MadeiraOccurrence::all()->keyBy('key');
 
-            $occurrence = $existing->get($id);
-            if ($occurrence && $occurrence->hash === $hash && !$occurrence->removedAt) {
+        foreach ($incoming as $key => ['row' => $row, 'copies' => $copies]) {
+            $occurrence = $existing->get($key);
+            $updatedAt = $this->time($row['atualizadoem'] ?? null);
+
+            if (!$occurrence) {
+                MadeiraOccurrence::create($this->normalize($row) + ['key' => $key, 'copies' => $copies, 'removedAt' => null]);
+                MadeiraOccurrenceRevision::create(['key' => $key, 'change' => 'added', 'copies' => $copies, 'payload' => self::content($row)]);
+                $this->created++;
+
                 continue;
             }
 
-            $occurrence ??= new MadeiraOccurrence(['sourceId' => $id]);
-            $isNew = !$occurrence->exists;
+            $returned = $occurrence->removedAt !== null;
+            $changed = $returned || $occurrence->copies !== $copies;
 
-            $occurrence->fill($this->normalize($row) + ['hash' => $hash, 'removedAt' => null]);
-            $occurrence->save();
+            if (!$changed && $occurrence->sourceUpdatedAt?->getTimestampMs() === $updatedAt?->getTimestampMs()) {
+                continue;
+            }
 
-            MadeiraOccurrenceRevision::create(['sourceId' => $id, 'hash' => $hash, 'payload' => $row, 'removed' => false]);
+            $occurrence->fill(['copies' => $copies, 'removedAt' => null, 'sourceUpdatedAt' => $updatedAt])->save();
 
-            $isNew ? $this->created++ : $this->updated++;
+            if ($changed) {
+                MadeiraOccurrenceRevision::create(['key' => $key, 'change' => $returned ? 'added' : 'copies', 'copies' => $copies]);
+                $this->updated++;
+            }
         }
 
         $published = $existing->filter(fn (MadeiraOccurrence $o) => !$o->removedAt);
 
         // A short (but valid) response would otherwise remove most of the table.
-        if (count($rows) < $published->count() / 2) {
+        if (count($incoming) < $published->count() / 2) {
             Log::warning('[ProcessMadeiraOccurrences] response much smaller than stored, not removing', [
-                'rows' => count($rows),
+                'rows' => count($incoming),
                 'stored' => $published->count(),
             ]);
 
             return;
         }
 
-        foreach ($published as $id => $occurrence) {
-            if (isset($seen[$id])) {
+        foreach ($published as $key => $occurrence) {
+            if (isset($incoming[$key])) {
                 continue;
             }
 
             $occurrence->removedAt = Carbon::now();
             $occurrence->save();
 
-            MadeiraOccurrenceRevision::create(['sourceId' => $id, 'hash' => null, 'payload' => null, 'removed' => true]);
+            MadeiraOccurrenceRevision::create(['key' => $key, 'change' => 'removed', 'copies' => 0]);
             $this->removed++;
         }
+    }
+
+    /**
+     * Content key: every attribute except the positional objectid and the
+     * sync time.
+     */
+    public static function key(array $row): string
+    {
+        return sha1(json_encode(self::content($row)));
+    }
+
+    private static function content(array $row): array
+    {
+        unset($row['objectid'], $row['atualizadoem']);
+        ksort($row);
+
+        return $row;
     }
 
     private function normalize(array $row): array
