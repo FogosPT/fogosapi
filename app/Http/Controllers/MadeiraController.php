@@ -7,6 +7,7 @@ use App\Models\MadeiraEvent;
 use App\Models\MadeiraEventSnapshot;
 use App\Models\MadeiraOccurrence;
 use App\Models\MadeiraOccurrenceRevision;
+use App\Support\MadeiraParishes;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -278,6 +279,7 @@ class MadeiraController extends Controller
                     'code' => $code === '' ? null : (string) $code,
                     'name' => $code === '' ? null : $this->mostCommon($group->pluck('parish')),
                     'municipality' => $group->first()->municipality,
+                ] + $this->location($code === '' ? null : (string) $code, $this->mostCommon($group->pluck('parish'))) + [
                     'occurrences' => $group->sum(fn (MadeiraOccurrence $o) => $o->copies ?? 1),
                     'firefighters' => $group->sum(fn (MadeiraOccurrence $o) => ($o->firefighters ?? 0) * ($o->copies ?? 1)),
                     'vehicles' => $group->sum(fn (MadeiraOccurrence $o) => ($o->vehicles ?? 0) * ($o->copies ?? 1)),
@@ -297,6 +299,21 @@ class MadeiraController extends Controller
                 ->map(fn (MadeiraOccurrence $o) => $this->occurrence($o))
                 ->values()
                 ->all(),
+        ];
+    }
+
+    /**
+     * Approximate location: the centroid of the parish (CAOP), the only place
+     * the source gives. Null without a known parish.
+     */
+    private function location(?string $parishCode, ?string $parish): array
+    {
+        $found = MadeiraParishes::find($parishCode, $parish);
+
+        return [
+            'lat' => $found['lat'] ?? null,
+            'lng' => $found['lng'] ?? null,
+            'location' => $found ? 'parish' : null,
         ];
     }
 
@@ -320,6 +337,7 @@ class MadeiraController extends Controller
             'parish' => $o->parish,
             'municipalityCode' => $o->municipalityCode,
             'municipality' => $o->municipality,
+        ] + $this->location($o->parishCode, $o->parish) + [
             'entities' => $o->entities ?? [],
             'updatedAt' => $this->iso($o->sourceUpdatedAt),
         ];

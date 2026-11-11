@@ -85,9 +85,15 @@ class MadeiraControllerTest extends TestCase
             ->assertJsonPath('data.topOccurrences.0.vehicles', 3)
             ->assertJsonPath('data.topOccurrences.0.firefighters', 6)
             ->assertJsonPath('data.topOccurrences.0.parish', 'Caniço')
+            ->assertJsonPath('data.topOccurrences.0.lat', 32.65485)
+            ->assertJsonPath('data.topOccurrences.0.lng', -16.8389)
+            ->assertJsonPath('data.topOccurrences.0.location', 'parish')
+            ->assertJsonPath('data.parishes.0.lat', 32.7383)
             ->assertJsonPath('data.topOccurrences.0.entities', ['CMOS', 'BMSC']);
 
-        $this->assertNotNull(collect($response->json('data.parishes'))->firstWhere('code', null), 'occurrences without parish are grouped');
+        $noParish = collect($response->json('data.parishes'))->firstWhere('code', null);
+        $this->assertNotNull($noParish, 'occurrences without parish are grouped');
+        $this->assertSame([null, null, null], [$noParish['lat'], $noParish['lng'], $noParish['location']]);
     }
 
     /** @test */
@@ -100,7 +106,12 @@ class MadeiraControllerTest extends TestCase
             ->assertOk()
             ->assertJsonCount(221, 'data')
             ->assertJsonPath('data.0.id', $this->occurrenceKey(16172))
-            ->assertJsonStructure(['data' => [['id', 'copies', 'start', 'natureCode', 'nature', 'firefighters', 'vehicles', 'parishCode', 'parish', 'municipalityCode', 'municipality', 'entities', 'updatedAt']]]);
+            ->assertJsonStructure(['data' => [['id', 'copies', 'start', 'natureCode', 'nature', 'firefighters', 'vehicles', 'parishCode', 'parish', 'municipalityCode', 'municipality', 'lat', 'lng', 'location', 'entities', 'updatedAt']]]);
+
+        // Every occurrence with a parish gets the approximate location.
+        $rows = collect($response->json('data'));
+        $this->assertTrue($rows->whereNotNull('parishCode')->every(fn ($o) => $o['location'] === 'parish' && $o['lat'] > 32 && $o['lng'] < -16));
+        $this->assertTrue($rows->whereNull('parishCode')->every(fn ($o) => $o['lat'] === null && $o['location'] === null));
     }
 
     /** @test */

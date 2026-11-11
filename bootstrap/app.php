@@ -45,6 +45,7 @@ use App\Console\Commands\SyncSeismic;
 use App\Console\Commands\BackfillSeismic;
 use App\Console\Commands\ComputeSeismicStats;
 use App\Console\Commands\FillSeismicPlaces;
+use App\Console\Commands\ImportMadeiraParishes;
 use App\Console\Commands\ImportSeismicPlaces;
 use App\Console\Commands\TestStuff;
 use App\Http\Middleware\LiveActivityRateLimit;
@@ -75,6 +76,7 @@ return Application::configure(basePath: dirname(__DIR__))
         BackfillSeismic::class,
         ComputeSeismicStats::class,
         ImportSeismicPlaces::class,
+        ImportMadeiraParishes::class,
         FillSeismicPlaces::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
