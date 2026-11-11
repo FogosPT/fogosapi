@@ -65,7 +65,10 @@ class WeatherWarningEventRecorder
         }
     }
 
-    /** Rows that reached their endTime while still in force get one `terminado`. */
+    /**
+     * Rows that reached their endTime while still in force get one
+     * `terminado`. Runs on every sync, even when the feed is rejected.
+     */
     public function recordEnded(Carbon $now): void
     {
         $rows = WeatherWarning::whereNull('supersededAt')

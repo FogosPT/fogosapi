@@ -41,6 +41,8 @@ class HandleWeatherWarnings extends Job
     public function sync(?array $items): ?WeatherWarningDiff
     {
         if (!$items) {
+            $this->recordEnded();
+
             return null;
         }
 
@@ -59,6 +61,8 @@ class HandleWeatherWarnings extends Job
             ->get();
 
         if ($this->isStale($items, $active)) {
+            $this->recordEnded();
+
             return null;
         }
 
@@ -161,7 +165,18 @@ class HandleWeatherWarnings extends Job
             foreach ($rows as $row) {
                 $row->supersededAt = Carbon::now();
                 $row->save();
-                $removed[] = $row;
+
+                // Its interval is now covered by a kept row of another level
+                // (yellow 09–12 + orange 12–18 + yellow 18–24 → yellow 09–24):
+                // a level change, not a withdrawal.
+                $cover = collect($kept)->pluck('row')->first(
+                    fn (WeatherWarning $k) => $k->level !== $row->level && $this->overlap($this->span($row), $this->span($k)) > 0
+                );
+                if ($cover !== null) {
+                    $levelChanges[] = ['old' => $row, 'new' => $cover];
+                } else {
+                    $removed[] = $row;
+                }
             }
         }
 
@@ -171,15 +186,28 @@ class HandleWeatherWarnings extends Job
         $diff = new WeatherWarningDiff($created, $levelChanges, $updated, $removed, $reportDate);
 
         try {
-            $recorder = app(WeatherWarningEventRecorder::class);
-            $recorder->record($diff, Carbon::now());
-            $recorder->recordEnded(Carbon::now());
+            app(WeatherWarningEventRecorder::class)->record($diff, Carbon::now());
         } catch (\Throwable $e) {
             Log::warning('weather warning events not recorded: '.$e->getMessage());
             report($e);
         }
+        $this->recordEnded();
 
         return $diff;
+    }
+
+    /**
+     * Endings depend only on the stored endTime, so they are recorded on
+     * every run — including the ones whose feed is rejected.
+     */
+    private function recordEnded(): void
+    {
+        try {
+            app(WeatherWarningEventRecorder::class)->recordEnded(Carbon::now());
+        } catch (\Throwable $e) {
+            Log::warning('weather warning endings not recorded: '.$e->getMessage());
+            report($e);
+        }
     }
 
     /**

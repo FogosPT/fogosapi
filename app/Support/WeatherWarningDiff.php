@@ -15,9 +15,10 @@ class WeatherWarningDiff
     /**
      * @param WeatherWarning[] $created       new windows with no previous counterpart
      * @param array<int, array{old: WeatherWarning, new: WeatherWarning}> $levelChanges
-     *        `new` was created in this run; `old` is the overlapping window of
-     *        another level it replaces (superseded, or the previous version of a
-     *        row that was shrunk around it)
+     *        `old` is a window of another level replaced by `new`: either `new`
+     *        was created over it (old superseded, or the previous version of a
+     *        row shrunk around it), or `old` was superseded and a kept row of
+     *        another level now covers its interval
      * @param array<int, array{warning: WeatherWarning, previousEndTime: ?Carbon, previousText: ?string}> $updated
      *        rows updated in place whose endTime or text changed
      * @param WeatherWarning[] $removed       rows superseded without a replacement

@@ -256,6 +256,36 @@ class WeatherWarningEventsTest extends TestCase
         $this->assertSame(['emitido', 'retirado'], $this->events()->pluck('kind')->sort()->values()->all());
     }
 
+    /** @test */
+    public function a_split_merged_back_into_one_lower_window_is_desagravado(): void
+    {
+        $this->sync([
+            $this->item('LSB', 'Precipitação', 'yellow', '2026-11-10T09:00:00', '2026-11-10T12:00:00', '2026-11-10T07:00:00'),
+            $this->item('LSB', 'Precipitação', 'orange', '2026-11-10T12:00:00', '2026-11-10T18:00:00', '2026-11-10T07:00:00'),
+            $this->item('LSB', 'Precipitação', 'yellow', '2026-11-10T18:00:00', '2026-11-11T00:00:00', '2026-11-10T07:00:00'),
+        ]);
+        $this->sync([
+            $this->item('LSB', 'Precipitação', 'yellow', '2026-11-10T09:00:00', '2026-11-11T00:00:00', '2026-11-10T07:30:00'),
+        ]);
+
+        $after = $this->events()->slice(3)->values();
+        $this->assertSame(['desagravado'], $after->pluck('kind')->all());
+        $this->assertSame('orange', $after[0]->fromLevel);
+        $this->assertSame('yellow', $after[0]->toLevel);
+        $this->assertSame(1, WeatherWarning::whereNull('supersededAt')->count());
+    }
+
+    /** @test */
+    public function endings_are_recorded_even_when_the_feed_is_rejected(): void
+    {
+        $this->sync([$this->item('STB', 'Vento', 'yellow', '2026-11-10T07:00:00', '2026-11-10T09:00:00', '2026-11-10T07:00:00')]);
+        Carbon::setTestNow('2026-11-10T09:10:00');
+
+        $this->sync(null);
+
+        $this->assertSame(['emitido', 'terminado'], $this->events()->pluck('kind')->all());
+    }
+
     private function duplicateRows(string $district, string $type, string $level, string $start, string $end): void
     {
         foreach ([1, 2] as $_) {
