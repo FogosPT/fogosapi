@@ -128,6 +128,7 @@ Route::group(['prefix' => 'v2'], function () {
 
     Route::group(['prefix' => 'warnings'], function () {
         Route::get('ipma', '\App\Http\Controllers\WarningsController@ipma');
+        Route::get('ipma/history', '\App\Http\Controllers\WarningsController@history');
         Route::post('add', '\App\Http\Controllers\WarningsController@add')->middleware('write.key');
         Route::post('add/agif', '\App\Http\Controllers\WarningsController@addAgif')->middleware('write.key');
     });
