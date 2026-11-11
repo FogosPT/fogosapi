@@ -8,13 +8,16 @@ use Illuminate\Support\Collection;
 
 class WeatherWarningCollapse
 {
+    public const LEVEL_RANK = ['yellow' => 1, 'orange' => 2, 'red' => 3];
+
     /**
      * Shapes active warnings as the IPMA-style array used by /v2/warnings/ipma
      * and IncidentResource::weatherWarnings, one entry per warning window.
-     * HandleWeatherWarnings keeps a single active row per window (republishes
-     * update it in place, replaced warnings get `supersededAt`), so this only
-     * drops exact duplicates (same district, type, level and window), keeping
-     * the highest `reportDate`. Different windows of the same level (e.g.
+     * Two entries of the same (district, type) never cover the same instant:
+     * per group, windows are taken in precedence order (newest reportDate,
+     * then higher level) and each one only keeps the time not already claimed
+     * by a stronger one — so a nested orange splits the yellow around it and
+     * an exact duplicate disappears. Disjoint windows of the same level (e.g.
      * orange this morning and again tomorrow) are distinct entries.
      *
      * @param Collection<int, WeatherWarning> $warnings
@@ -22,44 +25,70 @@ class WeatherWarningCollapse
      */
     public static function collapse(Collection $warnings): array
     {
-        $bestByKey = [];
-
+        $groups = [];
         foreach ($warnings as $w) {
-            $key = implode('|', [
-                (string) $w->district,
-                (string) $w->type,
-                (string) $w->level,
-                Carbon::parse($w->startTime)->timestamp,
-                Carbon::parse($w->endTime)->timestamp,
-            ]);
-            $incumbent = $bestByKey[$key] ?? null;
-            if ($incumbent === null || self::isNewer($w, $incumbent)) {
-                $bestByKey[$key] = $w;
-            }
+            $groups[$w->district . '|' . $w->type][] = $w;
         }
 
-        $rows = array_map(static function (WeatherWarning $w): array {
-            return [
-                'text'              => $w->text,
-                'awarenessTypeName' => $w->type,
-                'idAreaAviso'       => $w->district,
-                'awarenessLevelID'  => $w->level,
-                'startTime'         => Carbon::parse($w->startTime)->format('Y-m-d\TH:i:s'),
-                'endTime'           => Carbon::parse($w->endTime)->format('Y-m-d\TH:i:s'),
-            ];
-        }, array_values($bestByKey));
+        $rows = [];
+        foreach ($groups as $group) {
+            usort($group, static fn (WeatherWarning $a, WeatherWarning $b) => self::precedence($b) <=> self::precedence($a));
+
+            $claimed = [];
+            foreach ($group as $w) {
+                $start = Carbon::parse($w->startTime)->timestamp;
+                $end   = Carbon::parse($w->endTime)->timestamp;
+
+                foreach (self::subtract([[$start, $end]], $claimed) as [$from, $to]) {
+                    $rows[] = [
+                        'text'              => $w->text,
+                        'awarenessTypeName' => $w->type,
+                        'idAreaAviso'       => $w->district,
+                        'awarenessLevelID'  => $w->level,
+                        'startTime'         => Carbon::createFromTimestamp($from, config('app.timezone'))->format('Y-m-d\TH:i:s'),
+                        'endTime'           => Carbon::createFromTimestamp($to, config('app.timezone'))->format('Y-m-d\TH:i:s'),
+                    ];
+                }
+                $claimed[] = [$start, $end];
+            }
+        }
 
         usort($rows, static fn (array $a, array $b) => strcmp($a['startTime'], $b['startTime']));
 
         return $rows;
     }
 
-    private static function isNewer(WeatherWarning $candidate, WeatherWarning $incumbent): bool
+    /**
+     * @param array<int, array{int, int}> $pieces
+     * @param array<int, array{int, int}> $claimed
+     * @return array<int, array{int, int}>
+     */
+    private static function subtract(array $pieces, array $claimed): array
     {
-        $candReport = self::reportTimestamp($candidate);
-        $incReport  = self::reportTimestamp($incumbent);
+        foreach ($claimed as [$cs, $ce]) {
+            $next = [];
+            foreach ($pieces as [$s, $e]) {
+                if ($ce <= $s || $cs >= $e) {
+                    $next[] = [$s, $e];
+                    continue;
+                }
+                if ($s < $cs) {
+                    $next[] = [$s, $cs];
+                }
+                if ($ce < $e) {
+                    $next[] = [$ce, $e];
+                }
+            }
+            $pieces = $next;
+        }
 
-        return $candReport !== null && ($incReport === null || $candReport > $incReport);
+        return array_values(array_filter($pieces, static fn ($p) => $p[1] > $p[0]));
+    }
+
+    /** @return array{int, int} */
+    private static function precedence(WeatherWarning $w): array
+    {
+        return [self::reportTimestamp($w) ?? PHP_INT_MIN, self::LEVEL_RANK[$w->level] ?? 0];
     }
 
     private static function reportTimestamp(WeatherWarning $w): ?int
