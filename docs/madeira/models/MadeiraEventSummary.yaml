@@ -1,0 +1,30 @@
+type: object
+description: |
+  An SRPC-RAM (Madeira) adverse-weather event. The source only publishes
+  aggregates (per municipality, nature and hour), never individual
+  occurrences. Times are UTC.
+properties:
+  id: { type: string, description: 'md5(title|start)', example: 3f1c0e7a9b2d4c6e8f0a1b2c3d4e5f60 }
+  title: { type: string, example: 'Depressão Charles – Precipitação e vento forte' }
+  zone: { type: string, example: Madeira e Porto Santo }
+  status: { type: string, enum: [ATIVO, ENCERRADO] }
+  active: { type: boolean, description: 'false once the event ends or the feed moves on to another event' }
+  start: { type: string, format: date-time }
+  end: { type: string, format: date-time, nullable: true }
+  untilNow: { type: boolean, description: '`end` is the last update, not the end of the event' }
+  updatedAt: { type: string, format: date-time, description: 'Last update of the source' }
+  kpi:
+    type: object
+    properties:
+      occurrences: { type: integer, description: 'Since the start of the event' }
+      activeOccurrences: { type: integer }
+      operationals: { type: integer, description: 'Summed per occurrence' }
+      groundAssets: { type: integer, description: 'Summed per occurrence' }
+      municipalities: { type: integer, description: 'Municipalities affected' }
+      peak:
+        type: object
+        nullable: true
+        properties:
+          time: { type: string, format: date-time }
+          occurrences: { type: integer }
+  summary: { type: string, nullable: true }

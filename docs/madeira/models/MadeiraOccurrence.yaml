@@ -1,0 +1,22 @@
+type: object
+description: |
+  One SRPC-RAM (Madeira) occurrence from the public statistics view of their
+  ArcGIS (source: Preventech). No location beyond the parish, no status and
+  no occurrence number: `id` is ours. It is kept when SRPC-RAM edits the
+  occurrence (means, parish, corporations, or nature reclassified), as long
+  as the edit can be matched unambiguously by start time. Firefighters and vehicles are summed per occurrence
+  (the same person or vehicle can count in several). Times are UTC.
+properties:
+  id: { type: string, description: 'Stable occurrence id (the source has none)', example: 3b9f0c1e2d4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c }
+  copies: { type: integer, description: 'Identical rows in the source (same time, nature, parish and means)', example: 1 }
+  start: { type: string, format: date-time, description: Time of the alert }
+  natureCode: { type: string, example: '4305', description: ANEPC nature code }
+  nature: { type: string, nullable: true, example: Limpeza de Via e Sinalização de Perigo }
+  firefighters: { type: integer, nullable: true }
+  vehicles: { type: integer, nullable: true }
+  parishCode: { type: string, nullable: true, example: '310803', description: 'CAOP code; null when the source has no parish' }
+  parish: { type: string, nullable: true, example: Caniço }
+  municipalityCode: { type: string, nullable: true, example: '3108' }
+  municipality: { type: string, nullable: true, example: Santa Cruz }
+  entities: { type: array, items: { type: string }, example: [CMOS, BMSC], description: 'Corporations involved' }
+  updatedAt: { type: string, format: date-time, nullable: true, description: Last sync of the source }

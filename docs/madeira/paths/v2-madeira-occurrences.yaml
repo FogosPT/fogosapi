@@ -1,0 +1,27 @@
+get:
+  operationId: v2GetMadeiraOccurrences
+  summary: SRPC-RAM (Madeira) occurrences, newest first
+  description: |
+    Individual occurrences currently published by SRPC-RAM (all natures, not
+    only adverse weather), polled every 5 minutes. Without `from`, the last
+    24 hours. Cached for 60 seconds.
+  tags: [Madeira]
+  parameters:
+    - { name: from, in: query, schema: { type: string, format: date-time } }
+    - { name: to, in: query, schema: { type: string, format: date-time } }
+    - { name: municipality, in: query, description: 'CAOP municipality code', schema: { type: string, enum: ['3101', '3102', '3103', '3104', '3105', '3106', '3107', '3108', '3109', '3110', '3201'] } }
+    - { name: parish, in: query, description: 'CAOP parish code', schema: { type: string, pattern: '^3[12]\d{4}$' } }
+    - { name: nature, in: query, description: 'ANEPC nature code', schema: { type: string, pattern: '^\d{4}$' } }
+    - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 2000, default: 500 } }
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              data: { type: array, items: { $ref: '../models/MadeiraOccurrence.yaml' } }
+    422:
+      $ref: '../../common/responses/422.yaml'

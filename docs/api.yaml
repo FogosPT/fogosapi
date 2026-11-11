@@ -35,6 +35,8 @@ tags:
     description: |
       Weather stations, daily observations, IPMA data, and derived products
       such as heat/cold wave detection.
+  - name: Madeira
+    description: SRPC-RAM (Madeira civil protection) adverse-weather events and individual occurrences.
   - name: Planes
     description: Aerial firefighting asset tracking (ADS-B).
   - name: Moderation
@@ -209,6 +211,20 @@ paths:
     $ref: './seismic/paths/v2-seismic-sources-health.yaml'
   /v2/seismic/sitemap:
     $ref: './seismic/paths/v2-seismic-sitemap.yaml'
+
+  # V2 — Madeira (SRPC-RAM events)
+  /v2/madeira/events:
+    $ref: './madeira/paths/v2-madeira-events.yaml'
+  /v2/madeira/events/current:
+    $ref: './madeira/paths/v2-madeira-events-current.yaml'
+  /v2/madeira/events/{id}:
+    $ref: './madeira/paths/v2-madeira-event.yaml'
+  /v2/madeira/events/{id}/timeline:
+    $ref: './madeira/paths/v2-madeira-event-timeline.yaml'
+  /v2/madeira/occurrences:
+    $ref: './madeira/paths/v2-madeira-occurrences.yaml'
+  /v2/madeira/occurrences/{id}/history:
+    $ref: './madeira/paths/v2-madeira-occurrence-history.yaml'
 
   # V2 — RCM (fire risk maps)
   /v2/rcm/today:

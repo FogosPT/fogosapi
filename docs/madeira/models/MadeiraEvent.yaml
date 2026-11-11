@@ -1,0 +1,91 @@
+allOf:
+  - $ref: './MadeiraEventSummary.yaml'
+  - type: object
+    properties:
+      recommendations: { type: array, items: { type: string } }
+      municipalities:
+        type: array
+        items:
+          type: object
+          properties:
+            name: { type: string, example: Funchal, description: '"Sem concelho" for occurrences without one' }
+            occurrences: { type: integer }
+            operationals: { type: integer }
+            groundAssets: { type: integer }
+            natures:
+              type: array
+              items:
+                type: object
+                properties:
+                  code: { type: string }
+                  description: { type: string, nullable: true }
+                  occurrences: { type: integer }
+      natures:
+        type: array
+        items:
+          type: object
+          properties:
+            code: { type: string, example: '3315', description: 'ANEPC nature code' }
+            description: { type: string }
+            occurrences: { type: integer }
+            percentage: { type: number }
+      hourly:
+        type: array
+        items:
+          type: object
+          properties:
+            time: { type: string, format: date-time }
+            occurrences: { type: integer }
+            cumulative: { type: integer }
+      roadRestrictions:
+        type: array
+        description: Roads closed or with restricted traffic, as currently reported by SRPC-RAM (a reopened road disappears).
+        items:
+          type: object
+          properties:
+            road: { type: string, example: 'ER101 – São Vicente' }
+            closed: { type: boolean, description: 'true = closed ("via cortada"), false = restricted traffic' }
+            text: { type: string, nullable: true }
+            time: { type: string, format: date-time, nullable: true }
+      communiques:
+        type: array
+        description: |
+          The event's communiqués plus the latest official SRPC-RAM ones
+          (procivmadeira.pt, `official: true`, not necessarily about this
+          event), newest first.
+        items:
+          type: object
+          properties:
+            title: { type: string }
+            time: { type: string, format: date-time, nullable: true }
+            text: { type: string, nullable: true, description: 'Excerpt' }
+            link: { type: string, nullable: true }
+            official: { type: boolean }
+      parishes:
+        type: array
+        description: |
+          From the individual occurrences inside the event period whose nature
+          is one of the event's. `code: null` groups occurrences without a parish.
+        items:
+          type: object
+          properties:
+            code: { type: string, nullable: true }
+            name: { type: string, nullable: true }
+            municipality: { type: string, nullable: true }
+            occurrences: { type: integer }
+            firefighters: { type: integer }
+            vehicles: { type: integer }
+      entities:
+        type: array
+        description: Corporations involved, by number of occurrences (same selection as `parishes`).
+        items:
+          type: object
+          properties:
+            code: { type: string, example: BMSC }
+            occurrences: { type: integer }
+      topOccurrences:
+        type: array
+        description: The 10 occurrences with the most vehicles, then firefighters (same selection as `parishes`).
+        items: { $ref: './MadeiraOccurrence.yaml' }
+      notes: { type: string, nullable: true }
+      source: { type: string, nullable: true }

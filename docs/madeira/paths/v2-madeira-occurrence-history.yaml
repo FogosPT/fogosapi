@@ -1,0 +1,52 @@
+get:
+  operationId: v2GetMadeiraOccurrenceHistory
+  summary: Every change of one Madeira occurrence
+  description: |
+    The change log of one SRPC-RAM (Madeira) occurrence, oldest first, and its
+    current version (`current: null` once the source stopped publishing it).
+    `time` is when the change was seen (polled every 5 minutes). `version` is
+    the occurrence as it was after `added`, `changed` or `restored`; `changes`
+    lists, for `changed`, the fields that changed. Cached for 60 seconds.
+  tags: [Madeira]
+  parameters:
+    - { name: id, in: path, required: true, schema: { type: string, pattern: '^[a-f0-9]{40}$' } }
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              id: { type: string }
+              current:
+                type: object
+                nullable: true
+                allOf:
+                  - $ref: '../models/MadeiraOccurrence.yaml'
+              history:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    time: { type: string, format: date-time }
+                    change: { type: string, enum: [added, changed, removed, restored, copies] }
+                    changes:
+                      type: object
+                      nullable: true
+                      description: 'field → {before, after}, for `changed`'
+                      additionalProperties:
+                        type: object
+                        properties:
+                          before: {}
+                          after: {}
+                      example: { vehicles: { before: 1, after: 2 }, parish: { before: null, after: Santa Cruz } }
+                    copies: { type: integer }
+                    version:
+                      type: object
+                      nullable: true
+                      allOf:
+                        - $ref: '../models/MadeiraOccurrence.yaml'
+    404:
+      $ref: '../../common/responses/404.yaml'

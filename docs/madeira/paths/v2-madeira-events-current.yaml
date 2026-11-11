@@ -1,0 +1,22 @@
+get:
+  operationId: v2GetMadeiraEventCurrent
+  summary: The active SRPC-RAM (Madeira) event
+  description: |
+    The event currently active, with the per-municipality, per-nature and
+    hourly breakdowns; `data` is `null` when there is none. Cached for 60
+    seconds.
+  tags: [Madeira]
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              data:
+                type: object
+                nullable: true
+                allOf:
+                  - $ref: '../models/MadeiraEvent.yaml'

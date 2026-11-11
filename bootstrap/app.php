@@ -4,6 +4,8 @@ use App\Jobs\CheckPendingPhotoModeration;
 use App\Jobs\DailySummary;
 use App\Jobs\DetectTemperatureWaves;
 use App\Jobs\ProcessFIRMSData;
+use App\Jobs\ProcessMadeiraEvents;
+use App\Jobs\ProcessMadeiraOccurrences;
 use App\Jobs\HandleWeatherWarnings;
 use App\Jobs\HourlySummary;
 use App\Jobs\ProcessMTGPerimeters;
@@ -81,6 +83,8 @@ return Application::configure(basePath: dirname(__DIR__))
             $schedule->job(new ProcessOcorrenciasSite())->everyTwoMinutes();
             $schedule->job(new ProcessDataForHistoryTotal())->everyTwoMinutes();
             // $schedule->job(new ProcessMadeiraWarnings())->everyTenMinutes();
+            $schedule->job(new ProcessMadeiraEvents())->everyTwoMinutes();
+            $schedule->job(new ProcessMadeiraOccurrences())->everyFiveMinutes();
             // $schedule->job(new ProcessPlanes())->everyFiveMinutes();
             $schedule->job(new ProcessRCM(true))->daily()->at('09:00');
             $schedule->job(new ProcessRCM(false))->hourly();

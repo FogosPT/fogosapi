@@ -1,0 +1,392 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\MadeiraOccurrence;
+use App\Models\MadeiraOccurrenceRevision;
+use App\Support\MadeiraFeedHealth;
+use Carbon\Carbon;
+use GuzzleHttp\Client;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Support\Facades\Log;
+
+/**
+ * Polls the public statistics view of the SRPC-RAM (Madeira) ArcGIS
+ * (`MADEIRA_OCCURRENCES_URL`, the layer URL, kept out of the code): one row
+ * per occurrence, without geometry, status or occurrence number.
+ *
+ * The objectid is NOT an identifier: the view is synced by position, so when
+ * a row is added or edited the following rows shift to other objectids.
+ * Rows are therefore stored by content (`key` = sha1 of every attribute but
+ * objectid and the sync time `atualizadoem`; `copies` = identical rows), and
+ * each occurrence gets its own stable `occurrenceId`.
+ *
+ * Each run diffs the whole table (paginated) against the published contents.
+ * A content that disappears and one that appears in the same run are the
+ * same occurrence edited when they are the only pair with the same start and
+ * nature (means, parish or corporations changed) or, failing that, the same
+ * start (nature reclassified): the new content inherits the `occurrenceId`
+ * and the old one gets `removedAt` + `replacedBy`. Everything else is a new
+ * occurrence or a removal. Every change is logged in
+ * `madeiraOccurrenceRevisions` (added / changed with a field diff / removed /
+ * restored / copies).
+ *
+ * The endpoints serve the published contents. A run that fails half-way, or
+ * returns far fewer rows than we hold, writes nothing.
+ */
+class ProcessMadeiraOccurrences extends Job implements ShouldBeUnique
+{
+    private const PAGE_SIZE = 2000;
+    private const MAX_PAGES = 50;
+
+    /** Below the `redis` connection's retry_after (90 s), or a slow run could be redelivered to another worker while still running. */
+    public $timeout = 80;
+
+    /** Total time for reading the table; past it the run is dropped. */
+    private const FETCH_BUDGET_SECONDS = 60;
+
+    /** Lock released when the job ends; this only bounds a crashed worker. */
+    public $uniqueFor = 180;
+
+    /** Why the last fetch failed, for the health alert. */
+    private ?string $failure = null;
+
+    public int $created = 0;
+    public int $changed = 0;
+    public int $updated = 0;
+    public int $removed = 0;
+
+    /** Fields compared in the `changes` diff of a `changed` revision. */
+    private const DIFF_FIELDS = ['start', 'natureCode', 'nature', 'firefighters', 'vehicles', 'parishCode', 'parish', 'entities'];
+
+    public function __construct() {}
+
+    /** Only set synchronously (tests); queued jobs build their own. */
+    private ?Client $client = null;
+
+    public function withClient(Client $client): self
+    {
+        $this->client = $client;
+
+        return $this;
+    }
+
+    public function handle(): void
+    {
+        $url = rtrim((string) env('MADEIRA_OCCURRENCES_URL'), '/');
+        if ($url === '') {
+            Log::debug('[ProcessMadeiraOccurrences] MADEIRA_OCCURRENCES_URL not set, skipping.');
+
+            return;
+        }
+
+        $rows = $this->fetch($url);
+        if ($rows === null) {
+            MadeiraFeedHealth::recordFailure('occurrences', $this->failure ?? 'unknown');
+
+            return;
+        }
+
+        if ($this->sync($rows)) {
+            MadeiraFeedHealth::recordSuccess('occurrences');
+        } else {
+            MadeiraFeedHealth::recordFailure('occurrences', $this->failure ?? 'unknown');
+        }
+    }
+
+    /**
+     * Every row of the table, or null when any page fails.
+     */
+    private function fetch(string $url): ?array
+    {
+        $client = $this->client ?? new Client([
+            'connect_timeout' => 5,
+            'http_errors' => false,
+            'headers' => ['User-Agent' => 'Fogos.pt/3.0', 'Accept' => 'application/json'],
+        ]);
+
+        $deadline = Carbon::now()->getTimestampMs() + self::FETCH_BUDGET_SECONDS * 1000;
+
+        $rows = [];
+        for ($page = 0; $page < self::MAX_PAGES; $page++) {
+            $left = ($deadline - Carbon::now()->getTimestampMs()) / 1000;
+            if ($left <= 0) {
+                $this->failure = 'reading the table took more than '.self::FETCH_BUDGET_SECONDS.' s ('.$page.' pages)';
+                Log::warning('[ProcessMadeiraOccurrences] '.$this->failure);
+
+                return null;
+            }
+
+            try {
+                $response = $client->get($url.'/query', ['timeout' => min(20, $left), 'query' => [
+                    'where' => '1=1',
+                    'outFields' => '*',
+                    'orderByFields' => 'objectid ASC',
+                    'resultOffset' => $page * self::PAGE_SIZE,
+                    'resultRecordCount' => self::PAGE_SIZE,
+                    'f' => 'json',
+                ]]);
+            } catch (\Throwable $e) {
+                $this->failure = 'request failed: '.$e->getMessage();
+                Log::warning('[ProcessMadeiraOccurrences] '.$this->failure);
+
+                return null;
+            }
+
+            $data = json_decode((string) $response->getBody(), true);
+            // ArcGIS reports errors as `{"error": …}` behind a 200.
+            if ($response->getStatusCode() !== 200 || !is_array($data) || isset($data['error']) || !isset($data['features'])) {
+                $this->failure = 'invalid response (HTTP '.$response->getStatusCode().', page '.$page.')'
+                    .(isset($data['error']['message']) ? ': '.$data['error']['message'] : '');
+                Log::warning('[ProcessMadeiraOccurrences] '.$this->failure);
+
+                return null;
+            }
+
+            foreach ($data['features'] as $feature) {
+                if (isset($feature['attributes']['objectid'])) {
+                    $rows[] = $feature['attributes'];
+                }
+            }
+
+            if (empty($data['exceededTransferLimit']) || !$data['features']) {
+                return $rows;
+            }
+        }
+
+        $this->failure = 'more than '.self::MAX_PAGES.' pages';
+        Log::warning('[ProcessMadeiraOccurrences] '.$this->failure);
+
+        return null;
+    }
+
+    /**
+     * @param array $rows raw ArcGIS attributes of the whole table
+     *
+     * @return bool false when the table looked wrong and nothing was written
+     */
+    public function sync(array $rows): bool
+    {
+        if (!$rows) {
+            $this->failure = 'empty table';
+
+            return false;
+        }
+
+        // Identical rows (same time, nature, parish, means…) are one content
+        // with `copies`.
+        $incoming = [];
+        foreach ($rows as $row) {
+            $key = self::key($row);
+            $incoming[$key] ??= ['row' => $row, 'copies' => 0];
+            $incoming[$key]['copies']++;
+            if (($row['atualizadoem'] ?? 0) > ($incoming[$key]['row']['atualizadoem'] ?? 0)) {
+                $incoming[$key]['row']['atualizadoem'] = $row['atualizadoem'];
+            }
+        }
+
+        $existing = MadeiraOccurrence::all()->keyBy('key');
+        $published = $existing->filter(fn (MadeiraOccurrence $o) => !$o->removedAt);
+
+        // A short (but valid) response would otherwise remove most of the table.
+        if (count($incoming) < $published->count() / 2) {
+            $this->failure = 'table much smaller than stored ('.count($incoming).' of '.$published->count().' occurrences), not synced';
+            Log::warning('[ProcessMadeiraOccurrences] '.$this->failure);
+
+            return false;
+        }
+
+        // Contents that appear (new or back after a removal) and disappear.
+        $appeared = [];
+        foreach ($incoming as $key => ['row' => $row, 'copies' => $copies]) {
+            $occurrence = $existing->get($key);
+
+            if (!$occurrence || $occurrence->removedAt) {
+                $occurrence ??= new MadeiraOccurrence(['key' => $key]);
+                $occurrence->fill(self::normalize($row) + ['copies' => $copies, 'removedAt' => null, 'replacedBy' => null]);
+                $appeared[$key] = ['occurrence' => $occurrence, 'row' => $row];
+
+                continue;
+            }
+
+            $updatedAt = self::time($row['atualizadoem'] ?? null);
+            if ($occurrence->copies === $copies && $occurrence->sourceUpdatedAt?->getTimestampMs() === $updatedAt?->getTimestampMs()) {
+                continue;
+            }
+
+            $copiesChanged = $occurrence->copies !== $copies;
+            $occurrence->fill(['copies' => $copies, 'sourceUpdatedAt' => $updatedAt])->save();
+
+            if ($copiesChanged) {
+                $this->log($occurrence, 'copies', $row);
+                $this->updated++;
+            }
+        }
+
+        $disappeared = $published->reject(fn (MadeiraOccurrence $o, $key) => isset($incoming[$key]));
+
+        $links = $this->link(collect($appeared)->pluck('occurrence'), $disappeared->values());
+
+        foreach ($appeared as $key => ['occurrence' => $occurrence, 'row' => $row]) {
+            $previous = $links[$key] ?? null;
+            $wasRemoved = $occurrence->exists;
+
+            if ($previous) {
+                $occurrence->occurrenceId = $previous->occurrenceId ?? $previous->key;
+                $occurrence->previousKey = $previous->key;
+            } else {
+                $occurrence->occurrenceId ??= $key;
+            }
+            $occurrence->save();
+
+            if ($previous) {
+                $this->log($occurrence, 'changed', $row, [
+                    'previousKey' => $previous->key,
+                    'changes' => $this->diff($previous, $occurrence),
+                ]);
+                $this->changed++;
+            } elseif ($wasRemoved) {
+                $this->log($occurrence, 'restored', $row);
+                $this->updated++;
+            } else {
+                $this->log($occurrence, 'added', $row);
+                $this->created++;
+            }
+        }
+
+        $replacedBy = collect($links)->mapWithKeys(fn (MadeiraOccurrence $old, $newKey) => [$old->key => $newKey]);
+
+        foreach ($disappeared as $key => $occurrence) {
+            $occurrence->removedAt = Carbon::now();
+            $occurrence->replacedBy = $replacedBy->get($key);
+            $occurrence->save();
+
+            if (!$occurrence->replacedBy) {
+                $this->log($occurrence, 'removed', null, ['copies' => 0]);
+                $this->removed++;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Pairs appeared ↔ disappeared contents that are the same occurrence
+     * edited: first by (start, nature), then by start alone, and only when
+     * the pair is unique on both sides. Contents with copies are ambiguous
+     * and never linked.
+     *
+     * @return array<string, MadeiraOccurrence> new key → previous version
+     */
+    private function link($appeared, $disappeared): array
+    {
+        $links = [];
+        $taken = [];
+
+        $passes = [
+            fn (MadeiraOccurrence $o) => $o->start?->getTimestampMs().'|'.$o->natureCode,
+            fn (MadeiraOccurrence $o) => (string) $o->start?->getTimestampMs(),
+        ];
+
+        foreach ($passes as $by) {
+            $new = $appeared->filter(fn ($o) => $o->copies === 1 && !isset($links[$o->key]))->groupBy($by);
+            $old = $disappeared->filter(fn ($o) => $o->copies === 1 && !isset($taken[$o->key]))->groupBy($by);
+
+            foreach ($new as $group => $candidates) {
+                if ($group === '' || $candidates->count() !== 1 || $old->get($group)?->count() !== 1) {
+                    continue;
+                }
+
+                $previous = $old->get($group)->first();
+                $links[$candidates->first()->key] = $previous;
+                $taken[$previous->key] = true;
+            }
+        }
+
+        return $links;
+    }
+
+    /** field => [before, after], for the fields that changed. */
+    private function diff(MadeiraOccurrence $before, MadeiraOccurrence $after): array
+    {
+        $value = fn (MadeiraOccurrence $o, string $f) => $f === 'start' ? $o->start?->toIso8601ZuluString() : $o->{$f};
+
+        $changes = [];
+        foreach (self::DIFF_FIELDS as $field) {
+            if ($value($before, $field) !== $value($after, $field)) {
+                $changes[$field] = [$value($before, $field), $value($after, $field)];
+            }
+        }
+
+        return $changes;
+    }
+
+    /**
+     * Every revision but `removed` keeps the version as it was then (raw
+     * content, copies, source sync time), since the occurrence document is
+     * updated by later runs.
+     */
+    private function log(MadeiraOccurrence $occurrence, string $change, ?array $row, array $extra = []): void
+    {
+        MadeiraOccurrenceRevision::create(array_merge([
+            'occurrenceId' => $occurrence->occurrenceId ?? $occurrence->key,
+            'key' => $occurrence->key,
+            'change' => $change,
+            'copies' => $occurrence->copies,
+            'sourceUpdatedAt' => $row ? self::time($row['atualizadoem'] ?? null) : null,
+            'payload' => $row ? self::content($row) : null,
+        ], $extra));
+    }
+
+    /**
+     * Content key: every attribute except the positional objectid and the
+     * sync time.
+     */
+    public static function key(array $row): string
+    {
+        return sha1(json_encode(self::content($row)));
+    }
+
+    private static function content(array $row): array
+    {
+        unset($row['objectid'], $row['atualizadoem']);
+        ksort($row);
+
+        return $row;
+    }
+
+    /** Our fields from the raw ArcGIS attributes (also used to rebuild past versions). */
+    public static function normalize(array $row): array
+    {
+        $parishCode = self::string($row['codigocaop'] ?? null);
+        $municipalityCode = $parishCode ? substr($parishCode, 0, 4) : null;
+
+        return [
+            'start' => self::time($row['inicio'] ?? null),
+            'natureCode' => self::string($row['codigo'] ?? null),
+            'nature' => self::string($row['tipologiafonte'] ?? null),
+            'firefighters' => is_numeric($row['bombeiros'] ?? null) ? (int) $row['bombeiros'] : null,
+            'vehicles' => is_numeric($row['viaturas'] ?? null) ? (int) $row['viaturas'] : null,
+            'parishCode' => $parishCode,
+            'parish' => self::string($row['freguesia'] ?? null),
+            'municipalityCode' => $municipalityCode,
+            'municipality' => MadeiraOccurrence::MUNICIPALITIES[$municipalityCode] ?? null,
+            'entities' => collect(preg_split('/[,;]/', (string) ($row['entidades'] ?? '')))
+                ->map(fn ($e) => trim($e))->filter()->unique()->values()->all(),
+            'sourceUpdatedAt' => self::time($row['atualizadoem'] ?? null),
+        ];
+    }
+
+    /** ArcGIS dates are epoch milliseconds, UTC. */
+    private static function time($value): ?Carbon
+    {
+        return is_numeric($value) ? Carbon::createFromTimestampMs((int) $value, 'UTC') : null;
+    }
+
+    private static function string($value): ?string
+    {
+        $value = is_string($value) || is_numeric($value) ? trim((string) $value) : '';
+
+        return $value === '' ? null : $value;
+    }
+}
