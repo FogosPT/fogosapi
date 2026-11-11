@@ -106,11 +106,12 @@ The scheduler runs when `SCHEDULER_ENABLE=true`. Key jobs and their cadence:
 
 ### Madeira (SRPC-RAM events)
 `ProcessMadeiraEvents` polls the SRPC-RAM events feed every 2 minutes. The URL is **only** in `MADEIRA_EVENTS_URL` (kept out of the public code; empty → the job skips). The feed is a snapshot of the current adverse-weather event with aggregates only — per municipality (`oc`/`op`/`mt` + ANEPC nature codes), per nature and per hour — never individual occurrences, so nothing is written to `Incident`. Feed times are `Atlantic/Madeira` local, stored UTC.
+- **History of everything, current version in the API.** `MadeiraFeedRevision` (`madeiraFeedRevisions`) archives every distinct version of the feed raw — including the IPMA warnings/forecasts we don't serve — deduplicated by `hash` = sha1 of the payload without `sincronizado` (which changes every poll); `eventId` null when the feed had no event. The endpoints only read `MadeiraEvent` (current version); anything past (e.g. when a road was closed and reopened) comes from the revisions.
 - `MadeiraEvent` (`madeiraEvents`) — one document per event, `eventId = md5(title|start)` (a new start time is a new event), overwritten with the latest aggregates. Every other event still `active` is closed when the feed carries a different one; `estado != ATIVO` → `active=false`. A feed older than the newest stored `sourceUpdatedAt` is ignored.
 - `MadeiraEventSnapshot` (`madeiraEventSnapshots`) — one KPI row per `(eventId, time)` (`time` = the feed's `atualizado`), for the evolution of active occurrences, operationals and ground assets.
 - API (`MadeiraController`, 60 s cache): `v2/madeira/events[?limit=]`, `events/current` (`data: null` when none), `events/{id}`, `events/{id}/timeline`.
-- The event also keeps the feed's current `roadRestrictions` (`condicionamentos`, `closed` = `nivel: cortada`) and `communiques` (event communiqués + the latest official SRPC-RAM ones, `oficiais`, newest first, de-duplicated by link). Both are the latest snapshot only, so a reopened road simply disappears.
-- The feed also carries IPMA warnings and ECMWF forecasts; they are deliberately not ingested.
+- The event also keeps the feed's current `roadRestrictions` (`condicionamentos`, `closed` = `nivel: cortada`) and `communiques` (event communiqués + the latest official SRPC-RAM ones, `oficiais`, newest first, de-duplicated by link). On the event they are the current version only (a reopened road disappears); the past ones are in the revisions.
+- The feed also carries IPMA warnings and ECMWF forecasts; they are archived in the revisions but not served.
 
 ### Seismic (sismos.pt)
 Earthquakes for the sismos.pt site (`v2/seismic/*`, `SeismicController`). IPMA's seismic feed only keeps ~30 days, so we archive it.

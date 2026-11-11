@@ -5,6 +5,7 @@ namespace Tests\Feature\Jobs;
 use App\Jobs\ProcessMadeiraEvents;
 use App\Models\MadeiraEvent;
 use App\Models\MadeiraEventSnapshot;
+use App\Models\MadeiraFeedRevision;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\MockHandler;
@@ -149,6 +150,49 @@ class ProcessMadeiraEventsTest extends TestCase
         $this->assertTrue($event->communiques[1]['official']);
         $this->assertSame('2026-11-10T15:27:00Z', $event->communiques[1]['time']);
         $this->assertSame($official['link'], $event->communiques[1]['link']);
+    }
+
+    /** @test */
+    public function every_distinct_version_of_the_feed_is_archived_raw(): void
+    {
+        $job = new ProcessMadeiraEvents();
+        $job->sync($this->feed());
+        $job->sync($this->feed()); // repeated
+        $job->sync($this->feed(['sincronizado' => '2026-11-11T09:26'])); // only the poll time changed
+        // Same `atualizado`, but a road was closed in the meantime.
+        $job->sync($this->feed(['evento' => ['condicionamentos' => [
+            ['via' => 'ER101', 'nivel' => 'cortada', 'texto' => 'Derrocada.'],
+        ]]]));
+        $job->sync($this->feed(['atualizado' => '2026-11-11T09:30', 'kpi' => ['ativas' => 12]]));
+
+        $revisions = MadeiraFeedRevision::orderBy('_id')->get();
+        $this->assertCount(3, $revisions);
+
+        $eventId = md5('Depressão Charles – Precipitação e vento forte|2026-11-10T20:00');
+        $this->assertSame([$eventId, $eventId, $eventId], $revisions->pluck('eventId')->all());
+
+        // Raw, including what the API does not serve (IPMA warnings, forecast).
+        $first = $revisions[0]->payload;
+        $this->assertSame(18, $first['kpi']['ativas']);
+        $this->assertSame('Vento', $first['avisos']['avisos'][1]['tipo']);
+        $this->assertSame('ECMWF IFS', $first['meteo']['modelo']);
+        $this->assertSame('ER101', $revisions[1]->payload['evento']['condicionamentos'][0]['via']);
+        $this->assertSame(12, $revisions[2]->payload['kpi']['ativas']);
+        $this->assertSame('2026-11-11T09:30:00Z', $revisions[2]->sourceUpdatedAt->utc()->format('Y-m-d\TH:i:s\Z'));
+
+        // The endpoints' view is the current version.
+        $this->assertSame(12, MadeiraEvent::first()->kpi['activeOccurrences']);
+        $this->assertSame([], MadeiraEvent::first()->roadRestrictions);
+    }
+
+    /** @test */
+    public function a_feed_without_an_event_is_archived_too(): void
+    {
+        (new ProcessMadeiraEvents())->sync(['evento' => null, 'atualizado' => '2026-11-12T10:00', 'kpi' => []]);
+
+        $this->assertSame(0, MadeiraEvent::count());
+        $this->assertSame(1, MadeiraFeedRevision::count());
+        $this->assertNull(MadeiraFeedRevision::first()->eventId);
     }
 
     /** @test */

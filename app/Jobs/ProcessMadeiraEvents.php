@@ -4,19 +4,24 @@ namespace App\Jobs;
 
 use App\Models\MadeiraEvent;
 use App\Models\MadeiraEventSnapshot;
+use App\Models\MadeiraFeedRevision;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use MongoDB\Driver\Exception\BulkWriteException;
 
 /**
  * Polls the SRPC-RAM (Madeira) events feed (`MADEIRA_EVENTS_URL`, kept out of
  * the code). The feed is a snapshot of the current adverse-weather event with
  * aggregates only (per municipality, nature and hour), so each run:
+ *  - archives every distinct version of the feed, raw, in `madeiraFeedRevisions`;
  *  - upserts the event in `madeiraEvents` (latest aggregates);
  *  - adds one KPI row to `madeiraEventSnapshots` per new `atualizado`;
  *  - closes every other event still flagged active (the feed only carries one).
- * Feed times are Madeira local time. A feed older than what is stored (cached
- * response) is ignored.
+ * The endpoints serve the current version; the history lives in the
+ * revisions and snapshots. Feed times are Madeira local time. A feed older
+ * than what is stored (cached response) does not touch the events.
  */
 class ProcessMadeiraEvents extends Job
 {
@@ -85,7 +90,12 @@ class ProcessMadeiraEvents extends Job
         $start = $this->time($payload['periodo']['inicio'] ?? null);
         $updatedAt = $this->time($payload['atualizado'] ?? null);
 
-        if (!is_array($evento) || empty($evento['titulo']) || !$start || !$updatedAt) {
+        $valid = is_array($evento) && !empty($evento['titulo']) && $start && $updatedAt;
+        $eventId = $valid ? md5($evento['titulo'].'|'.$start->format('Y-m-d\TH:i')) : null;
+
+        $this->archive($payload, $eventId, $updatedAt);
+
+        if (!$valid) {
             return null;
         }
 
@@ -96,7 +106,6 @@ class ProcessMadeiraEvents extends Job
             return null;
         }
 
-        $eventId = md5($evento['titulo'].'|'.$start->format('Y-m-d\TH:i'));
         $event = MadeiraEvent::where('eventId', $eventId)->first() ?? new MadeiraEvent(['eventId' => $eventId]);
 
         $natureDescriptions = collect($payload['tipologias'] ?? [])
@@ -179,6 +188,35 @@ class ProcessMadeiraEvents extends Job
             ->update(['active' => false]);
 
         return $event;
+    }
+
+    /**
+     * Keeps every distinct version of the feed, raw (including the IPMA
+     * warnings and forecasts the API does not serve), in
+     * `madeiraFeedRevisions`. `sincronizado` changes on every poll, so it is
+     * left out of the hash; a repeated version is stored once.
+     */
+    private function archive(array $payload, ?string $eventId, ?Carbon $updatedAt): void
+    {
+        $hash = sha1(json_encode(Arr::except($payload, ['sincronizado'])));
+
+        if (MadeiraFeedRevision::where('hash', $hash)->exists()) {
+            return;
+        }
+
+        try {
+            MadeiraFeedRevision::create([
+                'hash' => $hash,
+                'eventId' => $eventId,
+                'sourceUpdatedAt' => $updatedAt,
+                'payload' => $payload,
+            ]);
+        } catch (BulkWriteException $e) {
+            // Duplicate hash from a concurrent run: already archived.
+            if ($e->getCode() !== 11000) {
+                throw $e;
+            }
+        }
     }
 
     /**

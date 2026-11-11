@@ -8,7 +8,8 @@ use MongoDB\Driver\Exception\CommandException;
 return new class () extends Migration {
     /**
      * Indexes for the SRPC-RAM (Madeira) events: lookup by eventId, listings
-     * newest first, and one KPI snapshot per (event, feed update).
+     * newest first, one KPI snapshot per (event, feed update) and one raw
+     * feed revision per distinct payload.
      */
     private const INDEXES = [
         'madeiraEvents' => [
@@ -18,6 +19,10 @@ return new class () extends Migration {
         ],
         'madeiraEventSnapshots' => [
             'eventId_time_unique' => [['eventId' => 1, 'time' => 1], ['unique' => true]],
+        ],
+        'madeiraFeedRevisions' => [
+            'hash_unique' => [['hash' => 1], ['unique' => true]],
+            'eventId_sourceUpdatedAt_idx' => [['eventId' => 1, 'sourceUpdatedAt' => 1], []],
         ],
     ];
 
