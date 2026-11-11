@@ -1,0 +1,68 @@
+get:
+  operationId: v2GetWarningsIpmaHistory
+  summary: History of changes to the IPMA weather warnings
+  description: |
+    Event log written by the `HandleWeatherWarnings` job (collection
+    `weather_warning_events`) every time a warning changes. Recorded since the
+    deploy of this endpoint — there is no backfill.
+
+    Kinds: `emitido` (new warning), `agravado` / `desagravado` (level up /
+    down on an overlapping window), `prolongado` / `encurtado` (end moved),
+    `texto_alterado` (text changed — stored, only returned when requested in
+    `kind`), `retirado` (dropped from the feed before its end), `terminado`
+    (reached its end, or dropped at most 30 min before it).
+
+    All times are Lisbon wall-clock without a timezone, like
+    `/v2/warnings/ipma`. `occurredAt` is the IPMA `reportDate` of the
+    emission that caused the event (for `terminado`: the warning's end) and
+    is what `from`/`to` filter and the results are ordered by (newest first).
+  tags:
+    - Warnings
+  parameters:
+    - name: from
+      in: query
+      description: Start (`YYYY-MM-DD` = start of day, or `YYYY-MM-DDTHH:MM[:SS]`). Default `to` − 7 days.
+      schema: { type: string }
+    - name: to
+      in: query
+      description: End (`YYYY-MM-DD` = end of day, or a datetime). Default now. At most 31 days after `from`.
+      schema: { type: string }
+    - name: area
+      in: query
+      description: CSV of IPMA area codes (e.g. `LSB,STB`).
+      schema: { type: string }
+    - name: type
+      in: query
+      description: CSV of `awarenessTypeName` (e.g. `Vento,Precipitação`).
+      schema: { type: string }
+    - name: kind
+      in: query
+      description: CSV of kinds. Default every kind except `texto_alterado`.
+      schema: { type: string }
+  responses:
+    200:
+      description: OK (at most 5000 events)
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                id: { type: string }
+                kind:
+                  type: string
+                  enum: [emitido, agravado, desagravado, prolongado, encurtado, texto_alterado, retirado, terminado]
+                area: { type: string, description: IPMA area code }
+                type: { type: string, description: awarenessTypeName }
+                fromLevel: { type: string, nullable: true, enum: [yellow, orange, red], description: null for `emitido` }
+                toLevel: { type: string, nullable: true, enum: [yellow, orange, red], description: null for `retirado` / `terminado` }
+                startTime: { type: string, format: date-time }
+                endTime: { type: string, format: date-time }
+                previousEndTime: { type: string, format: date-time, nullable: true }
+                text: { type: string, nullable: true }
+                previousText: { type: string, nullable: true }
+                reportDate: { type: string, format: date-time, nullable: true }
+                occurredAt: { type: string, format: date-time }
+    422:
+      description: '`{"error":"invalid_date"}` or `{"error":"range_too_large"}` (more than 31 days)'

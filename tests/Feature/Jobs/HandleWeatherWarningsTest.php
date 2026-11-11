@@ -152,6 +152,81 @@ class HandleWeatherWarningsTest extends TestCase
         Queue::assertNotPushed(SendWeatherWarningToTelegram::class);
     }
 
+    /** @test */
+    public function a_second_earlier_window_of_the_same_level_does_not_shift_rows(): void
+    {
+        $this->sync([
+            $this->item('LSB', 'Precipitação', 'orange', '2026-11-11T05:00:00', '2026-11-11T18:00:00'),
+        ]);
+        $original = WeatherWarning::first();
+
+        $diff = (new HandleWeatherWarnings())->sync([
+            $this->item('LSB', 'Precipitação', 'orange', '2026-11-10T09:00:00', '2026-11-10T12:00:00'),
+            $this->item('LSB', 'Precipitação', 'orange', '2026-11-11T05:00:00', '2026-11-11T18:00:00'),
+        ]);
+
+        $kept = WeatherWarning::find($original->_id);
+        $this->assertSame('2026-11-11 05:00', $kept->startTime->format('Y-m-d H:i'));
+        $this->assertNull($kept->supersededAt);
+        $this->assertSame(2, WeatherWarning::whereNull('supersededAt')->count());
+        $this->assertCount(1, $diff->created);
+        $this->assertSame('2026-11-10 09:00', $diff->created[0]->startTime->format('Y-m-d H:i'));
+        $this->assertSame([], $diff->updated);
+        $this->assertSame([], $diff->removed);
+    }
+
+    /** @test */
+    public function duplicate_active_rows_are_retired_silently(): void
+    {
+        foreach ([1, 2] as $_) {
+            $w = new WeatherWarning();
+            $w->district = 'STB';
+            $w->type = 'Vento';
+            $w->level = 'yellow';
+            $w->reportDate = '2026-11-10T07:18:40';
+            $w->text = 'Rajadas até 120 km/h.';
+            $w->startTime = '2026-11-10T09:00:00';
+            $w->endTime = '2026-11-10T18:00:00';
+            $w->save();
+        }
+
+        $diff = (new HandleWeatherWarnings())->sync([
+            $this->item('STB', 'Vento', 'yellow', '2026-11-10T09:00:00', '2026-11-10T18:00:00'),
+        ]);
+
+        $this->assertSame(1, WeatherWarning::whereNull('supersededAt')->count());
+        $this->assertSame([], $diff->removed);
+        $this->assertSame([], $diff->created);
+        $this->assertSame([], $diff->levelChanges);
+    }
+
+    /** @test */
+    public function the_ipma_endpoint_never_serves_overlapping_windows_of_the_same_type(): void
+    {
+        $this->sync([
+            $this->item('STB', 'Vento', 'yellow', '2026-11-10T09:00:00', '2026-11-10T18:00:00', '2026-11-10T07:00:00'),
+            $this->item('STB', 'Vento', 'orange', '2026-11-10T12:00:00', '2026-11-10T21:00:00', '2026-11-10T07:00:00'),
+        ]);
+
+        $rows = $this->getJson('/v2/warnings/ipma')->assertOk()->json();
+
+        $this->assertSame(
+            ['yellow 2026-11-10T09:00:00 2026-11-10T12:00:00', 'orange 2026-11-10T12:00:00 2026-11-10T21:00:00'],
+            array_map(fn ($r) => "{$r['awarenessLevelID']} {$r['startTime']} {$r['endTime']}", $rows)
+        );
+    }
+
+    /** @test */
+    public function the_ipma_endpoint_never_serves_expired_warnings(): void
+    {
+        $this->sync([
+            $this->item('STB', 'Vento', 'yellow', '2026-11-10T07:00:00', '2026-11-10T08:30:00'),
+        ]);
+        Carbon::setTestNow('2026-11-10T08:31:00');
+
+        $this->assertSame([], $this->getJson('/v2/warnings/ipma')->assertOk()->json());
+    }
+
     private function sync(?array $items): void
     {
         (new HandleWeatherWarnings())->sync($items);
