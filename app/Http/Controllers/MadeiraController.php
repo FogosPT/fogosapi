@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessMadeiraOccurrences;
 use App\Models\MadeiraEvent;
 use App\Models\MadeiraEventSnapshot;
 use App\Models\MadeiraOccurrence;
@@ -164,8 +165,7 @@ class MadeiraController extends Controller
                 return null;
             }
 
-            $versions = MadeiraOccurrence::whereIn('key', $log->pluck('key')->unique()->values()->all())->get()->keyBy('key');
-            $current = $versions->first(fn (MadeiraOccurrence $o) => !$o->removedAt);
+            $current = MadeiraOccurrence::where('occurrenceId', $id)->whereNull('removedAt')->first();
 
             return [
                 'success' => true,
@@ -176,9 +176,7 @@ class MadeiraController extends Controller
                     'change' => $r->change,
                     'changes' => $r->change === 'changed' ? $this->changes($r->changes ?? []) : null,
                     'copies' => $r->copies,
-                    'version' => in_array($r->change, ['added', 'changed', 'restored'], true) && $versions->has($r->key)
-                        ? $this->occurrence($versions->get($r->key))
-                        : null,
+                    'version' => $this->version($r),
                 ])->values(),
             ];
         });
@@ -190,6 +188,27 @@ class MadeiraController extends Controller
         }
 
         return new JsonResponse($payload);
+    }
+
+    /**
+     * The occurrence as it was at this revision, rebuilt from what the
+     * revision archived (the occurrence document keeps changing).
+     */
+    private function version(MadeiraOccurrenceRevision $r): ?array
+    {
+        if ($r->change === 'removed' || !is_array($r->payload)) {
+            return null;
+        }
+
+        $version = new MadeiraOccurrence(ProcessMadeiraOccurrences::normalize($r->payload));
+        $version->forceFill([
+            'key' => $r->key,
+            'occurrenceId' => $r->occurrenceId,
+            'copies' => $r->copies,
+            'sourceUpdatedAt' => $r->sourceUpdatedAt,
+        ]);
+
+        return $this->occurrence($version);
     }
 
     /** field => [before, after] → {field: {before, after}} */

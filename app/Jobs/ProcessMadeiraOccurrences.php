@@ -39,7 +39,11 @@ class ProcessMadeiraOccurrences extends Job implements ShouldBeUnique
     private const PAGE_SIZE = 2000;
     private const MAX_PAGES = 50;
 
-    public $timeout = 120;
+    /** Below the `redis` connection's retry_after (90 s), or a slow run could be redelivered to another worker while still running. */
+    public $timeout = 80;
+
+    /** Total time for reading the table; past it the run is dropped. */
+    private const FETCH_BUDGET_SECONDS = 60;
 
     /** Lock released when the job ends; this only bounds a crashed worker. */
     public $uniqueFor = 180;
@@ -96,16 +100,25 @@ class ProcessMadeiraOccurrences extends Job implements ShouldBeUnique
     private function fetch(string $url): ?array
     {
         $client = $this->client ?? new Client([
-            'timeout' => 30,
             'connect_timeout' => 5,
             'http_errors' => false,
             'headers' => ['User-Agent' => 'Fogos.pt/3.0', 'Accept' => 'application/json'],
         ]);
 
+        $deadline = Carbon::now()->getTimestampMs() + self::FETCH_BUDGET_SECONDS * 1000;
+
         $rows = [];
         for ($page = 0; $page < self::MAX_PAGES; $page++) {
+            $left = ($deadline - Carbon::now()->getTimestampMs()) / 1000;
+            if ($left <= 0) {
+                $this->failure = 'reading the table took more than '.self::FETCH_BUDGET_SECONDS.' s ('.$page.' pages)';
+                Log::warning('[ProcessMadeiraOccurrences] '.$this->failure);
+
+                return null;
+            }
+
             try {
-                $response = $client->get($url.'/query', ['query' => [
+                $response = $client->get($url.'/query', ['timeout' => min(20, $left), 'query' => [
                     'where' => '1=1',
                     'outFields' => '*',
                     'orderByFields' => 'objectid ASC',
@@ -190,23 +203,24 @@ class ProcessMadeiraOccurrences extends Job implements ShouldBeUnique
 
             if (!$occurrence || $occurrence->removedAt) {
                 $occurrence ??= new MadeiraOccurrence(['key' => $key]);
-                $occurrence->fill($this->normalize($row) + ['copies' => $copies, 'removedAt' => null, 'replacedBy' => null]);
+                $occurrence->fill(self::normalize($row) + ['copies' => $copies, 'removedAt' => null, 'replacedBy' => null]);
                 $appeared[$key] = ['occurrence' => $occurrence, 'row' => $row];
 
                 continue;
             }
 
-            $updatedAt = $this->time($row['atualizadoem'] ?? null);
+            $updatedAt = self::time($row['atualizadoem'] ?? null);
             if ($occurrence->copies === $copies && $occurrence->sourceUpdatedAt?->getTimestampMs() === $updatedAt?->getTimestampMs()) {
                 continue;
             }
 
-            if ($occurrence->copies !== $copies) {
-                $this->log($occurrence, 'copies', ['copies' => $copies]);
+            $copiesChanged = $occurrence->copies !== $copies;
+            $occurrence->fill(['copies' => $copies, 'sourceUpdatedAt' => $updatedAt])->save();
+
+            if ($copiesChanged) {
+                $this->log($occurrence, 'copies', $row);
                 $this->updated++;
             }
-
-            $occurrence->fill(['copies' => $copies, 'sourceUpdatedAt' => $updatedAt])->save();
         }
 
         $disappeared = $published->reject(fn (MadeiraOccurrence $o, $key) => isset($incoming[$key]));
@@ -226,17 +240,16 @@ class ProcessMadeiraOccurrences extends Job implements ShouldBeUnique
             $occurrence->save();
 
             if ($previous) {
-                $this->log($occurrence, 'changed', [
+                $this->log($occurrence, 'changed', $row, [
                     'previousKey' => $previous->key,
                     'changes' => $this->diff($previous, $occurrence),
-                    'payload' => self::content($row),
                 ]);
                 $this->changed++;
             } elseif ($wasRemoved) {
-                $this->log($occurrence, 'restored');
+                $this->log($occurrence, 'restored', $row);
                 $this->updated++;
             } else {
-                $this->log($occurrence, 'added', ['payload' => self::content($row)]);
+                $this->log($occurrence, 'added', $row);
                 $this->created++;
             }
         }
@@ -249,7 +262,7 @@ class ProcessMadeiraOccurrences extends Job implements ShouldBeUnique
             $occurrence->save();
 
             if (!$occurrence->replacedBy) {
-                $this->log($occurrence, 'removed', ['copies' => 0]);
+                $this->log($occurrence, 'removed', null, ['copies' => 0]);
                 $this->removed++;
             }
         }
@@ -308,13 +321,20 @@ class ProcessMadeiraOccurrences extends Job implements ShouldBeUnique
         return $changes;
     }
 
-    private function log(MadeiraOccurrence $occurrence, string $change, array $extra = []): void
+    /**
+     * Every revision but `removed` keeps the version as it was then (raw
+     * content, copies, source sync time), since the occurrence document is
+     * updated by later runs.
+     */
+    private function log(MadeiraOccurrence $occurrence, string $change, ?array $row, array $extra = []): void
     {
         MadeiraOccurrenceRevision::create(array_merge([
             'occurrenceId' => $occurrence->occurrenceId ?? $occurrence->key,
             'key' => $occurrence->key,
             'change' => $change,
             'copies' => $occurrence->copies,
+            'sourceUpdatedAt' => $row ? self::time($row['atualizadoem'] ?? null) : null,
+            'payload' => $row ? self::content($row) : null,
         ], $extra));
     }
 
@@ -335,34 +355,35 @@ class ProcessMadeiraOccurrences extends Job implements ShouldBeUnique
         return $row;
     }
 
-    private function normalize(array $row): array
+    /** Our fields from the raw ArcGIS attributes (also used to rebuild past versions). */
+    public static function normalize(array $row): array
     {
-        $parishCode = $this->string($row['codigocaop'] ?? null);
+        $parishCode = self::string($row['codigocaop'] ?? null);
         $municipalityCode = $parishCode ? substr($parishCode, 0, 4) : null;
 
         return [
-            'start' => $this->time($row['inicio'] ?? null),
-            'natureCode' => $this->string($row['codigo'] ?? null),
-            'nature' => $this->string($row['tipologiafonte'] ?? null),
+            'start' => self::time($row['inicio'] ?? null),
+            'natureCode' => self::string($row['codigo'] ?? null),
+            'nature' => self::string($row['tipologiafonte'] ?? null),
             'firefighters' => is_numeric($row['bombeiros'] ?? null) ? (int) $row['bombeiros'] : null,
             'vehicles' => is_numeric($row['viaturas'] ?? null) ? (int) $row['viaturas'] : null,
             'parishCode' => $parishCode,
-            'parish' => $this->string($row['freguesia'] ?? null),
+            'parish' => self::string($row['freguesia'] ?? null),
             'municipalityCode' => $municipalityCode,
             'municipality' => MadeiraOccurrence::MUNICIPALITIES[$municipalityCode] ?? null,
             'entities' => collect(preg_split('/[,;]/', (string) ($row['entidades'] ?? '')))
                 ->map(fn ($e) => trim($e))->filter()->unique()->values()->all(),
-            'sourceUpdatedAt' => $this->time($row['atualizadoem'] ?? null),
+            'sourceUpdatedAt' => self::time($row['atualizadoem'] ?? null),
         ];
     }
 
     /** ArcGIS dates are epoch milliseconds, UTC. */
-    private function time($value): ?Carbon
+    private static function time($value): ?Carbon
     {
         return is_numeric($value) ? Carbon::createFromTimestampMs((int) $value, 'UTC') : null;
     }
 
-    private function string($value): ?string
+    private static function string($value): ?string
     {
         $value = is_string($value) || is_numeric($value) ? trim((string) $value) : '';
 

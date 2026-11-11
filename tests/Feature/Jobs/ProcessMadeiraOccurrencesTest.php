@@ -331,9 +331,36 @@ class ProcessMadeiraOccurrencesTest extends TestCase
     }
 
     /** @test */
-    public function the_job_is_unique(): void
+    public function the_job_is_unique_and_ends_before_the_queue_redelivers_it(): void
     {
-        $this->assertInstanceOf(ShouldBeUnique::class, new ProcessMadeiraOccurrences());
+        $job = new ProcessMadeiraOccurrences();
+
+        $this->assertInstanceOf(ShouldBeUnique::class, $job);
+        $this->assertLessThan(config('queue.connections.'.($job->connection ?? 'redis').'.retry_after'), $job->timeout);
+    }
+
+    /** @test */
+    public function a_read_slower_than_the_budget_is_dropped(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-11T12:00:00Z'));
+        $rows = $this->rows();
+
+        // Each page "takes" 35 s: the third request is never made.
+        $slow = fn (array $page, bool $more) => function () use ($page, $more) {
+            Carbon::setTestNow(Carbon::now()->addSeconds(35));
+
+            return $this->page($page, $more);
+        };
+        $this->job([
+            $slow(array_slice($rows, 0, 50), true),
+            $slow(array_slice($rows, 50, 50), true),
+            $slow(array_slice($rows, 100), false),
+        ])->handle();
+
+        $this->assertCount(2, $this->history);
+        $this->assertSame(0, MadeiraOccurrence::count());
+
+        Carbon::setTestNow();
     }
 
     /** @test */

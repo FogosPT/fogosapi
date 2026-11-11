@@ -11,6 +11,8 @@ use MongoDB\Laravel\Eloquent\Model;
  *    `previousKey`, `changes` = field => [before, after], raw in `payload`;
  *  - `removed`: no longer published; `restored`: published again;
  *  - `copies`: number of identical rows changed.
+ * All but `removed` keep the version as it was then: `payload`, `copies`,
+ * `sourceUpdatedAt`.
  */
 class MadeiraOccurrenceRevision extends Model
 {
@@ -23,6 +25,7 @@ class MadeiraOccurrenceRevision extends Model
 
     protected $casts = [
         'copies' => 'int',
+        'sourceUpdatedAt' => 'datetime',
         'created' => 'datetime',
         'updated' => 'datetime',
     ];
@@ -35,5 +38,6 @@ class MadeiraOccurrenceRevision extends Model
         'changes',
         'copies',
         'payload',
+        'sourceUpdatedAt',
     ];
 }

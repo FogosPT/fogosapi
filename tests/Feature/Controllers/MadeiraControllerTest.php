@@ -160,6 +160,36 @@ class MadeiraControllerTest extends TestCase
     }
 
     /** @test */
+    public function history_versions_are_as_they_were_not_as_they_are_now(): void
+    {
+        // Review of #97: an occurrence first published with two copies, then
+        // one, then re-synced must keep copies = 2 and its sync time in the
+        // first version.
+        $rows = array_column(json_decode(file_get_contents(base_path('tests/fixtures/madeira/ocorrencias.json')), true)['features'], 'attributes');
+        $row = collect($rows)->firstWhere('objectid', 16015);
+        $id = $this->occurrenceKey(16015);
+        $others = array_values(array_filter($rows, fn ($r) => $r['objectid'] !== 16015));
+
+        $twin = ['objectid' => 999999] + $row;
+        Carbon::setTestNow(Carbon::now()->addMinutes(5));
+        (new ProcessMadeiraOccurrences())->sync(array_merge($others, [$row, $twin]));
+        Carbon::setTestNow(Carbon::now()->addMinutes(5));
+        (new ProcessMadeiraOccurrences())->sync(array_merge($others, [['atualizadoem' => $row['atualizadoem'] + 600000] + $row]));
+
+        $response = $this->getJson('v2/madeira/occurrences/'.$id.'/history')->assertOk();
+        $history = $response->json('history');
+
+        $this->assertSame(['added', 'copies', 'copies'], array_column($history, 'change'));
+        $this->assertSame([1, 2, 1], array_column($history, 'copies'));
+        $this->assertSame([1, 2, 1], array_column(array_column($history, 'version'), 'copies'));
+
+        $original = Carbon::createFromTimestampMs($row['atualizadoem'], 'UTC')->format('Y-m-d\TH:i:s\Z');
+        $this->assertSame($original, $history[0]['version']['updatedAt']);
+        $this->assertSame(Carbon::createFromTimestampMs($row['atualizadoem'] + 600000, 'UTC')->format('Y-m-d\TH:i:s\Z'), $history[2]['version']['updatedAt']);
+        $this->assertSame($history[2]['version']['updatedAt'], $response->json('current.updatedAt'));
+    }
+
+    /** @test */
     public function a_removed_occurrence_keeps_its_history_without_a_current_version(): void
     {
         $rows = array_column(json_decode(file_get_contents(base_path('tests/fixtures/madeira/ocorrencias.json')), true)['features'], 'attributes');

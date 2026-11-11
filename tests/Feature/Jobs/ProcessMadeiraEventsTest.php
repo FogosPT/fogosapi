@@ -273,7 +273,10 @@ class ProcessMadeiraEventsTest extends TestCase
     /** @test */
     public function the_job_is_unique(): void
     {
-        $this->assertInstanceOf(ShouldBeUnique::class, new ProcessMadeiraEvents());
+        $job = new ProcessMadeiraEvents();
+
+        $this->assertInstanceOf(ShouldBeUnique::class, $job);
+        $this->assertLessThan(config('queue.connections.'.($job->connection ?? 'redis').'.retry_after'), $job->timeout);
     }
 
     /** @test */
