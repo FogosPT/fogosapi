@@ -116,6 +116,42 @@ class ProcessMadeiraEventsTest extends TestCase
     }
 
     /** @test */
+    public function road_restrictions_and_communiques_are_stored(): void
+    {
+        $official = $this->feed()['oficiais'][0];
+
+        (new ProcessMadeiraEvents())->sync($this->feed(['evento' => [
+            'condicionamentos' => [
+                ['via' => 'ER101 – São Vicente', 'nivel' => 'cortada', 'texto' => 'Derrocada ao km 12.', 'data' => '2026-11-11T08:40'],
+                ['via' => 'VR1 – Machico', 'nivel' => 'condicionada', 'texto' => 'Uma via aberta.'],
+            ],
+            'comunicados' => [
+                ['titulo' => 'Ponto de situação 08h00', 'data' => '2026-11-11T08:05', 'texto' => 'Balanço da noite.'],
+                // Also in `oficiais`: kept once, as official.
+                ['titulo' => $official['titulo'], 'data' => $official['data'], 'link' => $official['link']],
+            ],
+        ]]));
+
+        $event = MadeiraEvent::first();
+
+        $this->assertSame([
+            ['road' => 'ER101 – São Vicente', 'closed' => true, 'text' => 'Derrocada ao km 12.', 'time' => '2026-11-11T08:40:00Z'],
+            ['road' => 'VR1 – Machico', 'closed' => false, 'text' => 'Uma via aberta.', 'time' => null],
+        ], $event->roadRestrictions);
+
+        // 5 official + 1 event-only, newest first.
+        $this->assertCount(6, $event->communiques);
+        $this->assertSame(
+            ['title' => 'Ponto de situação 08h00', 'time' => '2026-11-11T08:05:00Z', 'text' => 'Balanço da noite.', 'link' => null, 'official' => false],
+            $event->communiques[0]
+        );
+        $this->assertSame($official['titulo'], $event->communiques[1]['title']);
+        $this->assertTrue($event->communiques[1]['official']);
+        $this->assertSame('2026-11-10T15:27:00Z', $event->communiques[1]['time']);
+        $this->assertSame($official['link'], $event->communiques[1]['link']);
+    }
+
+    /** @test */
     public function an_older_feed_is_ignored(): void
     {
         $job = new ProcessMadeiraEvents();

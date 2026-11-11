@@ -41,7 +41,11 @@ class MadeiraControllerTest extends TestCase
             ->assertJsonCount(12, 'data.municipalities')
             ->assertJsonCount(11, 'data.natures')
             ->assertJsonCount(14, 'data.hourly')
-            ->assertJsonCount(5, 'data.recommendations');
+            ->assertJsonCount(5, 'data.recommendations')
+            ->assertJsonPath('data.roadRestrictions', [])
+            ->assertJsonCount(5, 'data.communiques')
+            ->assertJsonPath('data.communiques.0.official', true)
+            ->assertJsonPath('data.communiques.0.time', '2026-11-10T15:27:00Z');
     }
 
     /** @test */
@@ -67,7 +71,8 @@ class MadeiraControllerTest extends TestCase
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.id', $this->id)
             ->assertJsonPath('data.0.kpi.occurrences', 212)
-            ->assertJsonMissingPath('data.0.municipalities');
+            ->assertJsonMissingPath('data.0.municipalities')
+            ->assertJsonMissingPath('data.0.communiques');
 
         $this->getJson('v2/madeira/events?limit=0')->assertStatus(422);
         $this->getJson('v2/madeira/events?limit=abc')->assertStatus(422);

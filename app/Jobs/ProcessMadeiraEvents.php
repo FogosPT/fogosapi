@@ -148,6 +148,13 @@ class ProcessMadeiraEvents extends Job
                 'occurrences' => $this->int($h['n'] ?? null),
                 'cumulative' => $this->int($h['acum'] ?? null),
             ])->values()->all(),
+            'roadRestrictions' => collect($evento['condicionamentos'] ?? [])->map(fn ($c) => [
+                'road' => $c['via'] ?? null,
+                'closed' => ($c['nivel'] ?? null) === 'cortada',
+                'text' => $c['texto'] ?? null,
+                'time' => $this->time($c['data'] ?? null)?->toIso8601ZuluString(),
+            ])->values()->all(),
+            'communiques' => $this->communiques($evento['comunicados'] ?? [], $payload['oficiais'] ?? []),
             'summary' => $payload['resumo'] ?? null,
             'notes' => $payload['notas'] ?? null,
             'source' => $payload['fonte'] ?? null,
@@ -172,6 +179,30 @@ class ProcessMadeiraEvents extends Job
             ->update(['active' => false]);
 
         return $event;
+    }
+
+    /**
+     * The event's own communiqués plus the latest official SRPC-RAM ones
+     * (`oficiais`, procivmadeira.pt), newest first, as the dashboard shows
+     * them. The same communiqué in both lists is kept once.
+     */
+    private function communiques(array $event, array $official): array
+    {
+        // Official first, so it wins when the same one is in both lists.
+        return collect($official)->map(fn ($c) => ['oficial' => true] + $c)
+            ->concat(collect($event)->map(fn ($c) => $c + ['oficial' => false]))
+            ->filter(fn ($c) => !empty($c['titulo']))
+            ->map(fn ($c) => [
+                'title' => $c['titulo'],
+                'time' => $this->time($c['data'] ?? null)?->toIso8601ZuluString(),
+                'text' => $c['texto'] ?? null,
+                'link' => $c['link'] ?? null,
+                'official' => (bool) $c['oficial'],
+            ])
+            ->unique(fn ($c) => $c['link'] ?? $c['title'].'|'.$c['time'])
+            ->sortByDesc('time')
+            ->values()
+            ->all();
     }
 
     private function time(?string $value): ?Carbon

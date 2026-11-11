@@ -46,6 +46,8 @@ class MadeiraEvent extends Model
         'municipalities',
         'natures',
         'hourly',
+        'roadRestrictions',
+        'communiques',
         'summary',
         'notes',
         'source',

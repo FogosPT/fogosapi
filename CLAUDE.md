@@ -109,7 +109,8 @@ The scheduler runs when `SCHEDULER_ENABLE=true`. Key jobs and their cadence:
 - `MadeiraEvent` (`madeiraEvents`) — one document per event, `eventId = md5(title|start)` (a new start time is a new event), overwritten with the latest aggregates. Every other event still `active` is closed when the feed carries a different one; `estado != ATIVO` → `active=false`. A feed older than the newest stored `sourceUpdatedAt` is ignored.
 - `MadeiraEventSnapshot` (`madeiraEventSnapshots`) — one KPI row per `(eventId, time)` (`time` = the feed's `atualizado`), for the evolution of active occurrences, operationals and ground assets.
 - API (`MadeiraController`, 60 s cache): `v2/madeira/events[?limit=]`, `events/current` (`data: null` when none), `events/{id}`, `events/{id}/timeline`.
-- The feed also carries IPMA warnings, ECMWF forecasts and SRPC communiqués; they are deliberately not ingested.
+- The event also keeps the feed's current `roadRestrictions` (`condicionamentos`, `closed` = `nivel: cortada`) and `communiques` (event communiqués + the latest official SRPC-RAM ones, `oficiais`, newest first, de-duplicated by link). Both are the latest snapshot only, so a reopened road simply disappears.
+- The feed also carries IPMA warnings and ECMWF forecasts; they are deliberately not ingested.
 
 ### Seismic (sismos.pt)
 Earthquakes for the sismos.pt site (`v2/seismic/*`, `SeismicController`). IPMA's seismic feed only keeps ~30 days, so we archive it.

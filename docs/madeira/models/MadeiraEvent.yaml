@@ -37,5 +37,29 @@ allOf:
             time: { type: string, format: date-time }
             occurrences: { type: integer }
             cumulative: { type: integer }
+      roadRestrictions:
+        type: array
+        description: Roads closed or with restricted traffic, as currently reported by SRPC-RAM (a reopened road disappears).
+        items:
+          type: object
+          properties:
+            road: { type: string, example: 'ER101 – São Vicente' }
+            closed: { type: boolean, description: 'true = closed ("via cortada"), false = restricted traffic' }
+            text: { type: string, nullable: true }
+            time: { type: string, format: date-time, nullable: true }
+      communiques:
+        type: array
+        description: |
+          The event's communiqués plus the latest official SRPC-RAM ones
+          (procivmadeira.pt, `official: true`, not necessarily about this
+          event), newest first.
+        items:
+          type: object
+          properties:
+            title: { type: string }
+            time: { type: string, format: date-time, nullable: true }
+            text: { type: string, nullable: true, description: 'Excerpt' }
+            link: { type: string, nullable: true }
+            official: { type: boolean }
       notes: { type: string, nullable: true }
       source: { type: string, nullable: true }

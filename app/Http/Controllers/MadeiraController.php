@@ -131,6 +131,8 @@ class MadeiraController extends Controller
             'municipalities' => $event->municipalities ?? [],
             'natures' => $event->natures ?? [],
             'hourly' => $event->hourly ?? [],
+            'roadRestrictions' => $event->roadRestrictions ?? [],
+            'communiques' => $event->communiques ?? [],
             'notes' => $event->notes,
             'source' => $event->source,
         ];
