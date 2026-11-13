@@ -280,6 +280,47 @@ class AemetStationsTest extends TestCase
             ->assertJsonPath('coordinates', null);
     }
 
+    /** @test */
+    public function endpoints_do_not_load_the_raw_row(): void
+    {
+        $raw = ['idema' => '3469A', 'blob' => str_repeat('x', 200000)];
+        AemetObservation::create(['stationId' => '3469A', 'date' => Carbon::parse('2026-11-09T13:00:00Z'), 'raw' => $raw] + self::HOURLY);
+        AemetDataDaily::create(['stationId' => '3469A', 'date' => Carbon::parse('2026-11-06T00:00:00Z'), 'raw' => $raw] + self::DAILY);
+
+        $loaded = [];
+        AemetObservation::retrieved(function (AemetObservation $m) use (&$loaded) {
+            $loaded[] = array_keys($m->getAttributes());
+        });
+        AemetDataDaily::retrieved(function (AemetDataDaily $m) use (&$loaded) {
+            $loaded[] = array_keys($m->getAttributes());
+        });
+
+        $feed = $this->getJson('v2/weather/aemet/observations')->assertOk()->json('2026-11-09T13:00.3469A');
+        $this->assertSame(['intensidadeVentoKM', 'temperatura', 'radiacao', 'idDireccVento', 'precAcumulada', 'intensidadeVento', 'humidade', 'pressao'], array_keys($feed));
+        $this->assertSame(-99, $feed['radiacao']);
+        $this->assertSame(20.5, $feed['temperatura']);
+
+        $this->getJson('v2/weather/aemet/stations/3469A/observations')
+            ->assertOk()
+            ->assertJsonCount(1, 'observations')
+            ->assertJsonPath('observations.0.date', '2026-11-09T13:00:00Z')
+            ->assertJsonPath('observations.0.temperatura', 20.5)
+            ->assertJsonPath('observations.0.radiacao', null)
+            ->assertJsonMissingPath('observations.0.raw');
+
+        $this->getJson('v2/weather/aemet/stations/3469A/daily')
+            ->assertOk()
+            ->assertJsonCount(1, 'daily')
+            ->assertJsonPath('daily.0.date', '2026-11-06')
+            ->assertJsonPath('daily.0.temp_max', 21.4)
+            ->assertJsonMissingPath('daily.0.raw');
+
+        $this->assertCount(3, $loaded);
+        foreach ($loaded as $keys) {
+            $this->assertNotContains('raw', $keys);
+        }
+    }
+
     /**
      * Keys and value types at every level (lists: shape of the first item); the
      * values of $ids are reduced to "id" so only the id may differ in type.

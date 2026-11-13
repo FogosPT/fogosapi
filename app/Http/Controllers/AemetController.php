@@ -132,9 +132,10 @@ class AemetController extends Controller
             return new JsonResponse(json_decode($cached, true));
         }
 
+        // Only the served fields: ~20k rows per day, and `raw` would double them.
         $rows = AemetObservation::where('date', '>=', Carbon::now('UTC')->subDay())
             ->orderBy('date', 'asc')
-            ->get();
+            ->get(array_merge(['stationId', 'date'], self::FEED_OBSERVATION_FIELDS));
 
         $buckets = [];
         foreach ($rows as $row) {
@@ -178,7 +179,7 @@ class AemetController extends Controller
             $rows = AemetObservation::where('stationId', $id)
                 ->where('date', '>=', Carbon::now('UTC')->subHours($hours))
                 ->orderBy('date', 'asc')
-                ->get();
+                ->get(array_merge(['date'], self::OBSERVATION_FIELDS));
 
             return $this->stationPayload($station) + [
                 'observations' => $rows->map(fn (AemetObservation $row) => [
@@ -209,14 +210,14 @@ class AemetController extends Controller
         $cacheKey = 'weather:aemet:station:' . $id . ':daily:' . $days;
 
         return response()->json(Cache::remember($cacheKey, 3600, function () use ($id, $days, $station) {
-            // Same window as IPMA (today minus $days, by calendar day), as the UTC
-            // midnight the days are stored at.
+            // Today minus $days, by calendar day — today as in peninsular Spain
+            // (IPMA uses Lisbon's), as the UTC midnight the days are stored at.
             $since = Carbon::parse(Carbon::now('Europe/Madrid')->subDays($days)->toDateString(), 'UTC');
 
             $rows = AemetDataDaily::where('stationId', $id)
                 ->where('date', '>=', $since)
                 ->orderBy('date', 'asc')
-                ->get();
+                ->get(array_merge(['date'], self::DAILY_FIELDS));
 
             return $this->stationPayload($station) + [
                 'daily' => $rows->map(fn (AemetDataDaily $row) => [
