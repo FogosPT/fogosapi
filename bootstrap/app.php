@@ -7,6 +7,7 @@ use App\Jobs\ProcessFIRMSData;
 use App\Jobs\ProcessMadeiraEvents;
 use App\Jobs\ProcessMadeiraOccurrences;
 use App\Jobs\HandleWeatherWarnings;
+use App\Jobs\ProcessAemetWarnings;
 use App\Jobs\HourlySummary;
 use App\Jobs\ProcessMTGPerimeters;
 use App\Jobs\ProcessMTGSimulation;
@@ -27,6 +28,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Console\Commands\AemetWarnings;
 use App\Console\Commands\AssignWeatherStations;
 use App\Console\Commands\CollapseWeatherWarnings;
 use App\Console\Commands\DumpFireStatuses;
@@ -78,6 +80,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ImportSeismicPlaces::class,
         ImportMadeiraParishes::class,
         FillSeismicPlaces::class,
+        AemetWarnings::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         if (env('SCHEDULER_ENABLE')) {
@@ -113,6 +116,11 @@ return Application::configure(basePath: dirname(__DIR__))
             $schedule->job(new CheckPendingPhotoModeration())->everyFifteenMinutes();
 
             $schedule->job(new HandleWeatherWarnings())->everyFifteenMinutes();
+
+            if (config('services.aemet.key')) {
+                $schedule->job(new ProcessAemetWarnings())->everyFifteenMinutes();
+            }
+
             $schedule->job(new ProcessFIRMSData())->everyFifteenMinutes();
 
             $schedule->job(new ProcessMTGPerimeters())->everyTenMinutes();

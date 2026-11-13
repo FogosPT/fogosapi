@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\AemetWarning;
+use App\Models\AemetWarningEvent;
 use App\Models\BaseWeatherWarning;
 use App\Models\WeatherWarning;
 use Carbon\Carbon;
@@ -31,6 +33,13 @@ class WeatherWarningSync
     {
         // Resolved from the container (IPMA defaults) so it can be swapped in tests.
         return new self(WeatherWarning::class, app(WeatherWarningEventRecorder::class));
+    }
+
+    public static function aemet(): self
+    {
+        // Built explicitly: the container's recorder is the IPMA one and would
+        // write AEMET events into weather_warning_events.
+        return new self(AemetWarning::class, new WeatherWarningEventRecorder(AemetWarning::class, AemetWarningEvent::class));
     }
 
     /**

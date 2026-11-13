@@ -1,0 +1,192 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\AemetWarningMessage;
+use App\Models\AemetWarningZone;
+use App\Support\Aemet\AemetWarningItems;
+use App\Support\Aemet\AemetZones;
+use App\Support\Aemet\CapMessage;
+use App\Support\Aemet\CapTar;
+use App\Support\AemetFeedHealth;
+use App\Support\WeatherWarningSync;
+use App\Tools\AemetTool;
+use Carbon\Carbon;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Support\Facades\Log;
+use MongoDB\BSON\UTCDateTime;
+
+/**
+ * Imports the AEMET (Spain) warnings: the `avisos_cap` tar is a full snapshot of
+ * the CAP messages in force. Each run:
+ *  - archives every message not stored yet in `aemetWarningMessages` (never rewritten);
+ *  - upserts every area of every message (verde included) in `aemetWarningZones`;
+ *  - reconciles `aemetWarnings` with the snapshot through the IPMA engine
+ *    (WeatherWarningSync::aemet()), which writes `aemetWarningEvents`.
+ * A failed download, a tar with any unreadable file or an empty tar changes no
+ * warning (only the endings are recorded) and counts as a failure in
+ * AemetFeedHealth, as does a snapshot the engine ignores (empty or older).
+ * Does nothing without `AEMET_API_KEY`.
+ */
+class ProcessAemetWarnings extends Job implements ShouldBeUnique
+{
+    /** Below the redis `retry_after` (90 s). */
+    public $timeout = 80;
+
+    /** Lock released when the job ends; this only bounds a crashed worker. */
+    public $uniqueFor = 900;
+
+    /** The health message posted by this run, if any (tests). */
+    public ?string $healthMessage = null;
+
+    /** Only set synchronously (tests); queued jobs build their own. */
+    private ?AemetTool $tool = null;
+
+    public function __construct() {}
+
+    public function withTool(AemetTool $tool): self
+    {
+        $this->tool = $tool;
+
+        return $this;
+    }
+
+    public function handle(): void
+    {
+        if ((string) config('services.aemet.key') === '') {
+            Log::debug('[ProcessAemetWarnings] AEMET_API_KEY not set, skipping.');
+
+            return;
+        }
+
+        try {
+            $messages = CapTar::messages(($this->tool ?? new AemetTool())->warningsTar());
+        } catch (\RuntimeException $e) {
+            // AemetException (download) or a tar with any unreadable entry.
+            $this->reject($e->getMessage());
+
+            return;
+        }
+
+        if ($messages === []) {
+            $this->reject('snapshot vazio');
+
+            return;
+        }
+
+        $this->archive($messages);
+        $this->zones($messages);
+
+        $diff = WeatherWarningSync::aemet()->sync(AemetWarningItems::fromMessages($messages, Carbon::now()));
+
+        $this->healthMessage = $diff === null
+            ? AemetFeedHealth::recordFailure('warnings', 'snapshot vazio ou antigo')
+            : AemetFeedHealth::recordSuccess('warnings');
+    }
+
+    /** No reconciliation: only the endings of the stored warnings are recorded. */
+    private function reject(string $reason): void
+    {
+        Log::warning('[ProcessAemetWarnings] '.$reason);
+        $this->healthMessage = AemetFeedHealth::recordFailure('warnings', $reason);
+        WeatherWarningSync::aemet()->sync(null);
+    }
+
+    /**
+     * Stores the messages not archived yet; a stored message is never rewritten.
+     *
+     * @param CapMessage[] $messages
+     */
+    private function archive(array $messages): void
+    {
+        $byIdentifier = [];
+        foreach ($messages as $message) {
+            $byIdentifier[$message->identifier] ??= $message;
+        }
+
+        try {
+            $stored = AemetWarningMessage::whereIn('identifier', array_map('strval', array_keys($byIdentifier)))
+                ->pluck('identifier')->flip()->all();
+        } catch (\Throwable $e) {
+            Log::warning('[ProcessAemetWarnings] messages not archived: '.$e->getMessage());
+            report($e);
+
+            return;
+        }
+
+        foreach ($byIdentifier as $message) {
+            $identifier = $message->identifier;
+            if (isset($stored[$identifier])) {
+                continue;
+            }
+
+            try {
+                AemetWarningMessage::create([
+                    'identifier' => $message->identifier,
+                    'sent'       => $message->sent,
+                    'msgType'    => $message->msgType,
+                    'references' => array_values($message->references),
+                    'level'      => $message->level,
+                    'phenomenon' => $message->phenomenon,
+                    'zones'      => array_values(array_unique(array_column($message->areas, 'code'))),
+                    'onset'      => $message->onset,
+                    'expires'    => $message->expires,
+                    'raw'        => $message->raw,
+                ]);
+            } catch (\Throwable $e) {
+                // e.g. a concurrent run inserted it first (unique index).
+                Log::warning("[ProcessAemetWarnings] message {$identifier} not archived: ".$e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Upserts every area of every message by `code` (one bulk write).
+     *
+     * @param CapMessage[] $messages
+     */
+    private function zones(array $messages): void
+    {
+        $zones = [];
+        foreach ($messages as $message) {
+            foreach ($message->areas as $area) {
+                $code = (string) $area['code'];
+                if ($code === '' || isset($zones[$code])) {
+                    continue;
+                }
+                $zones[$code] = $area;
+            }
+        }
+
+        if ($zones === []) {
+            return;
+        }
+
+        $now = new UTCDateTime(Carbon::now());
+        $operations = [];
+        foreach ($zones as $code => $area) {
+            $code = (string) $code; // numeric codes become int array keys
+            $operations[] = ['updateOne' => [
+                ['code' => $code],
+                ['$set' => [
+                    'code'       => $code,
+                    'name'       => $area['name'],
+                    'ccaa'       => substr($code, 0, 2),
+                    'province'   => substr($code, 2, 2),
+                    'coastal'    => AemetZones::isCoastal($code),
+                    'peninsula'  => AemetZones::isPeninsula($code),
+                    'geometry'   => AemetZones::geometry($area['polygons']),
+                    'lastSeenAt' => $now,
+                ]],
+                ['upsert' => true],
+            ]];
+        }
+
+        try {
+            AemetWarningZone::raw(fn ($collection) => $collection->bulkWrite($operations, ['ordered' => false]));
+        } catch (\Throwable $e) {
+            Log::warning('[ProcessAemetWarnings] zones not saved: '.$e->getMessage());
+            report($e);
+        }
+    }
+}
