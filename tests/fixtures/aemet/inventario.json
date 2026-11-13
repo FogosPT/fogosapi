@@ -1,0 +1,29 @@
+[
+  {
+    "latitud": "394924N",
+    "provincia": "ILLES BALEARS",
+    "altitud": "490",
+    "indicativo": "B013X",
+    "nombre": "ESCORCA, LLUC",
+    "indsinop": "08304",
+    "longitud": "025309E"
+  },
+  {
+    "latitud": "405729N",
+    "provincia": "TARRAGONA",
+    "altitud": "32",
+    "indicativo": "0002I",
+    "nombre": "VANDELLÒS",
+    "indsinop": "08169",
+    "longitud": "005217E"
+  },
+  {
+    "latitud": "392817N",
+    "provincia": "CACERES",
+    "altitud": "394",
+    "indicativo": "3469A",
+    "nombre": "CÁCERES",
+    "indsinop": "08261",
+    "longitud": "062020W"
+  }
+]
