@@ -384,6 +384,29 @@ class ProcessAemetWarningsTest extends TestCase
     }
 
     /** @test */
+    public function an_older_snapshot_after_an_all_clear_is_ignored(): void
+    {
+        $this->runJob();
+        Carbon::setTestNow('2026-11-12T18:05:00Z');
+        $this->runJob($this->allClear('2026-11-12T18:00:00-00:00'));
+        $this->assertSame([], $this->activeZones());
+        $events = AemetWarningEvent::count();
+
+        // A cached copy of the first tar (newest sent 17:07:09Z) comes back: with no
+        // active rows left, only the last accepted snapshot date can reject it.
+        Carbon::setTestNow('2026-11-12T18:20:00Z');
+        $job = $this->runJob();
+
+        $this->assertSame('snapshot antigo', $job->failureReason);
+        $this->assertSame([], $this->activeZones(), 'withdrawn warnings are not recreated');
+        $this->assertSame($events, AemetWarningEvent::count(), 'no spurious emitido');
+
+        // The same snapshot again is not "older".
+        $job = $this->runJob($this->allClear('2026-11-12T18:00:00-00:00'));
+        $this->assertNull($job->failureReason);
+    }
+
+    /** @test */
     public function a_partial_snapshot_is_a_failed_run(): void
     {
         $this->runJob();

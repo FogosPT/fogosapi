@@ -14,6 +14,7 @@ use App\Tools\AemetException;
 use App\Tools\AemetTool;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use MongoDB\BSON\UTCDateTime;
 
@@ -26,7 +27,8 @@ use MongoDB\BSON\UTCDateTime;
  *    (WeatherWarningSync::aemet()), which writes `aemetWarningEvents`.
  * A failed download, a tar with any unreadable file or an empty tar changes no
  * warning (only the endings are recorded) and counts as a failure in
- * AemetFeedHealth, as does a snapshot older than the stored rows or a partial
+ * AemetFeedHealth, as does a snapshot older than the stored rows or than the last
+ * reconciled one (`LAST_SNAPSHOT_KEY`, so a cached tar can't undo an all-clear) or a partial
  * one (fewer distinct zones, verde included, than half the zones already known;
  * it is still archived and its zones upserted). A tar whose messages are all
  * verde or expired is a valid all-clear: the active warnings are withdrawn.
@@ -35,6 +37,9 @@ use MongoDB\BSON\UTCDateTime;
  */
 class ProcessAemetWarnings extends Job implements ShouldBeUnique
 {
+    /** Unix time of the newest `sent` of the last reconciled snapshot (all-clears included). */
+    public const LAST_SNAPSHOT_KEY = 'aemet:warnings:lastSnapshot';
+
     /** Below the redis `retry_after` (90 s). */
     public $timeout = 80;
 
@@ -112,6 +117,15 @@ class ProcessAemetWarnings extends Job implements ShouldBeUnique
         // tar with no warning in force is a valid all-clear that withdraws the active ones.
         $snapshotSent = max(array_map(fn (CapMessage $m) => $m->sent->getTimestamp(), $messages));
 
+        // After an all-clear no active row is left to date the stored state, so the
+        // engine would take a cached older tar and recreate the withdrawn warnings.
+        $lastSnapshot = Cache::get(self::LAST_SNAPSHOT_KEY);
+        if ($lastSnapshot !== null && $snapshotSent < (int) $lastSnapshot) {
+            $this->reject('snapshot antigo');
+
+            return;
+        }
+
         $diff = WeatherWarningSync::aemet()->sync(
             AemetWarningItems::fromMessages($messages, Carbon::now()),
             Carbon::createFromTimestampUTC($snapshotSent)->toIso8601String(),
@@ -125,6 +139,7 @@ class ProcessAemetWarnings extends Job implements ShouldBeUnique
             return;
         }
 
+        Cache::forever(self::LAST_SNAPSHOT_KEY, $snapshotSent);
         $this->healthMessage = AemetFeedHealth::recordSuccess('warnings');
     }
 
