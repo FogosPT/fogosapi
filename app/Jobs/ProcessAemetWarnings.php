@@ -10,6 +10,7 @@ use App\Support\Aemet\CapMessage;
 use App\Support\Aemet\CapTar;
 use App\Support\AemetFeedHealth;
 use App\Support\WeatherWarningSync;
+use App\Tools\AemetException;
 use App\Tools\AemetTool;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -25,9 +26,11 @@ use MongoDB\BSON\UTCDateTime;
  *    (WeatherWarningSync::aemet()), which writes `aemetWarningEvents`.
  * A failed download, a tar with any unreadable file or an empty tar changes no
  * warning (only the endings are recorded) and counts as a failure in
- * AemetFeedHealth, as does a snapshot older than the stored rows. A tar whose
- * messages are all verde or expired is a valid all-clear: the active warnings
- * are withdrawn.
+ * AemetFeedHealth, as does a snapshot older than the stored rows or a partial
+ * one (fewer distinct zones, verde included, than half the zones already known;
+ * it is still archived and its zones upserted). A tar whose messages are all
+ * verde or expired is a valid all-clear: the active warnings are withdrawn.
+ * A 401 is announced at once (AemetFeedHealth::recordUnauthorized).
  * Does nothing without `AEMET_API_KEY`.
  */
 class ProcessAemetWarnings extends Job implements ShouldBeUnique
@@ -41,13 +44,20 @@ class ProcessAemetWarnings extends Job implements ShouldBeUnique
     /** The health message posted by this run, if any (tests). */
     public ?string $healthMessage = null;
 
-    /** Why this run failed (download, unreadable/empty tar, older snapshot); null on success. */
+    /** Why this run failed (download, unreadable/empty/partial tar, older snapshot); null on success. */
     public ?string $failureReason = null;
 
     /** Only set synchronously (tests); queued jobs build their own. */
     private ?AemetTool $tool = null;
 
-    public function __construct() {}
+    /** The unauthorized-key message posted by this run, if any (tests). */
+    public ?string $unauthorizedMessage = null;
+
+    /** Own worker (`fogos.worker-aemet`): never delays the ANEPC ingestion on `default`. */
+    public function __construct()
+    {
+        $this->onQueue('aemet');
+    }
 
     public function withTool(AemetTool $tool): self
     {
@@ -68,6 +78,9 @@ class ProcessAemetWarnings extends Job implements ShouldBeUnique
             $messages = CapTar::messages(($this->tool ?? new AemetTool())->warningsTar());
         } catch (\RuntimeException $e) {
             // AemetException (download) or a tar with any unreadable entry.
+            if ($e instanceof AemetException && $e->unauthorized) {
+                $this->unauthorizedMessage = AemetFeedHealth::recordUnauthorized('warnings', $e->getMessage());
+            }
             $this->reject($e->getMessage());
 
             return;
@@ -79,8 +92,21 @@ class ProcessAemetWarnings extends Job implements ShouldBeUnique
             return;
         }
 
+        // Counted before the upsert below adds this tar's zones.
+        $knownZones = $this->knownZoneCount();
+
         $this->archive($messages);
         $this->zones($messages);
+
+        // The tar is authoritative (whatever it lacks is withdrawn), so one covering
+        // fewer than half the zones we know is taken as truncated, not as an all-clear.
+        // The upsert above only adds/refreshes zones, never removes one.
+        $tarZones = $this->zoneCount($messages);
+        if ($knownZones !== null && $knownZones > 0 && $tarZones * 2 < $knownZones) {
+            $this->reject("snapshot parcial: {$tarZones} de {$knownZones} zonas");
+
+            return;
+        }
 
         // The newest `sent` of the whole tar (verde included) dates the snapshot, so a
         // tar with no warning in force is a valid all-clear that withdraws the active ones.
@@ -109,6 +135,39 @@ class ProcessAemetWarnings extends Job implements ShouldBeUnique
         $this->failureReason = $reason;
         $this->healthMessage = AemetFeedHealth::recordFailure('warnings', $reason);
         WeatherWarningSync::aemet()->sync(null);
+    }
+
+    /** Zones stored before this run; null when the count failed (then not checked). */
+    private function knownZoneCount(): ?int
+    {
+        try {
+            return AemetWarningZone::count();
+        } catch (\Throwable $e) {
+            Log::warning('[ProcessAemetWarnings] zones not counted: '.$e->getMessage());
+            report($e);
+
+            return null;
+        }
+    }
+
+    /**
+     * Distinct zone codes across every message of the tar (verde included).
+     *
+     * @param CapMessage[] $messages
+     */
+    private function zoneCount(array $messages): int
+    {
+        $codes = [];
+        foreach ($messages as $message) {
+            foreach ($message->areas as $area) {
+                $code = (string) $area['code'];
+                if ($code !== '') {
+                    $codes[$code] = true;
+                }
+            }
+        }
+
+        return count($codes);
     }
 
     /**

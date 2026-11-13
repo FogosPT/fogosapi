@@ -384,6 +384,63 @@ class ProcessAemetWarningsTest extends TestCase
     }
 
     /** @test */
+    public function a_partial_snapshot_is_a_failed_run(): void
+    {
+        $this->runJob();
+        // 19 zones from the fixture + 20 more known from earlier snapshots.
+        foreach (range(1, 20) as $i) {
+            AemetWarningZone::create(['code' => (string) (750000 + $i), 'name' => 'Zona '.$i]);
+        }
+        $before = AemetWarning::whereNull('supersededAt')->orderBy('district')->get(['district', 'level', 'endTime'])->toArray();
+
+        // The verde file alone covers 16 of the 39 known zones.
+        Carbon::setTestNow('2026-11-12T16:30:00Z');
+        $job = $this->runJob($this->allClear('2026-11-12T18:00:00-00:00'));
+
+        $this->assertSame('snapshot parcial: 16 de 39 zonas', $job->failureReason);
+        $after = AemetWarning::whereNull('supersededAt')->orderBy('district')->get(['district', 'level', 'endTime'])->toArray();
+        $this->assertEquals($before, $after);
+        $this->assertSame(0, AemetWarningEvent::where('kind', 'retirado')->count());
+        $this->assertSame(39, AemetWarningZone::count(), 'no zone is removed');
+
+        // Stale after the window like any other failure.
+        Carbon::setTestNow('2026-11-12T17:01:00Z');
+        $job = $this->runJob($this->allClear('2026-11-12T18:00:00-00:00'));
+        $this->assertTrue(AemetFeedHealth::isStale('warnings'));
+        $this->assertStringContainsString('snapshot parcial', $job->healthMessage);
+    }
+
+    /** @test */
+    public function a_small_first_snapshot_is_accepted(): void
+    {
+        $job = $this->runJob($this->allClear('2026-11-12T15:00:00-00:00'));
+
+        $this->assertNull($job->failureReason);
+        $this->assertSame(16, AemetWarningZone::count());
+        $this->assertFalse(AemetFeedHealth::isStale('warnings'));
+    }
+
+    /** @test */
+    public function unauthorized_is_announced_at_once(): void
+    {
+        $job = $this->job([new Response(401, [], '')]);
+        $job->handle();
+        $this->assertStringStartsWith('AEMET: chave AEMET inválida ou expirada', $job->unauthorizedMessage);
+        $this->assertNull($job->healthMessage, 'not stale yet');
+
+        Carbon::setTestNow('2026-11-12T16:15:00Z');
+        $again = $this->job([new Response(401, [], '')]);
+        $again->handle();
+        $this->assertNull($again->unauthorizedMessage);
+
+        $this->runJob();
+        Carbon::setTestNow('2026-11-12T16:30:00Z');
+        $renewed = $this->job([new Response(401, [], '')]);
+        $renewed->handle();
+        $this->assertStringStartsWith('AEMET: chave AEMET inválida ou expirada', $renewed->unauthorizedMessage);
+    }
+
+    /** @test */
     public function an_older_all_clear_snapshot_is_ignored(): void
     {
         $this->runJob();

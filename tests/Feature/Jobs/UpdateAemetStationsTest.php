@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Jobs;
 
+use App\Jobs\ProcessAemetWarnings;
 use App\Jobs\UpdateAemetDataDaily;
 use App\Jobs\UpdateAemetObservations;
 use App\Jobs\UpdateAemetStations;
@@ -19,6 +20,7 @@ use GuzzleHttp\Psr7\Response;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 /**
@@ -100,6 +102,44 @@ class UpdateAemetStationsTest extends TestCase
             $this->assertInstanceOf(ShouldBeUnique::class, $job);
             $this->assertLessThan(90, $job->timeout);
         }
+    }
+
+    /** @test */
+    public function jobs_run_on_their_own_queue(): void
+    {
+        Queue::fake();
+
+        $jobs = [ProcessAemetWarnings::class, UpdateAemetObservations::class, UpdateAemetStations::class, UpdateAemetDataDaily::class];
+        foreach ($jobs as $class) {
+            $this->assertSame('aemet', (new $class())->queue, $class);
+            dispatch(new $class());
+            Queue::assertPushedOn('aemet', $class);
+        }
+    }
+
+    /** @test */
+    public function unauthorized_is_announced_at_once(): void
+    {
+        $unauthorized = fn () => (new UpdateAemetStations())->withTool($this->tool([new Response(401, [], '')]));
+
+        $job = $unauthorized();
+        $job->handle();
+        $this->assertNotNull($job->failureReason);
+        $this->assertStringStartsWith('AEMET: chave AEMET inválida ou expirada', $job->unauthorizedMessage);
+
+        Carbon::setTestNow('2026-11-13T12:15:00Z');
+        $again = $unauthorized();
+        $again->handle();
+        $this->assertNull($again->unauthorizedMessage, 'announced once');
+
+        // A 401 on another source is the same key: not announced again.
+        $observations = $this->observations([new Response(401, [], '')]);
+        $this->assertNull($observations->unauthorizedMessage);
+
+        // Any success clears it; a new 401 is announced again.
+        $this->stations();
+        $daily = $this->daily([new Response(401, [], '')]);
+        $this->assertStringStartsWith('AEMET: chave AEMET inválida ou expirada', $daily->unauthorizedMessage);
     }
 
     /** @test */

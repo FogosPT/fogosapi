@@ -158,6 +158,10 @@ services:
     <<: *worker
     command: php artisan queue:work --queue=icnf --sleep=3 --tries=3 --max-time=3600
 
+  fogos.worker-aemet:
+    <<: *worker
+    command: php artisan queue:work --queue=aemet --sleep=3 --tries=1 --max-time=3600
+
   fogos.worker-firms:
     <<: *worker
     command: php artisan queue:work redis-long --queue=firms --sleep=3 --tries=1 --max-time=3600

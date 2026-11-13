@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\AemetStation;
 use App\Support\Aemet\AemetStationData;
+use App\Support\AemetFeedHealth;
 use App\Tools\AemetException;
 use App\Tools\AemetTool;
 use Carbon\Carbon;
@@ -14,7 +15,8 @@ use MongoDB\BSON\UTCDateTime;
 /**
  * Upserts the AEMET (Spain) station inventory into `aemetStations` by `stationId`
  * (DMS coordinates → decimal [lng, lat], `peninsula` by province). Stations missing
- * from the inventory are kept. Does nothing without `AEMET_API_KEY`.
+ * from the inventory are kept. A 401 is announced at once
+ * (AemetFeedHealth::recordUnauthorized). Does nothing without `AEMET_API_KEY`.
  */
 class UpdateAemetStations extends Job implements ShouldBeUnique
 {
@@ -33,7 +35,14 @@ class UpdateAemetStations extends Job implements ShouldBeUnique
     /** Only set synchronously (tests); queued jobs build their own. */
     private ?AemetTool $tool = null;
 
-    public function __construct() {}
+    /** The unauthorized-key message posted by this run, if any (tests). */
+    public ?string $unauthorizedMessage = null;
+
+    /** Own worker (`fogos.worker-aemet`): never delays the ANEPC ingestion on `default`. */
+    public function __construct()
+    {
+        $this->onQueue('aemet');
+    }
 
     public function withTool(AemetTool $tool): self
     {
@@ -53,6 +62,9 @@ class UpdateAemetStations extends Job implements ShouldBeUnique
         try {
             $rows = ($this->tool ?? new AemetTool())->inventory();
         } catch (AemetException $e) {
+            if ($e->unauthorized) {
+                $this->unauthorizedMessage = AemetFeedHealth::recordUnauthorized('stations', $e->getMessage());
+            }
             $this->reject($e->getMessage());
 
             return;
@@ -100,6 +112,8 @@ class UpdateAemetStations extends Job implements ShouldBeUnique
         }
 
         $this->imported = count($operations);
+        // Daily, so only the unauthorized alert (and its reset) is tracked, not staleness.
+        AemetFeedHealth::recordSuccess('stations');
     }
 
     private function reject(string $reason): void

@@ -45,7 +45,14 @@ class UpdateAemetObservations extends Job implements ShouldBeUnique
     /** Only set synchronously (tests); queued jobs build their own. */
     private ?AemetTool $tool = null;
 
-    public function __construct() {}
+    /** The unauthorized-key message posted by this run, if any (tests). */
+    public ?string $unauthorizedMessage = null;
+
+    /** Own worker (`fogos.worker-aemet`): never delays the ANEPC ingestion on `default`. */
+    public function __construct()
+    {
+        $this->onQueue('aemet');
+    }
 
     public function withTool(AemetTool $tool): self
     {
@@ -65,6 +72,9 @@ class UpdateAemetObservations extends Job implements ShouldBeUnique
         try {
             $rows = ($this->tool ?? new AemetTool())->observations();
         } catch (AemetException $e) {
+            if ($e->unauthorized) {
+                $this->unauthorizedMessage = AemetFeedHealth::recordUnauthorized('observations', $e->getMessage());
+            }
             $this->reject($e->getMessage());
 
             return;
