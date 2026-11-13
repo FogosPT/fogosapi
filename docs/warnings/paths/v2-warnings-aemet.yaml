@@ -1,0 +1,62 @@
+get:
+  operationId: v2GetWarningsAemet
+  summary: Active AEMET (Spain) weather warnings
+  description: |
+    Fuente: AEMET (Agencia Estatal de Meteorología, AEMET OpenData).
+
+    Currently-active Spanish weather warnings ingested by the
+    `ProcessAemetWarnings` job (collection `aemetWarnings`), normalized to the
+    exact shape of `/v2/warnings/ipma`: same keys, same formats (Lisbon
+    wall-clock without a timezone), same ordering (`startTime` ascending) and
+    the same collapsing rule (two entries of the same `idAreaAviso` +
+    `awarenessTypeName` never overlap; the higher level, then the newest
+    report, wins). `awarenessTypeName` uses the IPMA names (`Vento`,
+    `Precipitação`, …) where there is one, otherwise the AEMET phenomenon name;
+    `text` is the AEMET description (Spanish).
+
+    The only differences: `idAreaAviso` is an AEMET warning zone code
+    (e.g. `713603`, coastal zones end in `C`, e.g. `713603C`; see
+    `/v2/warnings/aemet/zones`), and each entry carries the extra fields
+    `areaName`, `phenomenon`, `parameter` and `probability`.
+
+    Cached for 60 seconds.
+  tags:
+    - Warnings
+  parameters:
+    - name: peninsula
+      in: query
+      description: '`1` = only the Iberian Peninsula (drops Baleares, Canarias, Ceuta and Melilla).'
+      schema: { type: string, enum: ['0', '1'] }
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              allOf:
+                - $ref: './v2-warnings-ipma.yaml#/get/responses/200/content/application~1json/schema/items'
+                - type: object
+                  properties:
+                    idAreaAviso:
+                      type: string
+                      description: AEMET warning zone code (e.g. `713603`, `713603C`).
+                    areaName:
+                      type: string
+                      nullable: true
+                      description: AEMET zone name (Spanish, e.g. `Miño de Pontevedra`).
+                    phenomenon:
+                      type: string
+                      nullable: true
+                      description: AEMET phenomenon code (e.g. `VI` wind, `PR` rain).
+                    parameter:
+                      type: string
+                      nullable: true
+                      description: "AEMET parameter text (Spanish, e.g. `Rachas máximas: 80 km/h`)."
+                    probability:
+                      type: string
+                      nullable: true
+                      description: AEMET probability band (e.g. `40%-70%`).
+    500:
+      $ref: '../../common/responses/500.yaml'

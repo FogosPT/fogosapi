@@ -28,7 +28,7 @@ tags:
   - name: Stats
     description: Statistics on fire incidents.
   - name: Warnings
-    description: IPMA weather warnings and operational warnings.
+    description: IPMA and AEMET weather warnings and operational warnings.
   - name: RCM
     description: Risco de Incêndio (fire risk) maps and parish lookups.
   - name: Weather
@@ -257,6 +257,12 @@ paths:
     $ref: './warnings/paths/v2-warnings-ipma.yaml'
   /v2/warnings/ipma/history:
     $ref: './warnings/paths/v2-warnings-ipma-history.yaml'
+  /v2/warnings/aemet:
+    $ref: './warnings/paths/v2-warnings-aemet.yaml'
+  /v2/warnings/aemet/history:
+    $ref: './warnings/paths/v2-warnings-aemet-history.yaml'
+  /v2/warnings/aemet/zones:
+    $ref: './warnings/paths/v2-warnings-aemet-zones.yaml'
   /v2/warnings/add:
     $ref: './warnings/paths/v2-warnings-add.yaml'
   /v2/warnings/add/agif:

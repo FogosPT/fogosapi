@@ -1,0 +1,40 @@
+get:
+  operationId: v2GetWarningsAemetHistory
+  summary: History of changes to the AEMET (Spain) weather warnings
+  description: |
+    Fuente: AEMET (Agencia Estatal de Meteorología, AEMET OpenData).
+
+    Event log of the AEMET warnings (collection `aemetWarningEvents`), written
+    by the same recorder as the IPMA history. Identical contract to
+    `/v2/warnings/ipma/history`: same parameters (`from`/`to`/`area`/`type`/
+    `kind`, default last 7 days, at most 31, `texto_alterado` only on
+    request), same response shape and the same 422 errors. `area` is an AEMET
+    warning zone code (see `/v2/warnings/aemet/zones`).
+  tags:
+    - Warnings
+  parameters:
+    - name: from
+      in: query
+      description: Start (`YYYY-MM-DD` = start of day, or `YYYY-MM-DDTHH:MM[:SS]`). Default `to` − 7 days.
+      schema: { type: string }
+    - name: to
+      in: query
+      description: End (`YYYY-MM-DD` = end of day, or a datetime). Default now. At most 31 days after `from`.
+      schema: { type: string }
+    - name: area
+      in: query
+      description: CSV of AEMET zone codes (e.g. `713603,713603C`).
+      schema: { type: string }
+    - name: type
+      in: query
+      description: CSV of `awarenessTypeName` (e.g. `Vento,Precipitação`).
+      schema: { type: string }
+    - name: kind
+      in: query
+      description: CSV of kinds. Default every kind except `texto_alterado`.
+      schema: { type: string }
+  responses:
+    200:
+      $ref: './v2-warnings-ipma-history.yaml#/get/responses/200'
+    422:
+      $ref: './v2-warnings-ipma-history.yaml#/get/responses/422'
