@@ -121,6 +121,26 @@ class AemetToolTest extends TestCase
     }
 
     /** @test */
+    public function estado_as_a_string_is_accepted(): void
+    {
+        $tool = $this->tool([
+            new Response(200, [], json_encode(['estado' => '200', 'descripcion' => 'exito', 'datos' => 'https://x/y'])),
+            new Response(200, [], '[]'),
+        ]);
+
+        $this->assertSame([], $tool->observations());
+    }
+
+    /** @test */
+    public function default_client_times_out_below_the_job_timeout(): void
+    {
+        $client = (new \ReflectionProperty(AemetTool::class, 'client'))->getValue(new AemetTool());
+
+        $this->assertSame(20, $client->getConfig('timeout'));
+        $this->assertSame(5, $client->getConfig('connect_timeout'));
+    }
+
+    /** @test */
     public function http_429_is_a_failure(): void
     {
         $tool = $this->tool([new Response(429, [], '')]);

@@ -34,7 +34,7 @@ class AemetTool
     {
         $this->client = $client ?? new Client([
             'http_errors' => false,
-            'timeout' => 30,
+            'timeout' => 20, // headroom under the jobs' 80 s timeout (two requests)
             'connect_timeout' => 5,
             'headers' => [
                 'User-Agent' => 'Fogos.pt/3.0',
@@ -115,7 +115,7 @@ class AemetTool
             throw new AemetException('A AEMET devolveu uma resposta inválida.');
         }
 
-        if (($decoded['estado'] ?? null) !== 200) {
+        if ((int) ($decoded['estado'] ?? 0) !== 200) {
             $reason = $decoded['descripcion'] ?? ('estado '.($decoded['estado'] ?? '?'));
 
             throw new AemetException((string) $reason);
