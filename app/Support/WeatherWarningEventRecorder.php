@@ -2,13 +2,15 @@
 
 namespace App\Support;
 
+use App\Models\BaseWeatherWarning;
+use App\Models\BaseWeatherWarningEvent;
 use App\Models\WeatherWarning;
 use App\Models\WeatherWarningEvent;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Turns a WeatherWarningDiff into WeatherWarningEvent rows. A failed write is
+ * Turns a WeatherWarningDiff into event rows (IPMA: WeatherWarningEvent). A failed write is
  * logged and skipped: the event log must never break the warnings sync.
  */
 class WeatherWarningEventRecorder
@@ -22,6 +24,16 @@ class WeatherWarningEventRecorder
      * flood the history with orphan endings (the migration also backfills it).
      */
     public const ENDED_LOOKBACK_HOURS = 24;
+
+    /**
+     * @param class-string<BaseWeatherWarning>      $warningClass the warnings whose endings are recorded
+     * @param class-string<BaseWeatherWarningEvent> $eventClass   where the events are written
+     */
+    public function __construct(
+        private readonly string $warningClass = WeatherWarning::class,
+        private readonly string $eventClass = WeatherWarningEvent::class,
+    ) {
+    }
 
     public function record(WeatherWarningDiff $diff, Carbon $now): void
     {
@@ -71,7 +83,7 @@ class WeatherWarningEventRecorder
      */
     public function recordEnded(Carbon $now): void
     {
-        $rows = WeatherWarning::whereNull('supersededAt')
+        $rows = $this->warningClass::whereNull('supersededAt')
             ->whereNull('endedAt')
             ->where('endTime', '<', $now)
             ->where('endTime', '>=', $now->copy()->subHours(self::ENDED_LOOKBACK_HOURS))
@@ -82,7 +94,7 @@ class WeatherWarningEventRecorder
         }
     }
 
-    private function ended(WeatherWarning $w, Carbon $now): void
+    private function ended(BaseWeatherWarning $w, Carbon $now): void
     {
         if ($this->write('terminado', $w, $w->level, null, $w->endTime, $now, ['reportDate' => null, 'warningId' => (string) $w->_id])) {
             try {
@@ -95,10 +107,10 @@ class WeatherWarningEventRecorder
         }
     }
 
-    private function write(string $kind, WeatherWarning $w, ?string $from, ?string $to, Carbon $occurred, Carbon $now, array $extra = []): bool
+    private function write(string $kind, BaseWeatherWarning $w, ?string $from, ?string $to, Carbon $occurred, Carbon $now, array $extra = []): bool
     {
         try {
-            WeatherWarningEvent::create(array_merge([
+            $this->eventClass::create(array_merge([
                 'kind'       => $kind,
                 'district'   => $w->district,
                 'type'       => $w->type,

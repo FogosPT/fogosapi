@@ -101,6 +101,12 @@ Route::group(['prefix' => 'v2'], function () {
         Route::get('observations', '\App\Http\Controllers\WeatherController@observations');
         Route::get('waves', '\App\Http\Controllers\WeatherController@waves');
         Route::get('ipma-services', '\App\Http\Controllers\WeatherController@ipmaServicesHTTPS');
+        Route::group(['prefix' => 'aemet'], function () {
+            Route::get('stations', '\App\Http\Controllers\AemetController@stations');
+            Route::get('observations', '\App\Http\Controllers\AemetController@observations');
+            Route::get('stations/{id}/observations', '\App\Http\Controllers\AemetController@stationObservations')->where('id', '[0-9A-Za-z]+');
+            Route::get('stations/{id}/daily', '\App\Http\Controllers\AemetController@stationDaily')->where('id', '[0-9A-Za-z]+');
+        });
     });
 
     Route::group(['prefix' => 'fire'], function () {
@@ -129,6 +135,9 @@ Route::group(['prefix' => 'v2'], function () {
     Route::group(['prefix' => 'warnings'], function () {
         Route::get('ipma', '\App\Http\Controllers\WarningsController@ipma');
         Route::get('ipma/history', '\App\Http\Controllers\WarningsController@history');
+        Route::get('aemet', '\App\Http\Controllers\AemetController@warnings');
+        Route::get('aemet/history', '\App\Http\Controllers\AemetController@history');
+        Route::get('aemet/zones', '\App\Http\Controllers\AemetController@zones');
         Route::post('add', '\App\Http\Controllers\WarningsController@add')->middleware('write.key');
         Route::post('add/agif', '\App\Http\Controllers\WarningsController@addAgif')->middleware('write.key');
     });

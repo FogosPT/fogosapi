@@ -1,0 +1,51 @@
+get:
+  operationId: v2GetWarningsAemetZones
+  summary: AEMET (Spain) warning zones as GeoJSON
+  description: |
+    Fuente: AEMET (Agencia Estatal de Meteorología, AEMET OpenData).
+
+    GeoJSON FeatureCollection of the AEMET warning zones (collection
+    `aemetWarningZones`), learned from the areas of the CAP messages — the
+    zones referenced by `idAreaAviso` in `/v2/warnings/aemet`. IPMA has no
+    equivalent endpoint. Geometries are MultiPolygons in lon/lat. Ordered by
+    `code`. Cached for 1 hour.
+  tags:
+    - Warnings
+  parameters:
+    - name: peninsula
+      in: query
+      description: '`1` = only the Iberian Peninsula (drops Baleares, Canarias, Ceuta and Melilla).'
+      schema: { type: string, enum: ['0', '1'] }
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              type: { type: string, enum: [FeatureCollection] }
+              features:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type: { type: string, enum: [Feature] }
+                    geometry:
+                      type: object
+                      properties:
+                        type: { type: string, enum: [MultiPolygon] }
+                        coordinates:
+                          type: array
+                          items: {}
+                    properties:
+                      type: object
+                      properties:
+                        code: { type: string, description: 'Zone code: CCAA (2) + province (2) + zone (2), `C` suffix on coastal zones' }
+                        name: { type: string }
+                        ccaa: { type: string, nullable: true }
+                        province: { type: string, nullable: true }
+                        coastal: { type: boolean }
+                        peninsula: { type: boolean }
+    500:
+      $ref: '../../common/responses/500.yaml'

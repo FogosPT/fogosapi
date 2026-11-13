@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ServesStationSeries;
 use App\Models\TemperatureWave;
 use App\Models\WeatherData;
 use App\Models\WeatherDataDaily;
@@ -20,6 +21,8 @@ use Illuminate\Support\Facades\Cache;
 
 class WeatherController extends Controller
 {
+    use ServesStationSeries;
+
     public static function getMeteoByLatAndLng($lat, $lng)
     {
         if (env('APP_ENV') === 'production') {
@@ -167,23 +170,12 @@ class WeatherController extends Controller
             ->orderBy('date', 'asc')
             ->get();
 
-        $fields = [
-            'intensidadeVentoKM',
-            'temperatura',
-            'radiacao',
-            'idDireccVento',
-            'precAcumulada',
-            'intensidadeVento',
-            'humidade',
-            'pressao',
-        ];
-
         $buckets = [];
         foreach ($rows as $row) {
             $bucket = Carbon::parse($row->date)->setTimezone('UTC')->format('Y-m-d\TH:i');
 
             $obs = [];
-            foreach ($fields as $f) {
+            foreach (self::FEED_OBSERVATION_FIELDS as $f) {
                 $obs[$f] = $row->{$f} ?? -99;
             }
 
@@ -196,34 +188,6 @@ class WeatherController extends Controller
 
         return new JsonResponse($buckets);
     }
-
-    private const OBSERVATION_FIELDS = [
-        'temperatura',
-        'humidade',
-        'pressao',
-        'precAcumulada',
-        'intensidadeVento',
-        'intensidadeVentoKM',
-        'idDireccVento',
-        'radiacao',
-    ];
-
-    private const DAILY_FIELDS = [
-        'temp_min',
-        'temp_med',
-        'temp_max',
-        'hum_min',
-        'hum_med',
-        'hum_max',
-        'prec_quant',
-        'prec_max_inst',
-        'rad_total',
-        'pressao',
-        'vento_int_med',
-        'vento_int_max_inst',
-        'vento_dir_max',
-        'idDireccVento',
-    ];
 
     /**
      * Hourly observations of one station, oldest first.
@@ -294,23 +258,6 @@ class WeatherController extends Controller
     }
 
     /**
-     * Integer query param within [min, max]; default when absent, null when invalid.
-     */
-    private function boundedInt(Request $request, string $key, int $default, int $min, int $max): ?int
-    {
-        if (!$request->has($key)) {
-            return $default;
-        }
-
-        $value = filter_var($request->query($key), FILTER_VALIDATE_INT);
-        if ($value === false || $value < $min || $value > $max) {
-            return null;
-        }
-
-        return $value;
-    }
-
-    /**
      * weatherData / weatherDataDaily store stationId as a string, but older
      * rows (and the stations collection) use ints — match both.
      */
@@ -327,22 +274,6 @@ class WeatherController extends Controller
             'place' => $station->place,
             'coordinates' => $station->coordinates,
         ];
-    }
-
-    /**
-     * Selected numeric fields; missing readings (null or IPMA's -99) become null.
-     *
-     * @param mixed $row
-     */
-    private function pick($row, array $fields): array
-    {
-        $out = [];
-        foreach ($fields as $f) {
-            $v = $row->{$f} ?? null;
-            $out[$f] = ($v === null || (float) $v === -99.0) ? null : $v;
-        }
-
-        return $out;
     }
 
     public function waves()
