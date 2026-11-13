@@ -63,13 +63,13 @@ class AemetTool
         return $this->fetchJson('valores/climatologicos/inventarioestaciones/todasestaciones');
     }
 
-    /** Daily climatological summaries over `[from, to]` (whole UTC days). */
+    /** Daily climatological summaries for the calendar dates `[from, to]` (whole days, as AEMET's UTC range). */
     public function daily(Carbon $from, Carbon $to): array
     {
         $path = sprintf(
             'valores/climatologicos/diarios/datos/fechaini/%s/fechafin/%s/todasestaciones',
-            $from->copy()->utc()->startOfDay()->format('Y-m-d\TH:i:s').'UTC',
-            $to->copy()->utc()->endOfDay()->format('Y-m-d\TH:i:s').'UTC'
+            $from->format('Y-m-d').'T00:00:00UTC',
+            $to->format('Y-m-d').'T23:59:59UTC'
         );
 
         return $this->fetchJson($path);

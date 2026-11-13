@@ -86,6 +86,7 @@ class AemetToolTest extends TestCase
         } catch (AemetException $e) {
             $this->assertFalse($e->unauthorized);
         }
+        $this->assertCount(1, $this->history);
     }
 
     /** @test */
@@ -100,6 +101,7 @@ class AemetToolTest extends TestCase
             $this->assertTrue($e->unauthorized);
             $this->assertStringContainsString('chave AEMET inválida ou expirada', $e->getMessage());
         }
+        $this->assertCount(1, $this->history);
     }
 
     /** @test */
@@ -123,8 +125,13 @@ class AemetToolTest extends TestCase
     {
         $tool = $this->tool([new Response(429, [], '')]);
 
-        $this->expectException(AemetException::class);
-        $tool->observations();
+        try {
+            $tool->observations();
+            $this->fail('Expected an AemetException.');
+        } catch (AemetException $e) {
+            $this->assertFalse($e->unauthorized);
+        }
+        $this->assertCount(1, $this->history);
     }
 
     /** @test */
@@ -143,6 +150,27 @@ class AemetToolTest extends TestCase
             (string) $this->history[0]['request']->getUri()
         );
         $this->assertCount(5, $result);
+    }
+
+    /** @test */
+    public function daily_uses_the_calendar_dates_in_summer(): void
+    {
+        // The app runs in Europe/Lisbon (UTC+1 in summer): the range must be
+        // the calendar dates given, not their UTC-shifted days.
+        $this->assertSame('Europe/Lisbon', date_default_timezone_get());
+
+        $tool = $this->tool([
+            $this->step1('https://opendata.aemet.es/opendata/sh/daily456'),
+            new Response(200, [], $this->fixture('diarios.json')),
+        ]);
+
+        $tool->daily(Carbon::parse('2026-07-03'), Carbon::parse('2026-07-12'));
+
+        $this->assertSame(
+            'https://opendata.aemet.es/opendata/api/valores/climatologicos/diarios/datos/'
+            .'fechaini/2026-07-03T00:00:00UTC/fechafin/2026-07-12T23:59:59UTC/todasestaciones',
+            (string) $this->history[0]['request']->getUri()
+        );
     }
 
     /** @test */
