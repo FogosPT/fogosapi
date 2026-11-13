@@ -2,7 +2,7 @@
 
 namespace App\Support;
 
-use App\Models\WeatherWarning;
+use App\Models\BaseWeatherWarning;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -20,10 +20,14 @@ class WeatherWarningCollapse
      * an exact duplicate disappears. Disjoint windows of the same level (e.g.
      * orange this morning and again tomorrow) are distinct entries.
      *
-     * @param Collection<int, WeatherWarning> $warnings
+     * When `$extra` is given, each entry is merged with `$extra($warning)`
+     * (source-specific fields, e.g. AEMET's).
+     *
+     * @param Collection<int, BaseWeatherWarning> $warnings
+     * @param (callable(BaseWeatherWarning): array<string, mixed>)|null $extra
      * @return array<int, array<string, mixed>>
      */
-    public static function collapse(Collection $warnings): array
+    public static function collapse(Collection $warnings, ?callable $extra = null): array
     {
         $groups = [];
         foreach ($warnings as $w) {
@@ -32,7 +36,7 @@ class WeatherWarningCollapse
 
         $rows = [];
         foreach ($groups as $group) {
-            usort($group, static fn (WeatherWarning $a, WeatherWarning $b) => self::precedence($b) <=> self::precedence($a));
+            usort($group, static fn (BaseWeatherWarning $a, BaseWeatherWarning $b) => self::precedence($b) <=> self::precedence($a));
 
             $claimed = [];
             $now = Carbon::now()->timestamp;
@@ -45,7 +49,7 @@ class WeatherWarningCollapse
                     if ($to < $now) {
                         continue;
                     }
-                    $rows[] = [
+                    $row = [
                         'text'              => $w->text,
                         'awarenessTypeName' => $w->type,
                         'idAreaAviso'       => $w->district,
@@ -53,6 +57,7 @@ class WeatherWarningCollapse
                         'startTime'         => Carbon::createFromTimestamp($from, config('app.timezone'))->format('Y-m-d\TH:i:s'),
                         'endTime'           => Carbon::createFromTimestamp($to, config('app.timezone'))->format('Y-m-d\TH:i:s'),
                     ];
+                    $rows[] = $extra ? array_merge($row, $extra($w)) : $row;
                 }
                 $claimed[] = [$start, $end];
             }
@@ -91,12 +96,12 @@ class WeatherWarningCollapse
     }
 
     /** @return array{int, int} */
-    private static function precedence(WeatherWarning $w): array
+    private static function precedence(BaseWeatherWarning $w): array
     {
         return [self::LEVEL_RANK[$w->level] ?? 0, self::reportTimestamp($w) ?? PHP_INT_MIN];
     }
 
-    private static function reportTimestamp(WeatherWarning $w): ?int
+    private static function reportTimestamp(BaseWeatherWarning $w): ?int
     {
         if (empty($w->reportDate)) {
             return null;
