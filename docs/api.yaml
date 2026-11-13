@@ -185,6 +185,14 @@ paths:
     $ref: './weather/paths/v2-weather-waves.yaml'
   /v2/weather/ipma-services:
     $ref: './weather/paths/v2-weather-ipma-services.yaml'
+  /v2/weather/aemet/stations:
+    $ref: './weather/paths/v2-weather-aemet-stations.yaml'
+  /v2/weather/aemet/observations:
+    $ref: './weather/paths/v2-weather-aemet-observations.yaml'
+  /v2/weather/aemet/stations/{id}/observations:
+    $ref: './weather/paths/v2-weather-aemet-stations-id-observations.yaml'
+  /v2/weather/aemet/stations/{id}/daily:
+    $ref: './weather/paths/v2-weather-aemet-stations-id-daily.yaml'
 
   # V2 — Fire perimeters and spread simulations (MTG FRP Processor)
   /v2/fire/perimeters:

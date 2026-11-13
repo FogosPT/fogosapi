@@ -1,0 +1,79 @@
+get:
+  operationId: v2GetWeatherAemetStationDaily
+  summary: Daily summaries of one AEMET weather station
+  description: |
+    AEMET (Spain) daily summaries for a single station, oldest first — same
+    shape, fields, units, parameters, limits and errors as
+    `/v2/weather/stations/{id}/daily`; only `stationId` is a string. AEMET
+    publishes them with roughly three days of delay. `date` is the civil day as
+    AEMET aggregates it (peninsular Spain). `prec_max_inst` and `rad_total`
+    have no AEMET equivalent and are always `null`. Missing values are `null`.
+    Cached for 1 hour.
+  tags:
+    - Weather
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: AEMET station id (`idema`, `idEstacao`)
+      schema:
+        type: string
+        pattern: '^[0-9A-Za-z]+$'
+        example: 3469A
+    - name: days
+      in: query
+      required: false
+      description: Window size in days, counted back from today
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 90
+        default: 30
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              stationId:
+                type: string
+              location:
+                type: string
+              place:
+                type: string
+                nullable: true
+              coordinates:
+                type: array
+                nullable: true
+                items:
+                  type: number
+              daily:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    date:
+                      type: string
+                      format: date
+                    temp_min: { type: number, nullable: true }
+                    temp_med: { type: number, nullable: true }
+                    temp_max: { type: number, nullable: true }
+                    hum_min: { type: number, nullable: true }
+                    hum_med: { type: number, nullable: true }
+                    hum_max: { type: number, nullable: true }
+                    prec_quant: { type: number, nullable: true, description: mm }
+                    prec_max_inst: { type: number, nullable: true }
+                    rad_total: { type: number, nullable: true }
+                    pressao: { type: number, nullable: true }
+                    vento_int_med: { type: number, nullable: true }
+                    vento_int_max_inst: { type: number, nullable: true }
+                    vento_dir_max: { type: number, nullable: true }
+                    idDireccVento: { type: integer, nullable: true }
+    404:
+      $ref: '../../common/responses/404.yaml'
+    422:
+      $ref: '../../common/responses/422.yaml'
+    500:
+      $ref: '../../common/responses/500.yaml'

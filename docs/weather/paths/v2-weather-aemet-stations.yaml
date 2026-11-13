@@ -1,0 +1,58 @@
+get:
+  operationId: v2GetWeatherAemetStations
+  summary: AEMET weather stations (same shape as /v2/weather/stations/ipma)
+  description: |
+    AEMET (Spain) weather stations (collection `aemetStations`, from the AEMET
+    inventory), in the exact shape of `/v2/weather/stations/ipma`. The only
+    difference is `properties.idEstacao`, the AEMET `idema` (a string such as
+    `3469A`). Stations without known coordinates are left out.
+
+    Each entry is a GeoJSON Feature with `properties.idEstacao` and
+    `properties.localEstacao`; coordinates follow the GeoJSON `[lng, lat]`
+    convention.
+
+    The response is cached in Redis for 1 hour.
+  tags:
+    - Weather
+  parameters:
+    - name: peninsula
+      in: query
+      required: false
+      description: '`1` returns only peninsular stations (drops Baleares, Canarias, Ceuta and Melilla)'
+      schema:
+        type: boolean
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [Feature]
+                geometry:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [Point]
+                    coordinates:
+                      type: array
+                      minItems: 2
+                      maxItems: 2
+                      items:
+                        type: number
+                properties:
+                  type: object
+                  properties:
+                    idEstacao:
+                      type: string
+                      example: 3469A
+                    localEstacao:
+                      type: string
+    500:
+      $ref: '../../common/responses/500.yaml'
