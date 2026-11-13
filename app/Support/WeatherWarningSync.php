@@ -60,10 +60,17 @@ class WeatherWarningSync
      * An empty feed, or one older than what we already have (cached page),
      * is ignored (returns null) so a bad fetch never wipes the active
      * warnings, and a row is never overwritten by an older version of itself.
+     *
+     * `$snapshotReportDate` is for sources whose snapshot can validly carry no
+     * warning at all (AEMET: a tar of verde messages). When it is given, `[]`
+     * is an all-clear snapshot (every active row is withdrawn) and that date,
+     * not the items', decides whether the snapshot is older than the stored
+     * rows and is the diff's reportDate. Without it (IPMA) an empty feed is
+     * ignored, as always.
      */
-    public function sync(?array $items): ?WeatherWarningDiff
+    public function sync(?array $items, ?string $snapshotReportDate = null): ?WeatherWarningDiff
     {
-        if (!$items) {
+        if ($items === null || (!$items && $snapshotReportDate === null)) {
             $this->recordEnded();
 
             return null;
@@ -83,7 +90,7 @@ class WeatherWarningSync
             ->where('endTime', '>=', Carbon::now())
             ->get();
 
-        if ($this->isStale($items, $active)) {
+        if ($this->isStale($items, $active, $snapshotReportDate)) {
             $this->recordEnded();
 
             return null;
@@ -203,7 +210,7 @@ class WeatherWarningSync
             }
         }
 
-        $reportDate = collect($items)->pluck('reportDate')->filter()
+        $reportDate = $snapshotReportDate ?? collect($items)->pluck('reportDate')->filter()
             ->sortBy(fn ($r) => $this->timestamp($r))->last();
 
         $diff = new WeatherWarningDiff($created, $levelChanges, $updated, $removed, $reportDate);
@@ -328,9 +335,11 @@ class WeatherWarningSync
         return max(0, min($a[1], $b[1]) - max($a[0], $b[0]));
     }
 
-    private function isStale(array $items, $active): bool
+    private function isStale(array $items, $active, ?string $snapshotReportDate = null): bool
     {
-        $incomingReport = collect($items)->map(fn ($d) => $this->timestamp($d->reportDate ?? null))->filter()->max();
+        $incomingReport = $snapshotReportDate !== null
+            ? $this->timestamp($snapshotReportDate)
+            : collect($items)->map(fn ($d) => $this->timestamp($d->reportDate ?? null))->filter()->max();
         $existingReport = $active->map(fn (BaseWeatherWarning $w) => $this->timestamp($w->reportDate ?? null))->filter()->max();
 
         if ($incomingReport === null) {

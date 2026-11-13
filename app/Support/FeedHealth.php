@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Cache;
  * Discord errors channel once when it has failed for longer than its stale
  * window, and once when it recovers. Subclasses supply, through late static
  * binding, the cache `KEY` prefix, the source `LABELS`, the message
- * `PREFIX` and `staleMinutes()`.
+ * `PREFIX` and the stale window through
+ * `staleMinutesFor($source)`.
  */
 abstract class FeedHealth
 {

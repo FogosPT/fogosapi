@@ -20,6 +20,7 @@ use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -36,6 +37,8 @@ class ProcessAemetWarningsTest extends TestCase
     use DatabaseMigrations;
 
     private const ZONE_713603 = 'Z_CAP_C_LEMM_20261112092714_AFAZ713603PRP11223.xml';
+
+    private const VERDE = 'Z_CAP_C_LEMM_20261111225001_AFAZ71VV71PRP11423.xml';
 
     private array $history = [];
 
@@ -55,12 +58,17 @@ class ProcessAemetWarningsTest extends TestCase
         parent::tearDown();
     }
 
-    private function job(array $responses): ProcessAemetWarnings
+    private function tool(array $responses): AemetTool
     {
         $stack = HandlerStack::create(new MockHandler($responses));
         $stack->push(Middleware::history($this->history));
 
-        return (new ProcessAemetWarnings())->withTool(new AemetTool(new Client(['http_errors' => false, 'handler' => $stack])));
+        return new AemetTool(new Client(['http_errors' => false, 'handler' => $stack]));
+    }
+
+    private function job(array $responses): ProcessAemetWarnings
+    {
+        return (new ProcessAemetWarnings())->withTool($this->tool($responses));
     }
 
     /** The two-step responses serving `$tar`. */
@@ -335,5 +343,81 @@ class ProcessAemetWarningsTest extends TestCase
 
         $this->assertSame(1, AemetWarning::where('district', 'STB')->count());
         Queue::assertNotPushed(SendWeatherWarningToTelegram::class);
+    }
+
+    /** A tar of verde messages only (sent as given), the IPMA-style "nothing in force". */
+    private function allClear(string $sent): string
+    {
+        $files = $this->entries($this->fixture());
+        $verde = str_replace(
+            ['<sent>2026-11-11T22:50:01-00:00</sent>', '2.49.0.0.724.0.ES.20261111225001.71VV71PRP114231794437401'],
+            ['<sent>'.$sent.'</sent>', '2.49.0.0.724.0.ES.ALLCLEAR.71VV71PRP114231794437401'],
+            $files[self::VERDE]
+        );
+
+        return $this->tar([self::VERDE => $verde]);
+    }
+
+    /** @test */
+    public function an_all_clear_snapshot_withdraws_warnings(): void
+    {
+        $this->runJob();
+        $this->assertSame(['645405C', '713201', '713603'], $this->activeZones());
+
+        // Newer than the newest stored report (713201, sent 17:07:09Z).
+        Carbon::setTestNow('2026-11-12T18:05:00Z');
+        $job = $this->runJob($this->allClear('2026-11-12T18:00:00-00:00'));
+
+        $this->assertNull($job->failureReason);
+        $this->assertSame([], $this->activeZones());
+        $this->assertSame(
+            ['645405C', '713201', '713603'],
+            AemetWarningEvent::where('kind', 'retirado')->pluck('district')->sort()->values()->all()
+        );
+        $this->assertSame(
+            '2026-11-12T18:00:00+00:00',
+            AemetWarningEvent::where('kind', 'retirado')->first()->occurredAt->toIso8601String()
+        );
+        $this->assertSame(10, AemetWarningMessage::count(), 'the all-clear message is archived');
+        $this->assertFalse(AemetFeedHealth::isStale('warnings'));
+        $this->assertSame(0, WeatherWarningEvent::count());
+    }
+
+    /** @test */
+    public function an_older_all_clear_snapshot_is_ignored(): void
+    {
+        $this->runJob();
+        $before = AemetWarning::whereNull('supersededAt')->orderBy('district')->get(['district', 'level', 'endTime'])->toArray();
+
+        Carbon::setTestNow('2026-11-12T16:15:00Z');
+        $job = $this->runJob($this->allClear('2026-11-12T08:00:00-00:00'));
+
+        $this->assertNotNull($job->failureReason);
+        $after = AemetWarning::whereNull('supersededAt')->orderBy('district')->get(['district', 'level', 'endTime'])->toArray();
+        $this->assertEquals($before, $after);
+        $this->assertSame(0, AemetWarningEvent::where('kind', 'retirado')->count());
+
+        Carbon::setTestNow('2026-11-12T17:01:00Z');
+        $job = $this->runJob($this->allClear('2026-11-12T08:00:00-00:00'));
+        $this->assertTrue(AemetFeedHealth::isStale('warnings'));
+        $this->assertStringContainsString('snapshot antigo', $job->healthMessage);
+    }
+
+    /** @test */
+    public function the_command_fails_on_a_failed_run(): void
+    {
+        $this->app->instance(AemetTool::class, $this->tool($this->serving($this->tar([]))));
+        $this->assertSame(1, Artisan::call('aemet:warnings'));
+        $this->assertStringContainsString('snapshot vazio', Artisan::output());
+
+        $this->app->instance(AemetTool::class, $this->tool($this->serving($this->fixture())));
+        $this->assertSame(0, Artisan::call('aemet:warnings'));
+    }
+
+    /** @test */
+    public function the_command_needs_a_key(): void
+    {
+        config(['services.aemet.key' => '']);
+        $this->assertSame(1, Artisan::call('aemet:warnings'));
     }
 }

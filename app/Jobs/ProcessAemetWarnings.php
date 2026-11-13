@@ -25,7 +25,9 @@ use MongoDB\BSON\UTCDateTime;
  *    (WeatherWarningSync::aemet()), which writes `aemetWarningEvents`.
  * A failed download, a tar with any unreadable file or an empty tar changes no
  * warning (only the endings are recorded) and counts as a failure in
- * AemetFeedHealth, as does a snapshot the engine ignores (empty or older).
+ * AemetFeedHealth, as does a snapshot older than the stored rows. A tar whose
+ * messages are all verde or expired is a valid all-clear: the active warnings
+ * are withdrawn.
  * Does nothing without `AEMET_API_KEY`.
  */
 class ProcessAemetWarnings extends Job implements ShouldBeUnique
@@ -38,6 +40,9 @@ class ProcessAemetWarnings extends Job implements ShouldBeUnique
 
     /** The health message posted by this run, if any (tests). */
     public ?string $healthMessage = null;
+
+    /** Why this run failed (download, unreadable/empty tar, older snapshot); null on success. */
+    public ?string $failureReason = null;
 
     /** Only set synchronously (tests); queued jobs build their own. */
     private ?AemetTool $tool = null;
@@ -77,17 +82,31 @@ class ProcessAemetWarnings extends Job implements ShouldBeUnique
         $this->archive($messages);
         $this->zones($messages);
 
-        $diff = WeatherWarningSync::aemet()->sync(AemetWarningItems::fromMessages($messages, Carbon::now()));
+        // The newest `sent` of the whole tar (verde included) dates the snapshot, so a
+        // tar with no warning in force is a valid all-clear that withdraws the active ones.
+        $snapshotSent = max(array_map(fn (CapMessage $m) => $m->sent->getTimestamp(), $messages));
 
-        $this->healthMessage = $diff === null
-            ? AemetFeedHealth::recordFailure('warnings', 'snapshot vazio ou antigo')
-            : AemetFeedHealth::recordSuccess('warnings');
+        $diff = WeatherWarningSync::aemet()->sync(
+            AemetWarningItems::fromMessages($messages, Carbon::now()),
+            Carbon::createFromTimestampUTC($snapshotSent)->toIso8601String(),
+        );
+
+        if ($diff === null) {
+            $this->failureReason = 'snapshot antigo';
+            Log::warning('[ProcessAemetWarnings] '.$this->failureReason);
+            $this->healthMessage = AemetFeedHealth::recordFailure('warnings', $this->failureReason);
+
+            return;
+        }
+
+        $this->healthMessage = AemetFeedHealth::recordSuccess('warnings');
     }
 
     /** No reconciliation: only the endings of the stored warnings are recorded. */
     private function reject(string $reason): void
     {
         Log::warning('[ProcessAemetWarnings] '.$reason);
+        $this->failureReason = $reason;
         $this->healthMessage = AemetFeedHealth::recordFailure('warnings', $reason);
         WeatherWarningSync::aemet()->sync(null);
     }
