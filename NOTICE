@@ -39,5 +39,20 @@ resources/data/madeira/parishes.json
     a partir da Carta Administrativa Oficial de Portugal (CAOP 2024.1), Direção-
     Geral do Território — CC BY 4.0.
 
-Os dados servidos pela API (ANEPC, ICNF, IPMA, SRPC-RAM, EMSC, USGS, GFZ, IGN, ISC, …)
-não fazem parte do repositório e seguem os termos de cada fonte.
+Os dados servidos pela API (ANEPC, ICNF, IPMA, SRPC-RAM, AEMET, EMSC, USGS, GFZ, IGN,
+ISC, …) não fazem parte do repositório e seguem os termos de cada fonte.
+
+-------------------------------------------------------------------------------
+Fontes de dados com atribuição obrigatória
+-------------------------------------------------------------------------------
+
+AEMET — Agencia Estatal de Meteorología (Espanha), AEMET OpenData
+    Avisos meteorológicos (CAP), zonas de aviso e dados das estações servidos em
+    /v2/warnings/aemet* e /v2/weather/aemet/*. Reutilização livre, também
+    comercial, citando a fonte (nota legal da AEMET, Lei 37/2007):
+
+        Fuente: AEMET
+        Información elaborada utilizando, entre otras, la obtenida de la
+        Agencia Estatal de Meteorología
+
+    https://opendata.aemet.es

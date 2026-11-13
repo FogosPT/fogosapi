@@ -43,10 +43,11 @@ class WeatherWarningSync
     }
 
     /**
-     * The IPMA feed is a full snapshot of the current warnings: when IPMA
-     * upgrades a warning (yellow → orange → red) or cancels it, the old one
-     * simply stops appearing. So each run reconciles the active rows with the
-     * snapshot, per (district, type), one row per warning window:
+     * Both feeds (IPMA homepage, AEMET CAP tar) are full snapshots of the
+     * current warnings: when the source upgrades a warning (yellow → orange →
+     * red) or cancels it, the old one simply stops appearing. So each run
+     * reconciles the active rows with the snapshot, per (district, type) —
+     * district = IPMA area or AEMET zone code — one row per warning window:
      *  1. windows are paired with an overlapping active row of the same
      *     level (earliest window first), which is updated in place (IPMA moves startTime to
      *     "now" and extends endTime on every republish);

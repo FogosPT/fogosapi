@@ -2,6 +2,8 @@ get:
   operationId: v2GetWeatherAemetStationObservations
   summary: Hourly observations of one AEMET weather station
   description: |
+    Fuente: AEMET (Agencia Estatal de Meteorología, AEMET OpenData).
+
     Hourly readings for a single AEMET (Spain) station, oldest first — same
     shape, parameters, limits and errors as `/v2/weather/stations/{id}/observations`;
     only `stationId` is a string. Missing readings are `null` (unlike

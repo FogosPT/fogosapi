@@ -2,6 +2,8 @@ get:
   operationId: v2GetWeatherAemetObservations
   summary: Hourly AEMET station observations (last 24h, same shape as /v2/weather/observations)
   description: |
+    Fuente: AEMET (Agencia Estatal de Meteorología, AEMET OpenData).
+
     Returns the last 24 hours of hourly AEMET (Spain) observations ingested by
     the `UpdateAemetObservations` job (collection `aemetObservations`), in the
     exact shape and units of `/v2/weather/observations`. Station keys are AEMET

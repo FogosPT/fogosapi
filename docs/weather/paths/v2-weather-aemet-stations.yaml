@@ -2,6 +2,8 @@ get:
   operationId: v2GetWeatherAemetStations
   summary: AEMET weather stations (same shape as /v2/weather/stations/ipma)
   description: |
+    Fuente: AEMET (Agencia Estatal de Meteorología, AEMET OpenData).
+
     AEMET (Spain) weather stations (collection `aemetStations`, from the AEMET
     inventory), in the exact shape of `/v2/weather/stations/ipma`. The only
     difference is `properties.idEstacao`, the AEMET `idema` (a string such as

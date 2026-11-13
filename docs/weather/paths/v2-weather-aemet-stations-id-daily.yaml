@@ -2,6 +2,8 @@ get:
   operationId: v2GetWeatherAemetStationDaily
   summary: Daily summaries of one AEMET weather station
   description: |
+    Fuente: AEMET (Agencia Estatal de Meteorología, AEMET OpenData).
+
     AEMET (Spain) daily summaries for a single station, oldest first — same
     shape, fields, units, parameters, limits and errors as
     `/v2/weather/stations/{id}/daily`; only `stationId` is a string. AEMET
