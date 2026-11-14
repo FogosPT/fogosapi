@@ -32,6 +32,12 @@ class IpmaDistrict
         'Viseu'            => 'VIS',
     ];
 
+    /** @return array<string, string> district name => area code */
+    public static function all(): array
+    {
+        return self::DISTRICT_TO_AREA;
+    }
+
     public static function areaCode(?string $district): ?string
     {
         if (!$district) {

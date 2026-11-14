@@ -1,0 +1,30 @@
+get:
+  operationId: v2GetWarningsIpmaAreas
+  summary: IPMA warning areas
+  description: >-
+    The 25 IPMA warning areas (`idAreaAviso`): one per continental district,
+    four in Madeira (MCN, MCS, MRM, MPS) and three in the Azores (AOC, ACE,
+    AOR), with the districts (islands) each covers. Madeira island spans MCN,
+    MCS and MRM; `concelhos` lists its municipalities per coastal area (all of
+    them are also in MRM). Cached for 24 hours.
+  tags:
+    - Warnings
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code: { type: string, example: MCS }
+                    name: { type: string, example: Madeira - Costa Sul }
+                    region: { type: string, enum: [continente, madeira, acores] }
+                    districts: { type: array, items: { type: string } }
+                    concelhos: { type: array, items: { type: string } }

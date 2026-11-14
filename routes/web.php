@@ -54,6 +54,7 @@ Route::group(['prefix' => 'v2'], function () {
 
     Route::group(['prefix' => 'incidents'], function () {
         Route::get('search', '\App\Http\Controllers\IncidentController@search');
+        Route::get('locations', '\App\Http\Controllers\IncidentController@locations');
         Route::get('active/kml', '\App\Http\Controllers\IncidentController@activeKML');
         Route::get('active', '\App\Http\Controllers\IncidentController@active');
         Route::get('1000ha-burned', '\App\Http\Controllers\IncidentController@burnMoreThan1000');
@@ -135,6 +136,7 @@ Route::group(['prefix' => 'v2'], function () {
     Route::group(['prefix' => 'warnings'], function () {
         Route::get('ipma', '\App\Http\Controllers\WarningsController@ipma');
         Route::get('ipma/history', '\App\Http\Controllers\WarningsController@history');
+        Route::get('ipma/areas', '\App\Http\Controllers\WarningsController@areas');
         Route::get('aemet', '\App\Http\Controllers\AemetController@warnings');
         Route::get('aemet/history', '\App\Http\Controllers\AemetController@history');
         Route::get('aemet/zones', '\App\Http\Controllers\AemetController@zones');
