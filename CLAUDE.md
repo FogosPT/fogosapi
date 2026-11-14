@@ -190,7 +190,6 @@ Several features are toggled via `.env`:
 - `SCHEDULER_ENABLE` — enable cron jobs
 - `LEGACY_ENABLE` — enable v1 endpoints
 - `TELEGRAM_ENABLE`, `TWITTER_ENABLE`, `FACEBOOK_ENABLE`, `DISCORD_ENABLE`, `NOTIFICATIONS_ENABLE` — social/notification channels
-- `TROLL_MODE` — returns fake data for unauthorized API consumers (checks against whitelisted user-agents/referers)
 - `PROXY_ENABLE` / `PROXY_URL` — route outbound requests through a proxy
 - `MADEIRA_EVENTS_URL` — SRPC-RAM (Madeira) events feed; empty disables `ProcessMadeiraEvents`
 - `MADEIRA_OCCURRENCES_URL` — SRPC-RAM ArcGIS statistics view (layer URL); empty disables `ProcessMadeiraOccurrences`
