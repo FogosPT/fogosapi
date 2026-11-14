@@ -62,6 +62,25 @@ class IncidentLocationsTest extends TestCase
     }
 
     /** @test */
+    public function locations_are_cached_until_the_warm_command_rebuilds_them(): void
+    {
+        $this->incident('Porto', 'Amarante', 'Telões');
+
+        $districts = fn () => array_column($this->getJson('v2/incidents/locations')->assertOk()->json('data'), 'district');
+
+        $this->assertSame(['Porto'], $districts());
+        $this->getJson('v2/incidents/locations')->assertHeader('Cache-Control', 'max-age=86400, public, s-maxage=604800, stale-while-revalidate=604800');
+
+        // A new name does not reach the cached list…
+        $this->incident('Faro', 'Loulé', 'Almancil');
+        $this->assertSame(['Porto'], $districts());
+
+        // …until the (daily / deploy) warm command rebuilds it.
+        $this->artisan('fogospt:warm-locations')->assertSuccessful();
+        $this->assertSame(['Faro', 'Porto'], $districts());
+    }
+
+    /** @test */
     public function active_filters_by_several_locations_at_any_level(): void
     {
         $porto = $this->incident('Porto', 'Amarante', 'Telões');

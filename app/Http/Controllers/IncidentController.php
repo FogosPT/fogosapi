@@ -251,10 +251,12 @@ class IncidentController extends Controller
      */
     public function locations(): JsonResponse
     {
+        // Changes rarely (see IncidentLocations): a week at the CDN, a day in
+        // the browser, and stale copies served while Cloudflare revalidates.
         return $this->cacheable(new JsonResponse([
             'success' => true,
             'data' => IncidentLocations::tree(),
-        ]), 86400);
+        ]), 604800, 86400, 604800);
     }
 
     public function activeKML(Request $request): JsonResponse

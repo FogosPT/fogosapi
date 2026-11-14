@@ -48,7 +48,8 @@ class WarningsController extends Controller
     /** The 25 IPMA warning areas and the locations each one covers. */
     public function areas(): JsonResponse
     {
-        return $this->cacheable(new JsonResponse(['success' => true, 'data' => IpmaArea::all()]), 86400);
+        // Static list: a month at the CDN, a week in the browser.
+        return $this->cacheable(new JsonResponse(['success' => true, 'data' => IpmaArea::all()]), 2592000, 604800);
     }
 
     /** Event log of the IPMA warnings; see ServesWarningHistory. */

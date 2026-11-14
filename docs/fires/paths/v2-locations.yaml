@@ -5,7 +5,8 @@ get:
     Distinct `district` / `concelho` / `freguesia` values stored on incidents,
     grouped case-insensitively (the most frequent spelling is shown) and
     sorted. These are the values the `district`, `concelho` and `freguesia`
-    filters accept. Cached for 24 hours.
+    filters accept. Cached in Redis with no expiry and rebuilt daily
+    (`fogospt:warm-locations`); `s-maxage` 7 days, `max-age` 1 day.
   tags:
     - V2
   responses:

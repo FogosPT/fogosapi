@@ -6,7 +6,7 @@ get:
     four in Madeira (MCN, MCS, MRM, MPS) and three in the Azores (AOC, ACE,
     AOR), with the districts (islands) each covers. Madeira island spans MCN,
     MCS and MRM; `concelhos` lists its municipalities per coastal area (all of
-    them are also in MRM). Cached for 24 hours.
+    them are also in MRM). Static: `s-maxage` 30 days, `max-age` 7 days.
   tags:
     - Warnings
   responses:

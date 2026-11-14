@@ -14,14 +14,17 @@ use voku\helper\UTF8;
  *
  * Names are grouped case-insensitively; the most frequent spelling is the one
  * shown, and every stored spelling is kept so a filter matches all of them.
+ *
+ * Both lists change rarely, so they are cached with no expiry and rebuilt in
+ * place once a day by `fogospt:warm-locations` (scheduled, also run on
+ * deploy): requests never wait on the aggregation except on a cold cache.
  */
 class IncidentLocations
 {
     public const LEVELS = ['district', 'concelho', 'freguesia'];
 
-    private const CACHE_KEY = 'incidents.locations.v1';
-    private const LOCATIONS_CACHE_KEY = 'locations.names.v2';
-    private const CACHE_TTL_SECONDS = 86400;
+    private const CACHE_KEY = 'incidents.locations.v2';
+    private const LOCATIONS_CACHE_KEY = 'locations.names.v3';
 
     // Incidents in Spain are stored with concelho "Espanha", which has no
     // Location row (see Concelho).
@@ -161,13 +164,34 @@ class IncidentLocations
     private static function data(): array
     {
         $cached = Cache::memo()->get(self::CACHE_KEY);
-        if (is_array($cached)) {
-            return $cached;
-        }
 
+        return is_array($cached) ? $cached : self::refreshIncidents();
+    }
+
+    /**
+     * Rebuild both lists and overwrite the cache (the old value is served
+     * until the new one is written). Empty results are not cached.
+     *
+     * @return array{districts: int, concelhos: int, freguesias: int, locations: int}
+     */
+    public static function refresh(): array
+    {
+        $data = self::refreshIncidents();
+        $names = self::refreshLocationNames();
+
+        return [
+            'districts' => count($data['spellings']['district'] ?? []),
+            'concelhos' => count($data['spellings']['concelho'] ?? []),
+            'freguesias' => count($data['spellings']['freguesia'] ?? []),
+            'locations' => array_sum(array_map('count', array_intersect_key($names, array_flip(self::LEVELS)))),
+        ];
+    }
+
+    private static function refreshIncidents(): array
+    {
         $data = self::build();
         if (!empty($data['tree'])) {
-            Cache::memo()->put(self::CACHE_KEY, $data, self::CACHE_TTL_SECONDS);
+            Cache::memo()->forever(self::CACHE_KEY, $data);
         }
 
         return $data;
@@ -253,10 +277,12 @@ class IncidentLocations
     private static function locationNames(): array
     {
         $cached = Cache::memo()->get(self::LOCATIONS_CACHE_KEY);
-        if (is_array($cached)) {
-            return $cached;
-        }
 
+        return is_array($cached) ? $cached : self::refreshLocationNames();
+    }
+
+    private static function refreshLocationNames(): array
+    {
         $locations = Location::whereIn('level', array_values(self::LOCATION_LEVEL))->get(['level', 'code', 'name']);
 
         $names = array_fill_keys(self::LEVELS, []);
@@ -304,7 +330,7 @@ class IncidentLocations
         $names['districtNames'] = $districtNames;
 
         if ($locations->isNotEmpty()) {
-            Cache::memo()->put(self::LOCATIONS_CACHE_KEY, $names, self::CACHE_TTL_SECONDS);
+            Cache::memo()->forever(self::LOCATIONS_CACHE_KEY, $names);
         }
 
         return $names;

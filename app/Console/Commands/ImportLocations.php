@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Location;
+use App\Support\IncidentLocations;
 use Illuminate\Console\Command;
 
 class ImportLocations extends Command
@@ -17195,5 +17196,7 @@ class ImportLocations extends Command
             $location->code = $l->code;
             $location->save();
         }
+
+        IncidentLocations::refresh();
     }
 }

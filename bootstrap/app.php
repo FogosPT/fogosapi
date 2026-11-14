@@ -35,6 +35,7 @@ use App\Console\Commands\AemetWarnings;
 use App\Console\Commands\AemetStations;
 use App\Console\Commands\AemetObservations;
 use App\Console\Commands\AemetDaily;
+use App\Console\Commands\WarmIncidentLocations;
 use App\Console\Commands\AssignWeatherStations;
 use App\Console\Commands\CollapseWeatherWarnings;
 use App\Console\Commands\DumpFireStatuses;
@@ -90,6 +91,7 @@ return Application::configure(basePath: dirname(__DIR__))
         AemetStations::class,
         AemetObservations::class,
         AemetDaily::class,
+        WarmIncidentLocations::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         if (env('SCHEDULER_ENABLE')) {
@@ -113,6 +115,7 @@ return Application::configure(basePath: dirname(__DIR__))
             $schedule->job(new UpdateICNFData(6))->cron('0 3 * * 3');
 
             $schedule->job(new UpdateWeatherStations())->daily()->at('03:21');
+            $schedule->command('fogospt:warm-locations')->dailyAt('04:40')->withoutOverlapping(30)->runInBackground();
             $schedule->job(new UpdateWeatherData())->hourly();
 
             $schedule->job(new UpdateWeatherDataDaily())->daily()->at('04:21');
