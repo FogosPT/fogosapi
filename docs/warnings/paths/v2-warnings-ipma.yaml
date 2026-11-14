@@ -14,6 +14,19 @@ get:
     are ordered by `startTime` ascending.
   tags:
     - Warnings
+  parameters:
+    - name: area
+      in: query
+      required: false
+      description: >-
+        IPMA area codes (`idAreaAviso`, see `GET v2/warnings/ipma/areas`),
+        separated by `,` or `|`. Combined (OR) with `district` / `concelho` /
+        `freguesia`, which are resolved to the areas covering them. An unknown
+        code returns `422` `invalid_area`.
+      schema: { type: string }
+    - $ref: '../../common/parameters/location-district.yaml'
+    - $ref: '../../common/parameters/location-concelho.yaml'
+    - $ref: '../../common/parameters/location-freguesia.yaml'
   responses:
     200:
       description: OK

@@ -25,7 +25,9 @@ class IncidentSearchRequest extends FormRequest
     {
         return [
             'all' => 'boolean',
+            'district' => 'string',
             'concelho' => 'string',
+            'freguesia' => 'string',
             'day' => 'date_format:Y-m-d',
             'before' => 'date_format:Y-m-d',
             'after' => 'date_format:Y-m-d',

@@ -19,6 +19,9 @@ get:
   tags:
     - Warnings
   parameters:
+    - $ref: '../../common/parameters/location-district.yaml'
+    - $ref: '../../common/parameters/location-concelho.yaml'
+    - $ref: '../../common/parameters/location-freguesia.yaml'
     - name: from
       in: query
       description: Start (`YYYY-MM-DD` = start of day, or `YYYY-MM-DDTHH:MM[:SS]`). Default `to` − 7 days.

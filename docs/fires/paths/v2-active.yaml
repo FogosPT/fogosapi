@@ -10,7 +10,9 @@ get:
   parameters:
     - $ref: '../parameters/query/all.yaml'
     - $ref: '../parameters/query/geojson.yaml'
-    - $ref: '../parameters/query/concelho-v2.yaml'
+    - $ref: '../../common/parameters/location-district.yaml'
+    - $ref: '../../common/parameters/location-concelho.yaml'
+    - $ref: '../../common/parameters/location-freguesia.yaml'
     - name: limit
       in: query
       required: false

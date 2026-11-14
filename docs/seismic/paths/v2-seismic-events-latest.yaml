@@ -2,6 +2,10 @@ get:
   operationId: v2GetSeismicLatest
   summary: Last earthquake and the last 7 days
   description: |
+    `district` / `concelho` / `freguesia` match the nearest Portuguese places
+    of each event (`nearestPlaces`: municipality or parish); a district means
+    all of its municipalities.
+
     `last` is the most recent earthquake (whatever its age); `data` holds up
     to 200 earthquakes from the last 7 days. `primarySource` is the source
     currently leading (IPMA unless it has been down for more than
@@ -9,6 +13,9 @@ get:
   tags: [Seismic]
   parameters:
     - { name: region, in: query, schema: { type: string, enum: [continente, acores, madeira, outro] } }
+    - $ref: '../../common/parameters/location-district.yaml'
+    - $ref: '../../common/parameters/location-concelho.yaml'
+    - $ref: '../../common/parameters/location-freguesia.yaml'
   responses:
     200:
       description: OK

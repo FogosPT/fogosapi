@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use voku\helper\UTF8;
+
 /**
  * Nearest Portuguese places to an epicentre, from the gazetteer in
  * resources/data/seismic/places-pt.json (Wikidata, see seismic:places-import):
@@ -19,6 +21,9 @@ class SeismicPlaces
 
     /** @var null|array<string, array<int, array>> */
     private static ?array $grid = null;
+
+    /** @var null|array{municipalities: array<string, array<int, string>>, parishes: array<string, array<int, array{0: string, 1: string}>>} */
+    private static ?array $names = null;
 
     /** @var array{0: int, 1: int, 2: int, 3: int} min/max row and column of the grid */
     private static array $bounds = [0, 0, 0, 0];
@@ -115,6 +120,125 @@ class SeismicPlaces
             'kind' => $kind === 'c' ? 'concelho' : 'freguesia',
             'km' => round($bestKm, 1),
             'bearing' => self::bearing($plat, $plon, $lat, $lon),
+        ];
+    }
+
+    /**
+     * Gazetteer municipality names for administrative ones (Location /
+     * incident names). Accents and case are ignored, and a leading
+     * "Vila da/de/do" is dropped when nothing matches with it ("Vila da Praia
+     * da Vitória" → "Praia da Vitória").
+     *
+     * @param array<int, string> $names
+     * @return array<int, string>
+     */
+    public static function municipalitiesFor(array $names): array
+    {
+        $index = self::names()['municipalities'];
+        $out = [];
+        foreach ($names as $name) {
+            foreach (self::candidateKeys($name, false) as $key) {
+                if (isset($index[$key])) {
+                    array_push($out, ...$index[$key]);
+                    break;
+                }
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    /**
+     * Gazetteer parishes [name, municipality] for administrative parishes
+     * [freguesia, concelho or null]. Besides accents and case, the gazetteer's
+     * "Freguesia de …" prefix is ignored, "Cidade (Parish)" is looked up as the
+     * parish in brackets, and a "União das freguesias de A, B e C" matches its
+     * former parishes A, B and C. With a municipality only its parishes match.
+     *
+     * @param array<int, array{0: string, 1: ?string}> $parishes
+     * @return array<int, array{0: string, 1: string}>
+     */
+    public static function parishesFor(array $parishes): array
+    {
+        $index = self::names()['parishes'];
+        $out = [];
+        foreach ($parishes as [$parish, $concelho]) {
+            $municipalities = $concelho !== null ? self::municipalitiesFor([$concelho]) : null;
+            foreach (self::candidateKeys($parish, true) as $key) {
+                $found = array_filter(
+                    $index[$key] ?? [],
+                    fn ($p) => $municipalities === null || in_array($p[1], $municipalities, true)
+                );
+                if ($found) {
+                    array_push($out, ...$found);
+                    if (!self::isUnion($parish)) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return array_values(array_unique($out, SORT_REGULAR));
+    }
+
+    public static function nameKey(string $name): string
+    {
+        return trim(preg_replace('/\s+/', ' ', mb_strtolower(UTF8::to_ascii($name))));
+    }
+
+    /** Keys to try for $name, best first. */
+    private static function candidateKeys(string $name, bool $parish): array
+    {
+        $key = self::nameKey($name);
+        $keys = [$key];
+
+        if (!$parish) {
+            $keys[] = preg_replace('/^vila (da|de|do) /', '', $key);
+        } else {
+            if (preg_match('/\(([^)]+)\)/', $key, $m)) {
+                $keys[] = trim($m[1]);
+            }
+            if (self::isUnion($name)) {
+                $rest = preg_replace('/^uniao das freguesias (de |da |do |das |dos )?/', '', $key);
+                foreach (preg_split('/, | e /', $rest) as $part) {
+                    $keys[] = trim($part);
+                }
+            }
+        }
+
+        return array_values(array_unique(array_filter($keys)));
+    }
+
+    private static function isUnion(string $name): bool
+    {
+        return str_starts_with(self::nameKey($name), 'uniao das freguesias');
+    }
+
+    private static function names(): array
+    {
+        if (self::$names !== null) {
+            return self::$names;
+        }
+
+        self::load();
+        $municipalities = $parishes = [];
+        foreach (self::$grid ?? [] as $cell) {
+            foreach ($cell as [$name, $municipality, $kind]) {
+                $municipalities[self::nameKey($municipality)][$municipality] = $municipality;
+                if ($kind === 'f') {
+                    $key = self::nameKey($name);
+                    $parishes[$key][] = [$name, $municipality];
+                    $short = preg_replace('/^freguesia (de |da |do |das |dos )/', '', $key);
+                    if ($short !== $key) {
+                        $parishes[$short][] = [$name, $municipality];
+                    }
+                }
+            }
+        }
+
+        return self::$names = [
+            'municipalities' => array_map('array_values', $municipalities),
+            'parishes' => $parishes,
         ];
     }
 

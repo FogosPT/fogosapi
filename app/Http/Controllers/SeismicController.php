@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Earthquake;
 use App\Models\SeismicStat;
 use App\Resources\EarthquakeResource;
+use App\Support\IncidentLocations;
+use App\Support\LocationFilter;
 use App\Support\SeismicFeedHealth;
+use App\Support\SeismicPlaces;
 use App\Support\SeismicRegion;
 use App\Support\SeismicStats;
 use App\Support\SeismicStatsBuilder;
@@ -40,6 +43,9 @@ class SeismicController extends Controller
             'felt' => 'nullable|in:0,1,true,false',
             'bbox' => ['nullable', 'regex:/^-?\d+(\.\d+)?(,-?\d+(\.\d+)?){3}$/'],
             'limit' => 'nullable|integer|min:1|max:2000',
+            'district' => 'nullable|string',
+            'concelho' => 'nullable|string',
+            'freguesia' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -47,11 +53,12 @@ class SeismicController extends Controller
         }
 
         $params = $validator->validated();
-        $cacheKey = 'seismic:events:'.md5(json_encode($params));
+        $places = $this->placeFilter($request);
+        $cacheKey = 'seismic:events:'.md5(json_encode([$params, $places]));
 
-        $payload = Cache::remember($cacheKey, 60, function () use ($params) {
+        $payload = Cache::remember($cacheKey, 60, function () use ($params, $places) {
             $limit = (int) ($params['limit'] ?? 500);
-            $query = $this->filtered($params)->orderBy('time', 'desc')->orderBy('_id', 'desc')->limit($limit + 1);
+            $query = $this->withPlaces($this->filtered($params), $places)->orderBy('time', 'desc')->orderBy('_id', 'desc')->limit($limit + 1);
             $rows = $query->get();
 
             // Cursor = "{time}_{id}": events sharing an origin time are
@@ -80,8 +87,11 @@ class SeismicController extends Controller
             return new JsonResponse(['success' => false, 'errors' => ['region' => ['invalid']]], 422);
         }
 
-        $payload = Cache::remember('seismic:latest:'.($region ?? 'all'), 30, function () use ($region) {
-            $base = fn () => Earthquake::when($region, fn ($q) => $q->where('region', $region));
+        $places = $this->placeFilter($request);
+        $cacheKey = 'seismic:latest:'.($region ?? 'all').($places ? ':'.md5(json_encode($places)) : '');
+
+        $payload = Cache::remember($cacheKey, 30, function () use ($region, $places) {
+            $base = fn () => $this->withPlaces(Earthquake::when($region, fn ($q) => $q->where('region', $region)), $places);
 
             $last = $base()->orderBy('time', 'desc')->first();
             $recent = $base()->where('time', '>=', Carbon::now()->subDays(7))->orderBy('time', 'desc')->limit(200)->get();
@@ -300,6 +310,58 @@ class SeismicController extends Controller
         });
 
         return new JsonResponse($payload);
+    }
+
+    /**
+     * Municipalities / parishes asked for with `district` / `concelho` /
+     * `freguesia` (see LocationFilter; a district means all its
+     * municipalities), resolved to the gazetteer's names (SeismicPlaces), or
+     * null when none. Matched against the nearest Portuguese places of each
+     * event (`nearestPlaces`).
+     *
+     * @return array{municipalities: array<int, string>, parishes: array<int, array{0: string, 1: string}>}|null
+     */
+    private function placeFilter(Request $request): ?array
+    {
+        $locations = LocationFilter::fromRequest($request);
+        if ($locations->isEmpty()) {
+            return null;
+        }
+
+        $concelhos = $locations->names('concelho');
+        foreach ($locations->names('district') as $district) {
+            array_push($concelhos, ...IncidentLocations::concelhosOfDistrict($district));
+        }
+
+        $parishes = [];
+        foreach ($locations->names('freguesia') as $freguesia) {
+            $parents = IncidentLocations::parentsOfFreguesia($freguesia);
+            if (!$parents) {
+                $parishes[] = [$freguesia, null];
+            }
+            foreach ($parents as [, $concelho]) {
+                $parishes[] = [$freguesia, $concelho];
+            }
+        }
+
+        return [
+            'municipalities' => SeismicPlaces::municipalitiesFor($concelhos),
+            'parishes' => SeismicPlaces::parishesFor($parishes),
+        ];
+    }
+
+    private function withPlaces($query, ?array $places)
+    {
+        if ($places === null) {
+            return $query;
+        }
+
+        $or = [['nearestPlaces.municipality' => ['$in' => $places['municipalities'] ?: ['-']]]];
+        foreach ($places['parishes'] as [$name, $municipality]) {
+            $or[] = ['nearestPlaces' => ['$elemMatch' => ['name' => $name, 'municipality' => $municipality]]];
+        }
+
+        return $query->whereRaw(['$or' => $or]);
     }
 
     private function filtered(array $params)

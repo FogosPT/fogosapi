@@ -65,6 +65,13 @@ properties:
   cos:
     type: string
     description: Comandante de Operações de Socorro
+  kind:
+    type: string
+    enum: [fire, urbanFire, transportFire, otherFire, fma, other]
+    description: >-
+      Incident category, from the flags set at ingestion (else from
+      `naturezaCode`): rural fire, urban/industrial fire, transport fire,
+      other fire, FMA (fogo/meteorologia adversa) or any other incident.
   naturezaCode:
     type: integer
     enum:
