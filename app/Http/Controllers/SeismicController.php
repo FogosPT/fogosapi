@@ -8,6 +8,7 @@ use App\Resources\EarthquakeResource;
 use App\Support\IncidentLocations;
 use App\Support\LocationFilter;
 use App\Support\SeismicFeedHealth;
+use App\Support\SeismicPlaces;
 use App\Support\SeismicRegion;
 use App\Support\SeismicStats;
 use App\Support\SeismicStatsBuilder;
@@ -19,7 +20,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use MongoDB\BSON\ObjectId;
-use MongoDB\BSON\Regex;
 use MongoDB\BSON\UTCDateTime;
 
 /**
@@ -315,10 +315,11 @@ class SeismicController extends Controller
     /**
      * Municipalities / parishes asked for with `district` / `concelho` /
      * `freguesia` (see LocationFilter; a district means all its
-     * municipalities), or null when none. Matched against the nearest
-     * Portuguese places of each event (`nearestPlaces`, see SeismicPlaces).
+     * municipalities), resolved to the gazetteer's names (SeismicPlaces), or
+     * null when none. Matched against the nearest Portuguese places of each
+     * event (`nearestPlaces`).
      *
-     * @return array{municipalities: array<int, string>, parishes: array<int, string>}|null
+     * @return array{municipalities: array<int, string>, parishes: array<int, array{0: string, 1: string}>}|null
      */
     private function placeFilter(Request $request): ?array
     {
@@ -327,19 +328,25 @@ class SeismicController extends Controller
             return null;
         }
 
-        $municipalities = $locations->names('concelho');
+        $concelhos = $locations->names('concelho');
         foreach ($locations->names('district') as $district) {
-            array_push($municipalities, ...IncidentLocations::concelhosOfDistrict($district));
+            array_push($concelhos, ...IncidentLocations::concelhosOfDistrict($district));
         }
 
-        $unique = fn (array $names) => array_values(array_unique(array_map(
-            fn ($n) => mb_strtolower(trim($n)),
-            $names
-        )));
+        $parishes = [];
+        foreach ($locations->names('freguesia') as $freguesia) {
+            $parents = IncidentLocations::parentsOfFreguesia($freguesia);
+            if (!$parents) {
+                $parishes[] = [$freguesia, null];
+            }
+            foreach ($parents as [, $concelho]) {
+                $parishes[] = [$freguesia, $concelho];
+            }
+        }
 
         return [
-            'municipalities' => $unique($municipalities),
-            'parishes' => $unique($locations->names('freguesia')),
+            'municipalities' => SeismicPlaces::municipalitiesFor($concelhos),
+            'parishes' => SeismicPlaces::parishesFor($parishes),
         ];
     }
 
@@ -349,12 +356,12 @@ class SeismicController extends Controller
             return $query;
         }
 
-        $exact = fn (array $names) => array_map(fn ($n) => new Regex('^'.preg_quote($n, '/').'$', 'i'), $names);
+        $or = [['nearestPlaces.municipality' => ['$in' => $places['municipalities'] ?: ['-']]]];
+        foreach ($places['parishes'] as [$name, $municipality]) {
+            $or[] = ['nearestPlaces' => ['$elemMatch' => ['name' => $name, 'municipality' => $municipality]]];
+        }
 
-        return $query->whereRaw(['$or' => [
-            ['nearestPlaces.municipality' => ['$in' => $exact($places['municipalities'] ?: ['-'])]],
-            ['nearestPlaces.name' => ['$in' => $exact($places['parishes'] ?: ['-'])]],
-        ]]);
+        return $query->whereRaw(['$or' => $or]);
     }
 
     private function filtered(array $params)

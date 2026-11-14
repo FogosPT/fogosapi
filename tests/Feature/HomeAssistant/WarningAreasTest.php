@@ -24,7 +24,7 @@ class WarningAreasTest extends TestCase
 
         foreach ([
             [1, 13, 'Porto'], [2, 1317, 'Vila Nova de Gaia'],
-            [1, 31, 'Ilha da Madeira'], [2, 3103, 'Funchal'], [2, 3107, 'Porto Moniz'], [2, 3101, 'Calheta'],
+            [1, 31, 'Ilha da Madeira'], [2, 3103, 'Funchal'], [3, 310305, 'Sé'], [2, 3107, 'Porto Moniz'], [2, 3101, 'Calheta'],
             [1, 45, 'Ilha de São Jorge'], [2, 4501, 'Calheta'],
             [1, 42, 'Ilha de São Miguel'], [2, 4203, 'Ponta Delgada'],
         ] as [$level, $code, $name]) {
@@ -85,6 +85,8 @@ class WarningAreasTest extends TestCase
         // Calheta is a municipality of Madeira and of São Jorge.
         $this->assertSame(['ACE', 'MCS', 'MRM'], $this->areas('concelho=Calheta'));
         $this->assertSame(['AOR'], $this->areas('district='.urlencode('Ilha de São Miguel')));
+        // A parish known from the locations only (no incident there yet).
+        $this->assertSame(['MCS', 'MRM'], $this->areas('freguesia='.urlencode('Sé')));
     }
 
     /** @test */

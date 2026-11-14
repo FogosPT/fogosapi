@@ -20,7 +20,7 @@ class IncidentLocations
     public const LEVELS = ['district', 'concelho', 'freguesia'];
 
     private const CACHE_KEY = 'incidents.locations.v1';
-    private const LOCATIONS_CACHE_KEY = 'locations.names.v1';
+    private const LOCATIONS_CACHE_KEY = 'locations.names.v2';
     private const CACHE_TTL_SECONDS = 86400;
 
     // Incidents in Spain are stored with concelho "Espanha", which has no
@@ -115,15 +115,15 @@ class IncidentLocations
     }
 
     /**
-     * [district, concelho] pairs (display names) whose incidents have the
-     * parish $freguesia.
+     * [district, concelho] pairs (display names) that have the parish
+     * $freguesia, from the locations collection and from incidents.
      *
      * @return array<int, array{0: string, 1: string}>
      */
     public static function parentsOfFreguesia(string $freguesia): array
     {
         $key = self::key($freguesia);
-        $parents = [];
+        $parents = self::locationNames()['freguesiaParents'][$key] ?? [];
 
         foreach (self::tree() as $district) {
             foreach ($district['concelhos'] as $item) {
@@ -135,7 +135,13 @@ class IncidentLocations
             }
         }
 
-        return $parents;
+        // The same place spelled two ways (locations vs incidents) once.
+        $unique = [];
+        foreach ($parents as [$district, $concelho]) {
+            $unique[self::key($district) . '|' . self::key($concelho)] ??= [$district, $concelho];
+        }
+
+        return array_values($unique);
     }
 
     public static function forget(): void
@@ -257,6 +263,7 @@ class IncidentLocations
         $districtsByCode = [];
         $districtNames = [];
         $concelhos = [];
+        $freguesias = [];
         foreach ($locations as $location) {
             $level = array_search((int) $location->level, self::LOCATION_LEVEL, true);
             $name = trim((string) $location->name);
@@ -270,17 +277,30 @@ class IncidentLocations
                 $districtNames[self::key($name)] = $name;
             } elseif ($level === 'concelho') {
                 $concelhos[] = [(int) $location->code, $name];
+            } else {
+                $freguesias[] = [(int) $location->code, $name];
             }
         }
 
         $byDistrict = [];
+        $concelhosByCode = [];
         foreach ($concelhos as [$code, $name]) {
             $district = $districtsByCode[intdiv($code, 100)] ?? null;
             if ($district !== null) {
                 $byDistrict[$district][] = $name;
+                $concelhosByCode[$code] = [$districtNames[$district], $name];
             }
         }
         $names['concelhosByDistrict'] = $byDistrict;
+
+        // Parish code = municipality code × 100 + n (10103 → 101 → district 1).
+        $parents = [];
+        foreach ($freguesias as [$code, $name]) {
+            if ($parent = $concelhosByCode[intdiv($code, 100)] ?? null) {
+                $parents[self::key($name)][] = $parent;
+            }
+        }
+        $names['freguesiaParents'] = $parents;
         $names['districtNames'] = $districtNames;
 
         if ($locations->isNotEmpty()) {

@@ -24,6 +24,11 @@ class SeismicLocationFilterTest extends TestCase
         Location::create(['level' => 2, 'code' => 4206, 'name' => 'Ribeira Grande']);
         Location::create(['level' => 2, 'code' => 1106, 'name' => 'Lisboa']);
         Location::create(['level' => 3, 'code' => 110601, 'name' => 'Belém']);
+        Location::create(['level' => 1, 'code' => 43, 'name' => 'Ilha Terceira']);
+        Location::create(['level' => 2, 'code' => 4302, 'name' => 'Vila da Praia da Vitória']);
+        Location::create(['level' => 1, 'code' => 1, 'name' => 'Aveiro']);
+        Location::create(['level' => 2, 'code' => 101, 'name' => 'Águeda']);
+        Location::create(['level' => 3, 'code' => 10121, 'name' => 'União das freguesias de Águeda e Borralha']);
     }
 
     protected function tearDown(): void
@@ -68,5 +73,23 @@ class SeismicLocationFilterTest extends TestCase
         }
 
         $this->getJson('v2/seismic/events?concelho=Narnia')->assertStatus(422);
+    }
+
+    /** @test */
+    public function administrative_names_are_matched_to_the_gazetteer(): void
+    {
+        $this->quake('b1', 1, [$this->place('Biscoitos', 'Praia da Vitória')]);
+        $this->quake('b2', 4, [$this->place('Freguesia de Borralha', 'Águeda')]);
+        $this->quake('b3', 7, [$this->place('Aguada de Cima', 'Águeda')]);
+        $this->quake('b4', 10, [$this->place('Freguesia de Borralha', 'Outro Concelho')]);
+
+        $uri = 'v2/seismic/events';
+        $this->assertSame(['Biscoitos'], $this->places($uri.'?concelho='.urlencode('Vila da Praia da Vitória')));
+        $this->assertSame(['Biscoitos'], $this->places($uri.'?district='.urlencode('Ilha Terceira')));
+        // A merged parish matches its former parishes, in its own municipality only.
+        $this->assertSame(
+            ['Freguesia de Borralha'],
+            $this->places($uri.'?freguesia='.urlencode('União das freguesias de Águeda e Borralha'))
+        );
     }
 }
