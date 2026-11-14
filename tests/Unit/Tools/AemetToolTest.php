@@ -150,6 +150,7 @@ class AemetToolTest extends TestCase
             $this->fail('Expected an AemetException.');
         } catch (AemetException $e) {
             $this->assertFalse($e->unauthorized);
+            $this->assertSame('A AEMET devolveu HTTP 429.', $e->getMessage());
         }
         $this->assertCount(1, $this->history);
     }

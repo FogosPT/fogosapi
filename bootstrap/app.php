@@ -128,7 +128,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
             if (config('services.aemet.key')) {
                 $schedule->job(new ProcessAemetWarnings())->everyFifteenMinutes();
-                $schedule->job(new UpdateAemetObservations())->hourlyAt(25);
+                // Every 10 min (never on the warnings' :00/:15/:30/:45), downloads only when an hour is due.
+                $schedule->job(new UpdateAemetObservations())->cron('3-59/10 * * * *');
                 $schedule->job(new UpdateAemetStations())->dailyAt('04:10');
                 $schedule->job(new UpdateAemetDataDaily())->dailyAt('10:15');
             }

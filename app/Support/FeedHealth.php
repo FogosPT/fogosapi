@@ -59,6 +59,14 @@ abstract class FeedHealth
         return static::post(static::PREFIX.static::LABELS[$source].' sem dados válidos há mais de '.static::staleMinutesFor($source).' min ('.$reason.')');
     }
 
+    /** When `$source` last gave usable data; null if it never did. */
+    public static function lastSuccessAt(string $source): ?Carbon
+    {
+        $at = Cache::get(static::KEY.$source);
+
+        return $at ? Carbon::createFromTimestamp($at) : null;
+    }
+
     public static function isStale(string $source): bool
     {
         $since = Cache::get(static::KEY.$source) ?? Cache::get(static::KEY.$source.':firstFailureAt');
