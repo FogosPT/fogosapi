@@ -102,7 +102,11 @@ class AemetTool
         }
 
         if ($response->getStatusCode() !== 200) {
-            throw new AemetException('A AEMET devolveu HTTP '.$response->getStatusCode().'.');
+            // A 429 carries AEMET's own reason ("Límite de peticiones o caudal por minuto excedido…").
+            $error = json_decode(mb_convert_encoding((string) $response->getBody(), 'UTF-8', 'ISO-8859-15'), true);
+            $detail = is_array($error) && is_string($error['descripcion'] ?? null) ? ': '.$error['descripcion'] : '';
+
+            throw new AemetException('A AEMET devolveu HTTP '.$response->getStatusCode().$detail.'.');
         }
 
         $body = (string) $response->getBody();

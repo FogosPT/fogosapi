@@ -16,8 +16,11 @@ use MongoDB\BSON\UTCDateTime;
 /**
  * Imports the last ~12 h of AEMET (Spain) conventional observations into
  * `aemetObservations`, upserted by `(stationId, date)` (`date` = `fint`, UTC) in
- * the IPMA fields and units (AemetStationData::hourly) plus `raw`. Hourly: the
- * feed's 12 h overlap means an isolated failure leaves no gap. A station not in
+ * the IPMA fields and units (AemetStationData::hourly) plus `raw`. Scheduled every
+ * 10 min but only downloads once the last import is DUE_MINUTES old: hourly while
+ * AEMET answers, and a failed run (e.g. a 429 rate limit) is retried 10 min later
+ * instead of an hour later; the feed's 12 h overlap means no gap. A forced run
+ * (`aemet:observations`) always downloads. A station not in
  * `aemetStations` is created from the row (`ubi`/`lat`/`lon`/`alt`); every station
  * seen gets `lastSeenAt`. A failed download or an empty feed counts as a failure
  * of the `observations` source in AemetFeedHealth.
@@ -26,6 +29,9 @@ use MongoDB\BSON\UTCDateTime;
 class UpdateAemetObservations extends Job implements ShouldBeUnique
 {
     private const CHUNK = 1000;
+
+    /** Minutes after the last import before a scheduled run downloads again. */
+    public const DUE_MINUTES = 55;
 
     /** Below the redis `retry_after` (90 s). */
     public $timeout = 80;
@@ -42,6 +48,9 @@ class UpdateAemetObservations extends Job implements ShouldBeUnique
     /** Observations upserted by this run. */
     public int $imported = 0;
 
+    /** The last import is too recent: nothing was requested (tests). */
+    public bool $skipped = false;
+
     /** Only set synchronously (tests); queued jobs build their own. */
     private ?AemetTool $tool = null;
 
@@ -49,7 +58,7 @@ class UpdateAemetObservations extends Job implements ShouldBeUnique
     public ?string $unauthorizedMessage = null;
 
     /** Own worker (`fogos.worker-aemet`): never delays the ANEPC ingestion on `default`. */
-    public function __construct()
+    public function __construct(private bool $force = false)
     {
         $this->onQueue('aemet');
     }
@@ -65,6 +74,13 @@ class UpdateAemetObservations extends Job implements ShouldBeUnique
     {
         if ((string) config('services.aemet.key') === '') {
             Log::debug('[UpdateAemetObservations] AEMET_API_KEY not set, skipping.');
+
+            return;
+        }
+
+        $last = AemetFeedHealth::lastSuccessAt('observations');
+        if (!$this->force && $last && $last->diffInMinutes(Carbon::now()) < self::DUE_MINUTES) {
+            $this->skipped = true;
 
             return;
         }

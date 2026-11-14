@@ -20,7 +20,7 @@ class AemetObservations extends Command
             return self::FAILURE;
         }
 
-        $job = new UpdateAemetObservations();
+        $job = new UpdateAemetObservations(force: true);
         if (app()->bound(AemetTool::class)) {
             $job->withTool(app(AemetTool::class)); // tests
         }

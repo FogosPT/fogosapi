@@ -250,6 +250,7 @@ class UpdateAemetStationsTest extends TestCase
     {
         $this->observations(); // success at 12:00
 
+        Carbon::setTestNow('2026-11-13T12:55:00Z'); // due again
         $job = $this->observations([new Response(500)]);
         $this->assertNotNull($job->failureReason);
         $this->assertFalse(AemetFeedHealth::isStale('observations'));
@@ -265,6 +266,57 @@ class UpdateAemetStationsTest extends TestCase
         Carbon::setTestNow('2026-11-15T13:02:00Z'); // 48 h + 1 min after the first failure
         $this->daily([new Response(500)]);
         $this->assertTrue(AemetFeedHealth::isStale('daily'));
+    }
+
+    /** @test */
+    public function observations_download_only_when_an_hour_is_due(): void
+    {
+        $this->observations(); // success at 12:00
+        $this->assertCount(2, $this->history);
+
+        // The scheduler runs it every 10 min; nothing is requested before DUE_MINUTES.
+        Carbon::setTestNow('2026-11-13T12:50:00Z');
+        $job = $this->observations([]);
+        $this->assertTrue($job->skipped);
+        $this->assertNull($job->failureReason);
+        $this->assertCount(2, $this->history);
+
+        Carbon::setTestNow('2026-11-13T12:55:00Z');
+        $job = $this->observations();
+        $this->assertFalse($job->skipped);
+        $this->assertNull($job->failureReason);
+        $this->assertCount(4, $this->history);
+    }
+
+    /** @test */
+    public function a_rate_limited_run_is_retried_ten_minutes_later_without_alerting(): void
+    {
+        $this->observations(); // success at 12:00
+
+        $limited = fn () => new Response(429, [], json_encode(['descripcion' => 'Límite de peticiones o caudal por minuto excedido para este usuario. Espere al siguiente minuto.', 'estado' => 429]));
+
+        Carbon::setTestNow('2026-11-13T13:00:00Z');
+        $job = $this->observations([$limited()]);
+        $this->assertSame('A AEMET devolveu HTTP 429: Límite de peticiones o caudal por minuto excedido para este usuario. Espere al siguiente minuto..', $job->failureReason);
+        $this->assertNull($job->healthMessage);
+
+        // Not skipped: the last success is still the 12:00 one.
+        Carbon::setTestNow('2026-11-13T13:10:00Z');
+        $job = $this->observations();
+        $this->assertFalse($job->skipped);
+        $this->assertNull($job->failureReason);
+        $this->assertNull($job->healthMessage, 'recovered inside the stale window: nothing posted');
+        $this->assertFalse(AemetFeedHealth::isStale('observations'));
+    }
+
+    /** @test */
+    public function the_command_always_downloads_observations(): void
+    {
+        $this->observations(); // success at 12:00
+        $this->app->instance(AemetTool::class, $this->tool($this->serving('observacion.json')));
+
+        $this->artisan('aemet:observations')->assertExitCode(0);
+        $this->assertCount(4, $this->history);
     }
 
     /** @test */
