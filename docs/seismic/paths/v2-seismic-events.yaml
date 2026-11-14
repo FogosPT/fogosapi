@@ -2,6 +2,10 @@ get:
   operationId: v2GetSeismicEvents
   summary: Earthquakes (newest first)
   description: |
+    `district` / `concelho` / `freguesia` match the nearest Portuguese places
+    of each event (`nearestPlaces`: municipality or parish); a district means
+    all of its municipalities.
+
     Earthquakes in mainland Portugal, the Azores, Madeira and the surrounding
     Atlantic, merged from IPMA, EMSC, USGS, GFZ GEOFON and IGN. Defaults to
     the last 30 days. Paginate with `before` = the `next` value of the
@@ -9,6 +13,9 @@ get:
   tags: [Seismic]
   parameters:
     - { name: region, in: query, schema: { type: string, enum: [continente, acores, madeira, outro] } }
+    - $ref: '../../common/parameters/location-district.yaml'
+    - $ref: '../../common/parameters/location-concelho.yaml'
+    - $ref: '../../common/parameters/location-freguesia.yaml'
     - { name: from, in: query, schema: { type: string, format: date-time }, description: Default now - 30 days. }
     - { name: to, in: query, schema: { type: string, format: date-time } }
     - name: before

@@ -88,7 +88,15 @@ All routes are defined in `routes/web.php`. The app has two versioned API famili
 - `v1/*` — legacy endpoints served by `LegacyController`, mostly reading from MongoDB with direct queries
 - `v2/*` — current endpoints: `IncidentController`, `IncidentPhotoController`, `PhotoModerationController`, `WeatherController`, `RCMController`, `PlanesController`, `WarningsController`, `StatsController`, `OtherController`
 
-Write endpoints (`POST /v2/incidents/{id}/posit`, `POST /v2/incidents/{id}/kml`) are protected by an `API_WRITE_KEY` header check (validated inline in the controller, not via middleware).
+Write endpoints (`POST /v2/incidents/{id}/posit`, `POST /v2/incidents/{id}/kml`, `GET v2/rcm/update`, `POST v2/warnings/add[/agif]`) are protected by the `write.key` middleware (`RequireWriteKey`: `key` header vs `API_WRITE_KEY`). Read access is gated by `X-API-Key` at Cloudflare, never seen here.
+
+### Location filters (`App\Support\LocationFilter`)
+
+`district` / `concelho` / `freguesia` take one or more names (`|`-separated; `,` too unless the whole value is a known name — parish names contain commas), combined with OR, validated against `IncidentLocations` (422 `invalid_{level}`; legacy `new/fires` doesn't validate and also reads `distrito`) and matched in every stored spelling.
+- `IncidentLocations`: distinct names from incidents (Mongo `$group`, grouped case-insensitively, cached 24 h, `Cache::memo()`) ∪ the `locations` collection; served as a tree by `GET v2/incidents/locations`. Ingestion stores ucwords casing ("Ilha De São Miguel", "Vila Nova De Gaia").
+- Used by `v2/incidents/active` (+ kml/geojson/csv), `v2/incidents/search`, `new/fires`, `v2/warnings/ipma` and `/history` (resolved to areas by `IpmaArea`, plus `area=` codes), `v2/seismic/events` and `/latest` (matched against `nearestPlaces.municipality` / `.name`, a district = its municipalities through the DICO codes).
+- `IpmaArea`: the 25 IPMA areas (`GET v2/warnings/ipma/areas`). Islands are districts (Location level 1: "Ilha da Madeira", "Ilha do Pico"…); the Azores groups and Porto Santo map 1:1, Madeira island spans MCN/MCS/MRM (northern municipalities MCN+MRM, southern MCS+MRM). `IncidentResource::weatherWarnings` uses it, so island incidents get their warnings too.
+- `IncidentResource.kind`: `fire|urbanFire|transportFire|otherFire|fma|other`.
 
 Photo endpoints:
 - `POST /v2/incidents/{id}/photos` — public upload, rate-limited via `photo.ratelimit` middleware

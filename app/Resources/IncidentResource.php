@@ -2,10 +2,11 @@
 
 namespace App\Resources;
 
+use App\Models\Incident;
 use App\Models\WeatherData;
 use App\Models\WeatherStation;
 use App\Models\WeatherWarning;
-use App\Support\IpmaDistrict;
+use App\Support\IpmaArea;
 use App\Support\WeatherWarningCollapse;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -105,8 +106,9 @@ class IncidentResource extends JsonResource
      */
     private function getActiveWeatherWarnings(): array
     {
-        $areaCode = IpmaDistrict::areaCode($this->district);
-        if (!$areaCode) {
+        // Continental districts map to one area; islands may cover several.
+        $areaCodes = IpmaArea::forConcelho($this->district, $this->concelho);
+        if (!$areaCodes) {
             return [];
         }
 
@@ -121,7 +123,30 @@ class IncidentResource extends JsonResource
             }
         }
 
-        return self::$activeWeatherWarningsByArea[$areaCode] ?? [];
+        $rows = [];
+        foreach ($areaCodes as $areaCode) {
+            array_push($rows, ...(self::$activeWeatherWarningsByArea[$areaCode] ?? []));
+        }
+
+        return $rows;
+    }
+
+    /**
+     * fire | urbanFire | transportFire | otherFire | fma | other, from the
+     * category flags set at ingestion, else from naturezaCode.
+     */
+    private function kind(): string
+    {
+        $code = (string) $this->naturezaCode;
+
+        return match (true) {
+            $this->isFire === true || in_array($code, Incident::NATUREZA_CODE_FIRE, true) => 'fire',
+            $this->isUrbanFire === true || in_array($code, Incident::NATUREZA_CODE_URBAN_FIRE, true) => 'urbanFire',
+            $this->isTransporteFire === true || in_array($code, Incident::NATUREZA_CODE_TRANSPORT_FIRE, true) => 'transportFire',
+            $this->isOtherFire === true || in_array($code, Incident::NATUREZA_CODE_OTHER_FIRE, true) => 'otherFire',
+            $this->isFMA === true || in_array($code, Incident::NATUREZA_CODE_FMA, true) => 'fma',
+            default => 'other',
+        };
     }
 
     public function toArray($request): array
@@ -172,6 +197,7 @@ class IncidentResource extends JsonResource
             'sub_regiao' => $this->sub_regiao,
             'nearestWeatherStationId' => $this->nearestWeatherStationId,
             'isFire' => $this->isFire,
+            'kind' => $this->kind(),
             'weather' => $this->getLatestWeather(),
             'weatherWarnings' => $this->getActiveWeatherWarnings(),
             'created' => $this->createdObject,

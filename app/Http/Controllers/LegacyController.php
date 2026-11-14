@@ -12,6 +12,7 @@ use App\Models\Warning;
 use App\Models\WarningMadeira;
 use App\Models\WarningSite;
 use App\Resources\IncidentResource;
+use App\Support\LocationFilter;
 use App\Resources\V1\HistoryStatusResource;
 use App\Resources\V1\HistoryTotalResource;
 use App\Resources\V1\WarningResource;
@@ -31,14 +32,12 @@ class LegacyController extends Controller
 
     public function newFires(Request $request): JsonResponse
     {
-        $concelho = $request->get('concelho');
-        $distrito = $request->get('distrito');
+        // Legacy contract: an unknown name returns no fires rather than a 422.
+        $locations = LocationFilter::fromRequest($request, ['district' => ['distrito']], false);
 
-        $incidents = Incident::isActive()->isFire()->when($concelho, function($query, $concelho){
-            return $query->where('concelho', $concelho);
-        })->when($distrito, function($query, $distrito){
-            return $query->where('district', $distrito);
-        })->get();
+        $incidents = Incident::isActive()->isFire()
+            ->when(!$locations->isEmpty(), fn ($q) => $locations->apply($q))
+            ->get();
 
         if(env('TROLL_MODE')){
             $ua = $request->userAgent();

@@ -1,0 +1,33 @@
+get:
+  operationId: v2GetIncidentLocations
+  summary: Districts, municipalities and parishes seen on incidents
+  description: >-
+    Distinct `district` / `concelho` / `freguesia` values stored on incidents,
+    grouped case-insensitively (the most frequent spelling is shown) and
+    sorted. These are the values the `district`, `concelho` and `freguesia`
+    filters accept. Cached for 24 hours.
+  tags:
+    - V2
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    district: { type: string, example: Porto }
+                    concelhos:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          concelho: { type: string, example: Vila Nova De Gaia }
+                          dico: { type: string, nullable: true, example: '1317' }
+                          freguesias: { type: array, items: { type: string } }

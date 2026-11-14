@@ -1,0 +1,12 @@
+name: concelho
+in: query
+required: false
+description: >-
+  Municipality — one or more names from `GET v2/incidents/locations`,
+  case-insensitive, separated by `|` (e.g. `Vila Nova de Gaia|Guimarães`). A comma also separates
+  unless the whole value is a known name (parish names contain commas).
+  `district`, `concelho` and `freguesia` are combined with OR: send the
+  most specific level of each branch. An unknown name returns `422` with
+  `{"success": false, "error": "invalid_concelho", "invalid": {...}}`.
+schema:
+  type: string

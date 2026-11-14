@@ -125,6 +125,8 @@ paths:
     $ref: './fires/paths/v2-active-kml.yaml'
   /v2/incidents/search:
     $ref: './fires/paths/v2-search.yaml'
+  /v2/incidents/locations:
+    $ref: './fires/paths/v2-locations.yaml'
   /v2/incidents/1000ha-burned:
     $ref: './fires/paths/v2-1000ha-burned.yaml'
   /v2/incidents/{id}/kml:
@@ -265,6 +267,8 @@ paths:
     $ref: './warnings/paths/v2-warnings-ipma.yaml'
   /v2/warnings/ipma/history:
     $ref: './warnings/paths/v2-warnings-ipma-history.yaml'
+  /v2/warnings/ipma/areas:
+    $ref: './warnings/paths/v2-warnings-ipma-areas.yaml'
   /v2/warnings/aemet:
     $ref: './warnings/paths/v2-warnings-aemet.yaml'
   /v2/warnings/aemet/history:
