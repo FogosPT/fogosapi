@@ -50,13 +50,13 @@ class BroadcastApprovedPhoto extends Job
 
         $tmp = null;
         try {
-            $contents = Storage::disk('minio')->get($photo->storage_key);
+            $contents = Storage::disk(PhotoStorageTool::DISK)->get($photo->storage_key);
             if ($contents !== null) {
                 $tmp = tempnam(sys_get_temp_dir(), 'fogo_photo_') . '.jpg';
                 file_put_contents($tmp, $contents);
             }
         } catch (\Throwable $e) {
-            DiscordTool::postError('Photo approve: failed to fetch image from MinIO — ' . $e->getMessage());
+            DiscordTool::postError('Photo approve: failed to fetch image from object storage — ' . $e->getMessage());
             $tmp = null;
         }
 
