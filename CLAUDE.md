@@ -206,4 +206,4 @@ Several features are toggled via `.env`:
 - `AEMET_STALE_MINUTES` — minutes without usable data before an AEMET source is announced on Discord (default 60; `daily` uses 48 h)
 - `PHOTO_MODERATION_KEY` — header token guarding the photo moderation endpoints
 - `PHOTO_UPLOAD_MAX_BYTES`, `PHOTO_RATE_PER_IP_PER_MINUTE`, `PHOTO_RATE_PER_INCIDENT_PER_IP_PER_HOUR`, `PHOTO_RATE_PER_INCIDENT_GLOBAL_PER_HOUR`, `PHOTO_PENDING_PER_INCIDENT_CAP` — photo upload limits and rate gates
-- `S3_ENDPOINT`, `S3_PUBLIC_BASE_URL`, `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` — S3-compatible storage (scoped app key). Optional `S3_ADMIN_ACCESS_KEY` / `S3_ADMIN_SECRET_KEY` for rclone/ops. `MINIO_*` names still work as a fallback.
+- `S3_ENDPOINT`, `S3_PUBLIC_BASE_URL`, `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` — S3-compatible storage (scoped app key). Optional `S3_ADMIN_ACCESS_KEY` / `S3_ADMIN_SECRET_KEY` for rclone/ops. The app uses the `S3_*` disk only when `S3_ENDPOINT` is set; otherwise it keeps the `MINIO_*` endpoint and credentials together. `S3_HOST_PORT` is the published host port for `fogos.s3` (default 9000; set to 9002 during the MinIO copy).

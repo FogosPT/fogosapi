@@ -95,8 +95,10 @@ services:
   # S3-compatible store for incident photos (replaces fogos.minio, #73).
   # Data lives on a new bind mount so the old MinIO /data is left untouched
   # until the copy in docs/s3-migration.md is confirmed. During the copy,
-  # use docker-compose.minio-migrate.yml so MinIO stays on host port 9000
-  # and this service is published on 9002.
+  # set S3_HOST_PORT=9002 and use docker-compose.minio-migrate.yml so MinIO
+  # stays on host port 9000 and this service is published only on 9002.
+  # (Compose concatenates `ports` across files, so the host port is
+  # parameterised here instead of adding a second mapping in the overlay.)
   fogos.s3:
     image: chrislusf/seaweedfs:4.54
     entrypoint: ["/bin/sh", "/s3-init/entrypoint.sh"]
@@ -111,7 +113,7 @@ services:
     expose:
       - 9000
     ports:
-      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:${S3_HOST_PORT:-9000}:9000"
     volumes:
       - /data-s3:/data
       - ./.docker/s3/entrypoint.sh:/s3-init/entrypoint.sh:ro

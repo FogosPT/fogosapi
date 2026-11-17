@@ -2,7 +2,13 @@
 # (so cdn.fogos.pt / host nginx keep working) and publish the new SeaweedFS
 # S3 API on 127.0.0.1:9002 while you copy the bucket.
 #
-#   docker-compose -f docker-compose.yml -f docker-compose.minio-migrate.yml up -d
+# Compose concatenates `ports` lists, so this file does not add a second
+# mapping for fogos.s3. Parameterise the base host port instead:
+#
+#   S3_HOST_PORT=9002 docker-compose -f docker-compose.yml -f docker-compose.minio-migrate.yml up -d
+#
+# You can also set S3_HOST_PORT=9002 in .env for the copy window; unset it
+# (or set it back to 9000) before the cutover recreates fogos.s3 on 9000.
 #
 # The MinIO image is not pullable. This file only works on a host that
 # already has minio/minio:RELEASE.2023-09-30T07-02-29Z. See docs/s3-migration.md.
@@ -11,10 +17,6 @@
 version: '3.8'
 
 services:
-  fogos.s3:
-    ports:
-      - "127.0.0.1:9002:9000"
-
   fogos.minio:
     # No longer pullable: MinIO stopped publishing images (Docker Hub repo
     # removed in 2025). Runs from the copy already on the host; keep a
