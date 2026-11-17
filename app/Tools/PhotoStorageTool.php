@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Storage;
 
 class PhotoStorageTool
 {
-    public const DISK = 'minio';
+    public const DISK = 's3';
 
     public static function store(string $bytes, string $key, string $mime = 'image/jpeg'): void
     {
@@ -23,7 +23,8 @@ class PhotoStorageTool
 
     public static function publicUrl(string $key): string
     {
-        $base = rtrim((string) env('MINIO_PUBLIC_BASE_URL'), '/');
+        $base = rtrim((string) (config('filesystems.disks.s3.url') ?: config('filesystems.disks.minio.url')), '/');
+
         return $base . '/' . ltrim($key, '/');
     }
 }

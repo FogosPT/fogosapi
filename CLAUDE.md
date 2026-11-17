@@ -71,7 +71,7 @@ docker exec -u www-data fogosapi_fogos.api_1 php artisan queue:restart       # w
 - `docker-compose exec -T` (v1) can swallow output; prefer `docker exec <container>`.
 - Image changes (`.docker/**`) are built by the *build docker images* workflow; then `docker-compose pull --ignore-pull-failures && docker-compose up -d`. Pin with `FOGOS_IMAGE_TAG=sha-<8 chars>` in `.env` for reproducible deploys/rollbacks.
 - Redis has no published port: the app must use `REDIS_HOST=fogos.redis` and `REDIS_PASSWORD` (compose refuses to start Redis without it).
-- `minio/minio` can no longer be pulled (MinIO stopped publishing images); the host keeps the only copy — never `docker image prune -a`.
+- Photo object storage is SeaweedFS (`fogos.s3`, image `chrislusf/seaweedfs:4.54`), data bind-mounted at `/data-s3`. The old MinIO image is not pullable: keep a `docker save` backup of it and the `/data` volume until the copy in `docs/s3-migration.md` is confirmed, and never `docker image prune -a` while MinIO is still the live store.
 - Memory limits under `deploy:` only apply with `docker-compose --compatibility up -d`.
 - Enabling AEMET (Spain): set `AEMET_API_KEY` in the production `.env`, run the migrations (indexes), reload php-fpm, `queue:restart`, start the AEMET worker (`docker-compose up -d fogos.worker-aemet` — the four jobs run on the `aemet` queue, never on `default`), check `php artisan schedule:list` in the scheduler shows the four AEMET jobs, then run the first import by hand (as `-u www-data`): `aemet:stations`, `aemet:observations`, `aemet:daily`, `aemet:warnings`. No new dependencies.
 
@@ -80,7 +80,7 @@ docker exec -u www-data fogosapi_fogos.api_1 php artisan queue:restart       # w
 - **Laravel 12** (PHP 8.2+). App bootstrap lives in `bootstrap/app.php` using the `Application::configure()` style (routes, middleware, schedule, console commands all wired there).
 - **MongoDB** (primary datastore via `mongodb/laravel-mongodb` ^5.0) — collection `fires.data` is the main incidents collection
 - **Redis** — queue backend (`QUEUE_CONNECTION=redis`). Jobs are dispatched via `dispatch(new JobClass())` and consumed by a queue worker
-- **MinIO** (S3-compatible) — object storage for user-submitted incident photos. Configured as the `minio` disk in `config/filesystems.php`. In production, data is bind-mounted at `/data`.
+- **SeaweedFS** (S3-compatible) — object storage for user-submitted incident photos. Configured as the `s3` disk in `config/filesystems.php` (the `minio` disk is a deprecated alias). In production, data is bind-mounted at `/data-s3`. Cutover from MinIO is in `docs/s3-migration.md`.
 - **Sentry** — error tracking
 
 ### Request Lifecycle
@@ -164,7 +164,7 @@ Earthquakes for the sismos.pt site (`v2/seismic/*`, `SeismicController`). IPMA's
 All models extend `MongoDB\Laravel\Eloquent\Model`. Key models:
 - `Incident` — collection `data`; central entity. Has scopes: `isActive()`, `isFire()`, `isFMA()`, `isOtherFire()`, `whereFireId()` (handles both legacy `id` field and new `_id`). Classification constants (`NATUREZA_CODE_*`) and `STATUS_ID`/`STATUS_COLORS` are defined here. Primary key is `_id`.
 - `IncidentHistory` / `IncidentStatusHistory` — historical records linked to `Incident` via `id` field
-- `IncidentPhoto` — collection `incident_photos`; user-submitted photos with moderation status (`pending`/`approved`). Stores GPS, EXIF, and storage key into the MinIO `incident-photos` bucket.
+- `IncidentPhoto` — collection `incident_photos`; user-submitted photos with moderation status (`pending`/`approved`). Stores GPS, EXIF, and storage key into the `incident-photos` bucket on the S3-compatible store.
 - `Location` — geocoding lookup table (level 1 = district, level 2 = concelho)
 - `WeatherStation` / `WeatherData` / `WeatherDataDaily` — weather data
 - `WeatherNormal` — collection `weatherNormals`; monthly mean tmax/tmin per station, indexed by `(stationId, period)`. Populated by the `weather:import-normals` command, which scrapes the IPMA normals pages (`allstations` JS literal) — no PDF parsing.
@@ -181,7 +181,7 @@ Stateless helper classes for external integrations:
 - `ScreenShotTool` — takes headless browser screenshots for social posts
 - `HashTagTool` — generates Portuguese location hashtags
 - `RCMTool` — processes RCM image data
-- `PhotoStorageTool` — uploads/deletes incident photos on the MinIO disk; computes public URLs from `MINIO_PUBLIC_BASE_URL`
+- `PhotoStorageTool` — uploads/deletes incident photos on the `s3` disk; computes public URLs from `S3_PUBLIC_BASE_URL` (falls back to `MINIO_PUBLIC_BASE_URL`)
 - `ImageProcessingTool` — extracts EXIF from PNG `eXIf` chunks (via `lsolesen/pel`), strips metadata, resizes and re-encodes to JPEG via Imagick
 
 ### Resources
@@ -206,4 +206,4 @@ Several features are toggled via `.env`:
 - `AEMET_STALE_MINUTES` — minutes without usable data before an AEMET source is announced on Discord (default 60; `daily` uses 48 h)
 - `PHOTO_MODERATION_KEY` — header token guarding the photo moderation endpoints
 - `PHOTO_UPLOAD_MAX_BYTES`, `PHOTO_RATE_PER_IP_PER_MINUTE`, `PHOTO_RATE_PER_INCIDENT_PER_IP_PER_HOUR`, `PHOTO_RATE_PER_INCIDENT_GLOBAL_PER_HOUR`, `PHOTO_PENDING_PER_INCIDENT_CAP` — photo upload limits and rate gates
-- `MINIO_ENDPOINT`, `MINIO_PUBLIC_BASE_URL`, `MINIO_BUCKET`, `MINIO_REGION`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD` — MinIO/S3 storage configuration
+- `S3_ENDPOINT`, `S3_PUBLIC_BASE_URL`, `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` — S3-compatible storage (scoped app key). Optional `S3_ADMIN_ACCESS_KEY` / `S3_ADMIN_SECRET_KEY` for rclone/ops. The app uses the `S3_*` disk only when `S3_ENDPOINT` is set; otherwise it keeps the `MINIO_*` endpoint and credentials together. `S3_HOST_PORT` is the published host port for `fogos.s3` (default 9000; set to 9002 during the MinIO copy).
