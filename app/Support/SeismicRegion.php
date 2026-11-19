@@ -8,7 +8,7 @@ namespace App\Support;
  * Polygons are deliberately coarse: they follow the land border with Spain and
  * extend over the ocean far enough to include the offshore structures that
  * matter for each region (Gorringe bank and the Gulf of Cádiz margin for the
- * mainland, the Terceira rift / Gloria fault for the Azores, the Selvagens for
+ * mainland, the Terceira rift, Gloria fault and the Mid-Atlantic Ridge up to 45° N for the Azores, the Selvagens for
  * Madeira). Points are [lon, lat].
  */
 class SeismicRegion
@@ -28,7 +28,7 @@ class SeismicRegion
             [-6.93, 38.2], [-7.3, 38.0], [-7.4, 37.17], [-7.4, 35.5], [-12.5, 35.5],
         ],
         self::ACORES => [
-            [-33.0, 41.0], [-23.5, 41.0], [-23.5, 35.5], [-33.0, 35.5],
+            [-33.0, 45.0], [-23.5, 45.0], [-23.5, 35.5], [-33.0, 35.5],
         ],
         self::MADEIRA => [
             [-18.5, 33.8], [-15.0, 33.8], [-15.0, 29.5], [-18.5, 29.5],

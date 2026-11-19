@@ -16,7 +16,7 @@ abstract class SeismicSource
      * Area of interest: mainland Portugal and its margin, Madeira and the
      * Azores, plus the Gulf of Cádiz and the Gorringe bank.
      */
-    public const BBOX = ['minLat' => 29.0, 'maxLat' => 44.5, 'minLon' => -33.0, 'maxLon' => -5.5];
+    public const BBOX = ['minLat' => 29.0, 'maxLat' => 45.5, 'minLon' => -33.0, 'maxLon' => -5.5];
 
     /** Records in the last parsed response, before any filtering. */
     protected int $rawCount = 0;

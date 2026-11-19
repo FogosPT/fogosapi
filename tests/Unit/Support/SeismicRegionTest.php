@@ -33,6 +33,7 @@ class SeismicRegionTest extends TestCase
             'Golfo de Cádis (lado espanhol)' => [36.49, -7.13, SeismicRegion::OUTRO],
             'Ponta Delgada' => [37.74, -25.67, SeismicRegion::ACORES],
             'Flores' => [39.45, -31.2, SeismicRegion::ACORES],
+            'Crista Médio-Atlântica a norte (M5.4, 2026-11-19)' => [43.799, -28.966, SeismicRegion::ACORES],
             'Funchal' => [32.65, -16.91, SeismicRegion::MADEIRA],
             'Selvagens' => [30.14, -15.87, SeismicRegion::MADEIRA],
             'Canárias' => [28.1, -15.4, SeismicRegion::OUTRO],
