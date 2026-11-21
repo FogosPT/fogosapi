@@ -152,6 +152,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 $schedule->job(new ProcessSeismicSource('ign'))->everyFifteenMinutes();
                 // CPU-bound: runs in the scheduler container, not on a queue worker.
                 $schedule->command('seismic:stats')->hourlyAt(7)->withoutOverlapping(30)->runInBackground();
+                // IPMA's feed only keeps ~30 days; the ISC bulletin (with IPMA/IGN
+                // contributions) fills in later what no live source had (#115).
+                $schedule->command('seismic:backfill isc --chunk=month --from='.now('UTC')->subDays(120)->toDateString())
+                    ->weeklyOn(1, '04:30')->withoutOverlapping(720)->runInBackground();
             }
 
             $schedule->job(new ProcessFR24Planes())->cron('*/3 * * * *');
