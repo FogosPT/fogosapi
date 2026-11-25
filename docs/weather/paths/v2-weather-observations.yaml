@@ -1,8 +1,8 @@
 get:
   operationId: v2GetWeatherObservations
-  summary: Hourly weather station observations (last 24h)
+  summary: Hourly weather station observations (last 24h by default, or one day / window)
   description: |
-    Returns the last 24 hours of hourly weather observations ingested by the
+    By default returns the last 24 hours of hourly weather observations ingested by the
     `UpdateWeatherData` job (collection `weatherData`), reshaped to match the
     payload of the upstream IPMA endpoint
     `https://api.ipma.pt/open-data/observation/meteorology/stations/observations.json`.
@@ -11,9 +11,54 @@ get:
     Each bucket maps station IDs (as strings) to an observation object.
     Missing numeric fields are reported as `-99` to preserve IPMA parity.
 
-    The response is cached in Redis for 10 minutes.
+    Filters: `date` (one calendar day) or `from`/`to`, and `station`. To keep
+    responses bounded, a window is at most **24 hours** for all stations and at
+    most **7 days** (168 h) with `station` (max 10 ids); longer windows get a
+    422 `range_too_long` (with `maxHours`). Other 422 errors: `invalid_date`,
+    `invalid_from`, `invalid_to`, `invalid_range` (`from` ≥ `to`, or `date`
+    together with `from`/`to`), `invalid_station`, `too_many_stations`.
+
+    The default response is cached in Redis for 10 minutes; filtered ones for
+    10 minutes when the window ends in the last 24 h, else 1 hour.
   tags:
     - Weather
+  parameters:
+    - name: date
+      in: query
+      required: false
+      description: |
+        Calendar day `YYYY-MM-DD` (Europe/Lisbon). Cannot be combined with `from`/`to`.
+      schema:
+        type: string
+        format: date
+        example: '2026-07-14'
+    - name: from
+      in: query
+      required: false
+      description: |
+        Start of the window (ISO 8601, UTC when no offset is given). Defaults to
+        `to` − 24 h.
+      schema:
+        type: string
+        format: date-time
+        example: '2026-07-14T00:00:00Z'
+    - name: to
+      in: query
+      required: false
+      description: |
+        End of the window, exclusive (ISO 8601, UTC when no offset is given).
+        Defaults to now.
+      schema:
+        type: string
+        format: date-time
+    - name: station
+      in: query
+      required: false
+      description: |
+        Only these stations: one or more IPMA station ids (`idEstacao`), comma-separated (max 10).
+      schema:
+        type: string
+        example: '1210881,1200545'
   responses:
     200:
       description: OK
@@ -51,5 +96,7 @@ get:
                   pressao:
                     type: number
                     description: Atmospheric pressure (hPa). `-99` when missing.
+    422:
+      $ref: '../../common/responses/422.yaml'
     500:
       $ref: '../../common/responses/500.yaml'

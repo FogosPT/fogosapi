@@ -103,6 +103,9 @@ Photo endpoints:
 - `GET /v2/incidents/{id}/photos` — public listing of approved photos (includes GPS coordinates and heading/azimuth)
 - `GET|POST /v2/moderation/photos[/...]` — moderation queue, protected by `photo.modauth` middleware checking `PHOTO_MODERATION_KEY` header
 
+Weather observations:
+- `GET /v2/weather/observations` (and `v2/weather/aemet/observations`, same code in `ServesStationSeries::feedObservations`) — IPMA feed shape, last 24 h by default; `date=YYYY-MM-DD` (Lisbon / Madrid calendar day) or `from`/`to` (`to` exclusive), `station=id[,id…]`. Windows capped at 24 h for all stations, 7 days with `station` (max 10 ids) → 422 `range_too_long`.
+
 Weather extremes:
 - `GET /v2/weather/waves` — heat/cold wave detector (WMO 6-day rule). Reads `TemperatureWave` rows where `ongoing=true`, joined with `WeatherStation` for naming. Response is cached in Redis for 1h. See `docs/weather/paths/v2-weather-waves.yaml` for the schema.
 

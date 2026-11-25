@@ -120,40 +120,22 @@ class AemetController extends Controller
     }
 
     /**
-     * `v2/weather/aemet/observations` — like `v2/weather/observations`: last 24 h,
+     * `v2/weather/aemet/observations` — like `v2/weather/observations` (same
+     * `date`/`from`/`to`/`station` filters and limits; `date` is the Spanish day),
      * `{ "<UTC Y-m-dTH:i>": { "<idEstacao>": {…} } }`, `-99` when missing (always
      * for `radiacao`, which AEMET does not measure).
      */
-    public function observations(): JsonResponse
+    public function observations(Request $request): JsonResponse
     {
-        $cacheKey = 'weather:aemet:observations';
-        $cached = Redis::get($cacheKey);
-        if ($cached) {
-            return new JsonResponse(json_decode($cached, true));
-        }
-
-        // Only the served fields: ~20k rows per day, and `raw` would double them.
-        $rows = AemetObservation::where('date', '>=', Carbon::now('UTC')->subDay())
-            ->orderBy('date', 'asc')
-            ->get(array_merge(['stationId', 'date'], self::FEED_OBSERVATION_FIELDS));
-
-        $buckets = [];
-        foreach ($rows as $row) {
-            $bucket = Carbon::parse($row->date)->setTimezone('UTC')->format('Y-m-d\TH:i');
-
-            $obs = [];
-            foreach (self::FEED_OBSERVATION_FIELDS as $f) {
-                $obs[$f] = $row->{$f} ?? -99;
-            }
-
-            $buckets[$bucket][(string) $row->stationId] = $obs;
-        }
-
-        ksort($buckets);
-
-        Redis::set($cacheKey, json_encode($buckets), 'EX', 600);
-
-        return new JsonResponse($buckets);
+        // Only the served fields are read: ~20k rows per day, and `raw` would double them.
+        return $this->feedObservations(
+            $request,
+            AemetObservation::class,
+            'weather:aemet:observations',
+            'Europe/Madrid',
+            '/^[0-9A-Za-z]+$/',
+            fn (string $id) => [$id]
+        );
     }
 
     /**
