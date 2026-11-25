@@ -156,37 +156,21 @@ class WeatherController extends Controller
         return response()->json($data);
     }
 
-    public function observations()
+    /**
+     * Hourly observations of every station, in the shape of IPMA's feed.
+     * GET v2/weather/observations[?date=YYYY-MM-DD | from=&to=][&station=id,id]
+     * (see ServesStationSeries::feedObservations for the limits).
+     */
+    public function observations(Request $request): JsonResponse
     {
-        $cacheKey = 'weather:observations';
-        $cached = Redis::get($cacheKey);
-        if ($cached) {
-            return new JsonResponse(json_decode($cached, true));
-        }
-
-        $since = Carbon::now('UTC')->subDay();
-
-        $rows = WeatherData::where('date', '>=', $since)
-            ->orderBy('date', 'asc')
-            ->get();
-
-        $buckets = [];
-        foreach ($rows as $row) {
-            $bucket = Carbon::parse($row->date)->setTimezone('UTC')->format('Y-m-d\TH:i');
-
-            $obs = [];
-            foreach (self::FEED_OBSERVATION_FIELDS as $f) {
-                $obs[$f] = $row->{$f} ?? -99;
-            }
-
-            $buckets[$bucket][(string) $row->stationId] = $obs;
-        }
-
-        ksort($buckets);
-
-        Redis::set($cacheKey, json_encode($buckets), 'EX', 600);
-
-        return new JsonResponse($buckets);
+        return $this->feedObservations(
+            $request,
+            WeatherData::class,
+            'weather:observations',
+            'Europe/Lisbon',
+            '/^[0-9]+$/',
+            fn (string $id) => $this->stationIdVariants($id)
+        );
     }
 
     /**
