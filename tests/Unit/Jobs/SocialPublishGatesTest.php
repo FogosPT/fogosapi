@@ -21,18 +21,15 @@ class SocialPublishGatesTest extends TestCase
     }
 
     /** @test */
-    public function hourly_summary_posts_nothing_outside_fire_season(): void
+    public function hourly_summary_outside_fire_season_only_with_active_fires(): void
     {
-        Carbon::setTestNow(Carbon::parse('2026-11-24 13:00', 'Europe/Lisbon'));
+        $november = Carbon::parse('2026-11-24 13:00', 'Europe/Lisbon');
+        $august = Carbon::parse('2026-08-15 13:00', 'Europe/Lisbon');
 
-        try {
-            // Returns before querying Mongo or touching any social tool.
-            (new HourlySummary())->handle();
-        } finally {
-            Carbon::setTestNow();
-        }
-
-        $this->assertTrue(true);
+        $this->assertFalse(HourlySummary::shouldPublish($november, 0));
+        $this->assertTrue(HourlySummary::shouldPublish($november, 1));
+        $this->assertTrue(HourlySummary::shouldPublish($august, 0));
+        $this->assertTrue(HourlySummary::shouldPublish($august, 3));
     }
 
     /** @test */

@@ -21,7 +21,7 @@ class HourlySummary extends Job
     }
 
     /**
-     * Fire season: April to October. Outside it the hourly summary is not posted.
+     * Fire season: April to October.
      */
     public static function isFireSeason(CarbonInterface $date): bool
     {
@@ -29,14 +29,19 @@ class HourlySummary extends Job
     }
 
     /**
+     * Always posted while there are active fires (in progress or in resolution);
+     * with none, only during the fire season.
+     */
+    public static function shouldPublish(CarbonInterface $date, int $activeFires): bool
+    {
+        return $activeFires > 0 || self::isFireSeason($date);
+    }
+
+    /**
      * Execute the job.
      */
     public function handle()
     {
-        if (!self::isFireSeason(Carbon::now())) {
-            return;
-        }
-
         $incidents = Incident::where('active', true)
             ->where('isFire', true)
             ->whereIn('statusCode', Incident::ACTIVE_STATUS_CODES)
@@ -46,6 +51,10 @@ class HourlySummary extends Job
             ->where('isFire', true)
             ->whereIn('statusCode', Incident::NOT_ACTIVE_STATUS_CODES)
             ->get();
+
+        if (!self::shouldPublish(Carbon::now(), $incidents->count() + $incidentsNotActive->count())) {
+            return;
+        }
 
         $date = date('H:i');
 
