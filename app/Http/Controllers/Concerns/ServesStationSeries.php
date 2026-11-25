@@ -118,8 +118,8 @@ trait ServesStationSeries
             if ($query instanceof JsonResponse) {
                 return $query;
             }
-            [$from, $to, $stations] = $query;
-            $cacheKey .= ':'.md5($from->toIso8601String().'|'.$to->toIso8601String().'|'.implode(',', $stations ?? []));
+            [$from, $to, $stations, $window] = $query;
+            $cacheKey .= ':'.md5($window.'|'.implode(',', $stations ?? []));
         } else {
             [$from, $to, $stations] = [Carbon::now('UTC')->subDay(), null, null];
         }
@@ -158,9 +158,11 @@ trait ServesStationSeries
 
     /**
      * Window [from, to) in UTC and station ids (null = all) of a filtered
-     * `observations` request, or the 422 response.
+     * `observations` request, plus the window as requested for the cache key
+     * (an omitted `to` is `now`, not the resolved second, so repeated requests
+     * share the cache), or the 422 response.
      *
-     * @return array{0: Carbon, 1: Carbon, 2: ?array}|JsonResponse
+     * @return array{0: Carbon, 1: Carbon, 2: ?array, 3: string}|JsonResponse
      */
     private function feedQuery(Request $request, string $timezone, string $idPattern)
     {
@@ -168,10 +170,11 @@ trait ServesStationSeries
 
         $stations = null;
         if ($request->has('station')) {
-            $stations = array_values(array_unique(array_filter(
+            $stations = array_unique(array_filter(
                 array_map('trim', explode(',', (string) $request->query('station'))),
                 fn ($id) => $id !== ''
-            )));
+            ));
+            sort($stations);
             if ($stations === [] || count(preg_grep($idPattern, $stations)) !== count($stations)) {
                 return $error('invalid_station');
             }
@@ -192,7 +195,7 @@ trait ServesStationSeries
                 return $error('invalid_date');
             }
 
-            return [$day->copy()->setTimezone('UTC'), $day->copy()->addDay()->setTimezone('UTC'), $stations];
+            return [$day->copy()->setTimezone('UTC'), $day->copy()->addDay()->setTimezone('UTC'), $stations, 'date:'.$date];
         }
 
         $bounds = [];
@@ -220,6 +223,9 @@ trait ServesStationSeries
             return $error('range_too_long', ['maxHours' => $max]);
         }
 
-        return [$from, $to, $stations];
+        $window = isset($bounds['from']) ? $from->toIso8601String() : '';
+        $window .= '|'.(isset($bounds['to']) ? $to->toIso8601String() : 'now');
+
+        return [$from, $to, $stations, $window];
     }
 }

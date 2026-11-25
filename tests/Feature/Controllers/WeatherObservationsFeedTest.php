@@ -124,6 +124,19 @@ class WeatherObservationsFeedTest extends TestCase
     }
 
     /** @test */
+    public function an_omitted_to_does_not_bust_the_cache_every_second(): void
+    {
+        $this->hourly('1210881', '2026-11-09T13:00:00Z');
+        $first = $this->getJson('v2/weather/observations?station=1210881')->assertOk()->json();
+
+        Carbon::setTestNow(Carbon::parse('2026-11-09T14:30:30Z'));
+        $this->hourly('1210881', '2026-11-09T14:00:00Z');
+
+        $this->assertSame($first, $this->getJson('v2/weather/observations?station=1210881')->assertOk()->json());
+        $this->assertCount(1, $this->redis);
+    }
+
+    /** @test */
     public function windows_are_capped_at_24_hours_or_7_days_with_station(): void
     {
         $this->getJson('v2/weather/observations?from=2026-11-01T00:00:00Z&to=2026-11-02T00:00:00Z')->assertOk();
