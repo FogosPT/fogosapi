@@ -32,6 +32,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Console\Commands\AemetWarnings;
+use App\Console\Commands\CheckDiskSpace;
 use App\Console\Commands\AemetStations;
 use App\Console\Commands\AemetObservations;
 use App\Console\Commands\AemetDaily;
@@ -68,6 +69,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(web: __DIR__.'/../routes/web.php')
     ->withCommands([
         TestStuff::class,
+        CheckDiskSpace::class,
         FixKMLData::class,
         FixFMA::class,
         SaveWarningAndSendNotificationAndSocial::class,
@@ -118,6 +120,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
             $schedule->job(new UpdateWeatherStations())->daily()->at('03:21');
             $schedule->command('fogospt:warm-locations')->dailyAt('04:40')->withoutOverlapping(30)->runInBackground();
+            // A command, not a queued job: a full disk takes Redis (and the queue) down first.
+            $schedule->command('system:disk-check')->everyTenMinutes()->runInBackground();
             $schedule->job(new UpdateWeatherData())->hourly();
 
             $schedule->job(new UpdateWeatherDataDaily())->daily()->at('04:21');
