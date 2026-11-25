@@ -41,6 +41,11 @@ php artisan weather:import-normals
 php artisan weather:import-normals --period=1991-2020
 php artisan weather:import-normals --period=1971-2000
 
+# Backfill weatherDataDaily from an archive of IPMA daily files (ipma_diario_YYYY-MM-DD.json,
+# zip or directory; same format as daily-observations.json). Only inserts missing (stationId, date); idempotent.
+php artisan weather:import-daily /path/diarios_ipma.zip --dry-run
+php artisan weather:import-daily /path/diarios_ipma.zip
+
 # Delete exact duplicate weather warnings (idempotent; --dry-run to preview)
 php artisan weather:collapse-warnings --dry-run
 php artisan weather:collapse-warnings

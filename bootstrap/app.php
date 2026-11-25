@@ -43,6 +43,7 @@ use App\Console\Commands\FixFMA;
 use App\Console\Commands\FixKMLData;
 use App\Console\Commands\GetICNFBurnAreaLegacy;
 use App\Console\Commands\ImportLocations;
+use App\Console\Commands\ImportWeatherDaily;
 use App\Console\Commands\ImportWeatherNormals;
 use App\Console\Commands\SaveWarningAndSendNotificationAndSocial;
 use App\Console\Commands\SyncAdsbPlanes;
@@ -73,6 +74,7 @@ return Application::configure(basePath: dirname(__DIR__))
         GetICNFBurnAreaLegacy::class,
         ImportLocations::class,
         AssignWeatherStations::class,
+        ImportWeatherDaily::class,
         ImportWeatherNormals::class,
         DumpFireStatuses::class,
         SyncFR24Planes::class,
