@@ -408,6 +408,15 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
         }
     }
 
+    /**
+     * Only worth posting when at least one municipality is at Muito Elevado
+     * or Máximo; otherwise it is a string of "Sem registo de concelhos…" posts.
+     */
+    public static function hasPublishableRisk(array $muitoElevado, array $maximo): bool
+    {
+        return count($muitoElevado) > 0 || count($maximo) > 0;
+    }
+
     private function publishSocial($all)
     {
         $moderado = [];
@@ -429,6 +438,10 @@ class ProcessRCM extends Job implements ShouldQueue, ShouldBeUnique
             } elseif ($a[$index] === 'Moderado') {
                 $moderado[] = $a['concelho'];
             }
+        }
+
+        if (!self::hasPublishableRisk($muitoElevado, $maximo)) {
+            return;
         }
 
         if (!count($moderado)) {

@@ -8,6 +8,8 @@ use App\Tools\FacebookTool;
 use App\Tools\Renderer;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
+use Carbon\CarbonInterface;
+use Illuminate\Support\Carbon;
 
 class HourlySummary extends Job
 {
@@ -16,6 +18,23 @@ class HourlySummary extends Job
      */
     public function __construct()
     {
+    }
+
+    /**
+     * Fire season: April to October.
+     */
+    public static function isFireSeason(CarbonInterface $date): bool
+    {
+        return $date->month >= 4 && $date->month <= 10;
+    }
+
+    /**
+     * Always posted while there are active fires (in progress or in resolution);
+     * with none, only during the fire season.
+     */
+    public static function shouldPublish(CarbonInterface $date, int $activeFires): bool
+    {
+        return $activeFires > 0 || self::isFireSeason($date);
     }
 
     /**
@@ -32,6 +51,10 @@ class HourlySummary extends Job
             ->where('isFire', true)
             ->whereIn('statusCode', Incident::NOT_ACTIVE_STATUS_CODES)
             ->get();
+
+        if (!self::shouldPublish(Carbon::now(), $incidents->count() + $incidentsNotActive->count())) {
+            return;
+        }
 
         $date = date('H:i');
 
