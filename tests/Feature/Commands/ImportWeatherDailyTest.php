@@ -3,6 +3,7 @@
 namespace Tests\Feature\Commands;
 
 use App\Models\WeatherDataDaily;
+use App\Models\WeatherStation;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
@@ -109,6 +110,21 @@ class ImportWeatherDailyTest extends TestCase
             ->assertSuccessful();
 
         $this->assertSame(0, WeatherDataDaily::count());
+    }
+
+    /** @test */
+    public function stations_stored_with_id_or_station_id_are_not_reported_as_unknown(): void
+    {
+        // Production: most stations keep the id in `id` (int), a few in `stationId`.
+        WeatherStation::raw(fn ($collection) => $collection->insertMany([
+            ['id' => 1200501, 'location' => 'Funchal'],
+            ['stationId' => 1200502, 'location' => 'Lajes'],
+        ]));
+        $this->writeDay('2017-03-02', ['1200504' => $this->values(14.0)]);
+
+        $this->artisan('weather:import-daily', ['path' => $this->dir])
+            ->expectsOutputToContain('1 station(s) not in weatherStations (rows imported anyway): 1200504')
+            ->assertSuccessful();
     }
 
     /** @test */

@@ -60,7 +60,7 @@ class ImportWeatherDaily extends Command
             return self::FAILURE;
         }
 
-        $known = WeatherStation::pluck('stationId')->map(fn ($id) => (string) $id)->flip();
+        $known = $this->knownStations();
         $inserted = $existing = $empty = $invalid = 0;
         $unknown = [];
 
@@ -130,6 +130,30 @@ class ImportWeatherDaily extends Command
         }
 
         return $invalid ? self::FAILURE : self::SUCCESS;
+    }
+
+    /**
+     * Station ids (as strings) of weatherStations. Most stations keep the id
+     * in `id` (int), some in `stationId`; read raw, as laravel-mongodb v5 maps
+     * `id` to `_id`.
+     *
+     * @return array<string, true>
+     */
+    private function knownStations(): array
+    {
+        $known = [];
+        $cursor = WeatherStation::raw(fn ($collection) => $collection->find([], [
+            'projection' => ['_id' => 0, 'id' => 1, 'stationId' => 1],
+        ]));
+        foreach ($cursor as $station) {
+            foreach (['stationId', 'id'] as $field) {
+                if (isset($station[$field])) {
+                    $known[(string) $station[$field]] = true;
+                }
+            }
+        }
+
+        return $known;
     }
 
     /**
