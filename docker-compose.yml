@@ -72,7 +72,9 @@ services:
     # Internal only (no published port). REDIS_PASSWORD comes from .env and
     # is also what the app uses (config/database.php); the app must use
     # REDIS_HOST=fogos.redis.
-    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}"
+    # maxmemory: a ceiling so a runaway key cannot take the host's RAM; noeviction
+    # because the queue lives here (a full Redis rejects writes, never drops jobs).
+    command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy noeviction --requirepass "${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}"
     volumes:
       # AOF on a volume: queued jobs survive container recreation/upgrades
       # (without it they lived in the container layer and were lost).
