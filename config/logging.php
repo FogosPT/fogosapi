@@ -1,5 +1,6 @@
 <?php
 
+use App\Logging\RedactSecretsTap;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -55,12 +56,14 @@ return [
 
         'single' => [
             'driver' => 'single',
+            'tap' => [RedactSecretsTap::class],
             'path' => storage_path('logs/laravel.log'),
             'level' => 'debug',
         ],
 
         'anepc' => [
             'driver' => 'single',
+            'tap' => [RedactSecretsTap::class],
             'path' => storage_path('logs/anepc.log'),
             'level' => 'debug',
         ],
@@ -68,6 +71,7 @@ return [
 
         'daily' => [
             'driver' => 'daily',
+            'tap' => [RedactSecretsTap::class],
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'info'),
             'days' => 14,
@@ -75,6 +79,7 @@ return [
 
         'slack' => [
             'driver' => 'slack',
+            'tap' => [RedactSecretsTap::class],
             'url' => env('LOG_SLACK_WEBHOOK_URL'),
             'username' => 'Lumen Log',
             'emoji' => ':boom:',
@@ -83,6 +88,7 @@ return [
 
         'papertrail' => [
             'driver' => 'monolog',
+            'tap' => [RedactSecretsTap::class],
             'level' => 'debug',
             'handler' => SyslogUdpHandler::class,
             'handler_with' => [
@@ -93,6 +99,7 @@ return [
 
         'stderr' => [
             'driver' => 'monolog',
+            'tap' => [RedactSecretsTap::class],
             'handler' => StreamHandler::class,
             'with' => [
                 'stream' => 'php://stderr',
@@ -101,11 +108,13 @@ return [
 
         'syslog' => [
             'driver' => 'syslog',
+            'tap' => [RedactSecretsTap::class],
             'level' => 'debug',
         ],
 
         'errorlog' => [
             'driver' => 'errorlog',
+            'tap' => [RedactSecretsTap::class],
             'level' => 'debug',
         ],
 
