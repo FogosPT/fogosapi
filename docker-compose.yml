@@ -13,7 +13,7 @@ x-logging: &logging
 # defaults to latest.
 x-app: &app
   image: ghcr.io/fogospt/fogosapi:${FOGOS_IMAGE_TAG:-latest}
-  restart: unless-stopped
+  restart: always
   volumes:
     - ./:/var/www/html
   networks:
@@ -39,7 +39,7 @@ services:
       - ./.docker/server/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./.docker/server/conf.d:/etc/nginx/conf.d:ro
       - .:/var/www/html:delegated
-    restart: unless-stopped
+    restart: always
     ports:
       - 127.0.0.1:8080:80
     healthcheck:
@@ -58,8 +58,10 @@ services:
     expose:
       - 9000
     # php-fpm accepting connections. To load new code use
-    # `docker-compose kill -s USR2 fogos.api`: php-fpm reload, resets opcache,
-    # no container restart (a restart also re-chowns storage/ and is slower).
+    # `docker exec fogosapi_fogos.api_1 sh -c 'kill -USR2 1'`: php-fpm reload,
+    # resets opcache, no container restart (a restart also re-chowns storage/ and
+    # is slower). Not `docker-compose kill -s USR2`: any `docker kill` marks the
+    # container as manually stopped, so it would not come back after a reboot.
     healthcheck:
       test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 9000) ? 0 : 1);"]
       interval: 30s
@@ -82,7 +84,7 @@ services:
       REDISCLI_AUTH: ${REDIS_PASSWORD}
     expose:
       - 6379
-    restart: unless-stopped
+    restart: always
     healthcheck:
       test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
       interval: 30s
@@ -108,7 +110,7 @@ services:
       - "127.0.0.1:9000:9000"
     volumes:
       - /data:/data
-    restart: unless-stopped
+    restart: always
     logging: *logging
     networks:
       - fogos
@@ -123,7 +125,7 @@ services:
       ALLOWED_HOSTS: ${RENDERER_ALLOWED_HOSTS:-fogos.pt}
     expose:
       - 3000
-    restart: unless-stopped
+    restart: always
     # Only applied with `docker-compose --compatibility up -d` (compose v1).
     deploy:
       resources:
@@ -139,7 +141,7 @@ services:
   fogos.scheduler:
     # Cron needs root; the schedule itself runs as www-data (cron.d/artisan).
     image: ghcr.io/fogospt/fogosapi-scheduler:${FOGOS_IMAGE_TAG:-latest}
-    restart: unless-stopped
+    restart: always
     volumes:
       - ./:/var/www/html
       - ./.docker/scheduler/cron.d:/etc/cron.d
