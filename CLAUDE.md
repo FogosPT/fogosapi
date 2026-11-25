@@ -68,10 +68,14 @@ docker run --rm -v "$PWD":/app -w /app composer:2 install --no-dev --no-interact
   --optimize-autoloader --no-scripts --ignore-platform-req='ext-*'
 docker exec -u www-data fogosapi_fogos.api_1 php artisan package:discover   # after composer install
 docker exec -u www-data fogosapi_fogos.api_1 php artisan migrate --force     # when there are migrations
-docker-compose kill -s USR2 fogos.api        # php-fpm reload + opcache reset; sub-second blip vs seconds of 502s on restart
+docker exec fogosapi_fogos.api_1 sh -c 'kill -USR2 1'   # php-fpm reload + opcache reset; sub-second blip vs seconds of 502s on restart
 docker exec -u www-data fogosapi_fogos.api_1 php artisan queue:restart       # workers pick up new code
 ```
 
+- **Never `docker-compose kill -s USR2 fogos.api`** (the old reload): any `docker kill`, whatever the signal, marks the container as manually stopped (`HasBeenManuallyStopped`), and it does not come back after a reboot or a daemon restart. Send the signal from inside the container (above). The services also use `restart: always` as a second guard.
+- Cache is Redis in production (`CACHE_DRIVER=redis`, connection `cache` = Redis DB 1; the queue is DB 0). Never the `file` store: it never deletes expired entries (per-URL response caches filled the disk). Changing the cache store needs a restart of the workers **and** the scheduler (`docker-compose restart fogos.scheduler fogos.worker …`): `queue:restart` is broadcast through the cache, so workers still on the old store never see it.
+- Docker on the host is pinned at 24.x (`apt-mark hold`): docker-compose v1 cannot recreate containers on Docker 25+ (`KeyError: 'ContainerConfig'`). Upgrade Docker together with the move to compose v2 (container names change to `fogosapi-fogos.api-1`).
+- The repo on the host belongs to `tomahock` (`storage/` and `bootstrap/cache` to `www-data`): `git pull` without `sudo`.
 - Run artisan as `-u www-data`: files root creates in `storage/` (e.g. today's log) are not writable by the www-data workers. The API container's entrypoint re-chowns `storage/` on start.
 - `docker-compose exec -T` (v1) can swallow output; prefer `docker exec <container>`.
 - Image changes (`.docker/**`) are built by the *build docker images* workflow; then `docker-compose pull --ignore-pull-failures && docker-compose up -d`. Pin with `FOGOS_IMAGE_TAG=sha-<8 chars>` in `.env` for reproducible deploys/rollbacks.
