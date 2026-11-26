@@ -2,6 +2,7 @@
 
 namespace App\Resources;
 
+use App\Models\IncidentPhoto;
 use App\Tools\PhotoStorageTool;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -15,7 +16,11 @@ class IncidentPhotoModerationResource extends JsonResource
             'status'     => $this->status,
             'public'     => (bool) ($this->public ?? true),
             'signature'  => $this->signature,
-            'url'        => PhotoStorageTool::publicUrl($this->storage_key),
+            // Approved: the public CDN URL. Pending: a signed, expiring URL
+            // through the API (pending photos are not public).
+            'url'        => $this->status === IncidentPhoto::STATUS_APPROVED && !PhotoStorageTool::isPending($this->storage_key)
+                ? PhotoStorageTool::publicUrl($this->storage_key)
+                : PhotoStorageTool::moderationUrl((string) $this->_id),
             'mime'       => $this->mime,
             'size_bytes' => $this->size_bytes,
             'width'      => $this->width,

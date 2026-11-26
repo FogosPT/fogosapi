@@ -80,7 +80,8 @@ docker exec -u www-data fogosapi-fogos.api-1 php artisan queue:restart       # w
 - In scripts prefer `docker exec <container>` (or `docker compose exec -T`): `docker compose exec` allocates a TTY by default.
 - Image changes (`.docker/**`) are built by the *build docker images* workflow; then `docker compose pull --ignore-pull-failures && docker compose up -d`. Pin with `FOGOS_IMAGE_TAG=sha-<8 chars>` in `.env` for reproducible deploys/rollbacks.
 - Redis has no published port: the app must use `REDIS_HOST=fogos.redis` and `REDIS_PASSWORD` (compose refuses to start Redis without it).
-- `minio/minio` can no longer be pulled (MinIO stopped publishing images); the host keeps the only copy — never `docker image prune -a`.
+- `minio/minio` can no longer be pulled (MinIO stopped publishing images); the host keeps the only copy — never `docker image prune -a` until the photos migration (#73) is finished and `fogos.minio` is removed.
+- Photos are plain files in `/data/photos` on the host (`PHOTOS_HOST_PATH`, mounted at `/var/www/photos` in every app container, `www-data` 33:33), served by the **host** nginx as `cdn.fogos.pt` (`location ^~ /incident-photos/incidents/ { alias /data/photos/incidents/; }`, `Cache-Control: public, max-age=31536000, immutable`). `pending/` is never served. One-shot migration from MinIO: `php artisan photos:import-from-minio [--dry-run]` (idempotent, md5-checked; pending rows get `pending/` keys).
 - Memory/CPU limits under `deploy:` are applied by compose v2 (workers 1536M, renderer 2 CPU / 2048M; the API has none).
 - Enabling AEMET (Spain): set `AEMET_API_KEY` in the production `.env`, run the migrations (indexes), reload php-fpm, `queue:restart`, start the AEMET worker (`docker compose up -d fogos.worker-aemet` — the four jobs run on the `aemet` queue, never on `default`), check `php artisan schedule:list` in the scheduler shows the four AEMET jobs, then run the first import by hand (as `-u www-data`): `aemet:stations`, `aemet:observations`, `aemet:daily`, `aemet:warnings`. No new dependencies.
 
@@ -89,7 +90,7 @@ docker exec -u www-data fogosapi-fogos.api-1 php artisan queue:restart       # w
 - **Laravel 12** (PHP 8.2+). App bootstrap lives in `bootstrap/app.php` using the `Application::configure()` style (routes, middleware, schedule, console commands all wired there).
 - **MongoDB** (primary datastore via `mongodb/laravel-mongodb` ^5.0) — collection `fires.data` is the main incidents collection
 - **Redis** — queue backend (`QUEUE_CONNECTION=redis`). Jobs are dispatched via `dispatch(new JobClass())` and consumed by a queue worker
-- **MinIO** (S3-compatible) — object storage for user-submitted incident photos. Configured as the `minio` disk in `config/filesystems.php`. In production, data is bind-mounted at `/data`.
+- **Photo storage** — incident photos are plain files on the `photos` disk (`config/filesystems.php`, driver `local`, root `PHOTOS_ROOT` = `/var/www/photos`), bind-mounted from the host data disk (`/data/photos`). The old **MinIO** (`minio` S3 disk, `fogos.minio`) is only read by `photos:import-from-minio` until it is removed (#73).
 - **Sentry** — error tracking
 
 ### Request Lifecycle
@@ -111,6 +112,7 @@ Photo endpoints:
 - `POST /v2/incidents/{id}/photos` — public upload, rate-limited via `photo.ratelimit` middleware
 - `GET /v2/incidents/{id}/photos` — public listing of approved photos (includes GPS coordinates and heading/azimuth)
 - `GET|POST /v2/moderation/photos[/...]` — moderation queue, protected by `photo.modauth` middleware checking `PHOTO_MODERATION_KEY` header
+- `GET /v2/moderation/photos/{id}/image` — the photo file for moderators, `signed:relative` route (the moderation listing's `url` for pending photos; `private, no-store`)
 
 Weather observations:
 - `GET /v2/weather/observations` (and `v2/weather/aemet/observations`, same code in `ServesStationSeries::feedObservations`) — IPMA feed shape, last 24 h by default; `date=YYYY-MM-DD` (Lisbon / Madrid calendar day) or `from`/`to` (`to` exclusive), `station=id[,id…]`. Windows capped at 24 h for all stations, 7 days with `station` (max 10 ids) → 422 `range_too_long`.
@@ -176,7 +178,7 @@ Earthquakes for the sismos.pt site (`v2/seismic/*`, `SeismicController`). IPMA's
 All models extend `MongoDB\Laravel\Eloquent\Model`. Key models:
 - `Incident` — collection `data`; central entity. Has scopes: `isActive()`, `isFire()`, `isFMA()`, `isOtherFire()`, `whereFireId()` (handles both legacy `id` field and new `_id`). Classification constants (`NATUREZA_CODE_*`) and `STATUS_ID`/`STATUS_COLORS` are defined here. Primary key is `_id`.
 - `IncidentHistory` / `IncidentStatusHistory` — historical records linked to `Incident` via `id` field
-- `IncidentPhoto` — collection `incident_photos`; user-submitted photos with moderation status (`pending`/`approved`). Stores GPS, EXIF, and storage key into the MinIO `incident-photos` bucket.
+- `IncidentPhoto` — collection `incident_photos`; user-submitted photos with moderation status (`pending`/`approved`). Stores GPS, EXIF and the `storage_key` on the `photos` disk: `pending/{fireId}/{photoId}.jpg` until approved (never public), `incidents/{fireId}/{photoId}.jpg` after (`approve` moves the file).
 - `Location` — geocoding lookup table (level 1 = district, level 2 = concelho)
 - `WeatherStation` / `WeatherData` / `WeatherDataDaily` — weather data
 - `WeatherNormal` — collection `weatherNormals`; monthly mean tmax/tmin per station, indexed by `(stationId, period)`. Populated by the `weather:import-normals` command, which scrapes the IPMA normals pages (`allstations` JS literal) — no PDF parsing.
@@ -193,7 +195,8 @@ Stateless helper classes for external integrations:
 - `ScreenShotTool` — takes headless browser screenshots for social posts
 - `HashTagTool` — generates Portuguese location hashtags
 - `RCMTool` — processes RCM image data
-- `PhotoStorageTool` — uploads/deletes incident photos on the MinIO disk; computes public URLs from `MINIO_PUBLIC_BASE_URL`
+- `PhotoStorageTool` — incident photos on the `photos` disk: `store` (to `pending/`), `approve` (move to `incidents/`), `read`, `delete`, `purge` (Cloudflare cache purge of the public URL, via `CloudflareTool`); `publicUrl` from `PHOTOS_PUBLIC_BASE_URL`; `moderationUrl` = signed, expiring `v2/moderation/photos/{id}/image` URL for moderators (pending photos have no public URL)
+- `CloudflareTool` — `purgeUrls()` (Zone → Cache Purge token in `CLOUDFLARE_CACHE_PURGE_TOKEN`, zone `CLOUDFLARE_ZONE_ID`; skipped with a warning when unset)
 - `ImageProcessingTool` — extracts EXIF from PNG `eXIf` chunks (via `lsolesen/pel`), strips metadata, resizes and re-encodes to JPEG via Imagick
 
 ### Resources
@@ -218,4 +221,7 @@ Several features are toggled via `.env`:
 - `AEMET_STALE_MINUTES` — minutes without usable data before an AEMET source is announced on Discord (default 60; `daily` uses 48 h)
 - `PHOTO_MODERATION_KEY` — header token guarding the photo moderation endpoints
 - `PHOTO_UPLOAD_MAX_BYTES`, `PHOTO_RATE_PER_IP_PER_MINUTE`, `PHOTO_RATE_PER_INCIDENT_PER_IP_PER_HOUR`, `PHOTO_RATE_PER_INCIDENT_GLOBAL_PER_HOUR`, `PHOTO_PENDING_PER_INCIDENT_CAP` — photo upload limits and rate gates
-- `MINIO_ENDPOINT`, `MINIO_PUBLIC_BASE_URL`, `MINIO_BUCKET`, `MINIO_REGION`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD` — MinIO/S3 storage configuration
+- `PHOTOS_HOST_PATH`, `PHOTOS_ROOT`, `PHOTOS_PUBLIC_BASE_URL` — photo files (host path, path in the containers, public base URL `https://cdn.fogos.pt/incident-photos`)
+- `API_PUBLIC_URL`, `PHOTO_PENDING_URL_TTL_MINUTES` — base and lifetime (120) of the signed moderation image URLs (`APP_URL` is the site, not the API)
+- `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_CACHE_PURGE_TOKEN` — cache purge of deleted photos
+- `MINIO_ENDPOINT`, `MINIO_PUBLIC_BASE_URL`, `MINIO_BUCKET`, `MINIO_REGION`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD` — legacy MinIO, only for `photos:import-from-minio`

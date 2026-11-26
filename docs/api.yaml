@@ -167,6 +167,8 @@ paths:
     $ref: './fires/paths/v2-moderation-photo-approve.yaml'
   /v2/moderation/photos/{photoId}/reject:
     $ref: './fires/paths/v2-moderation-photo-reject.yaml'
+  /v2/moderation/photos/{photoId}/image:
+    $ref: './fires/paths/v2-moderation-photo-image.yaml'
 
   # V2 — Weather
   /v2/weather/thunders:

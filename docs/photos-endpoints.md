@@ -39,7 +39,7 @@ curl -s "https://api.fogos.pt/v2/photos/latest?per_page=30&page=1"
     {
       "id": "6712aabbccddeeff00112233",
       "fire_id": "2025010012345",
-      "url": "https://minio.fogos.pt/incident-photos/incidents/2025010012345/6712aabbccddeeff00112233.jpg",
+      "url": "https://cdn.fogos.pt/incident-photos/incidents/2025010012345/6712aabbccddeeff00112233.jpg",
       "taken_at": "2026-09-22T14:31:07+00:00",
       "captured_at": "2026-09-22T14:31:07+00:00",
       "created_at": "2026-09-22T14:33:19+00:00",
@@ -71,7 +71,7 @@ curl -s "https://api.fogos.pt/v2/photos/latest?per_page=30&page=1"
 
 ## 2. `POST /v2/photos/{photoId}/delete`
 
-Remove uma foto de forma permanente. Apaga o objeto no MinIO (best-effort — se falhar, a limpeza da BD prossegue à mesma) e o documento em `incident_photos`.
+Remove uma foto de forma permanente. Apaga o ficheiro (best-effort — se falhar, a limpeza da BD prossegue à mesma) e o documento em `incident_photos`. Se a foto estava aprovada, faz também purge do URL público na cache do Cloudflare (as fotos ficam em cache um ano).
 
 ### Autenticação
 
@@ -107,5 +107,5 @@ curl -X POST "https://api.fogos.pt/v2/photos/6712aabbccddeeff00112233/delete" \
 ### Notas operacionais
 
 - A operação é **irreversível** — não há soft-delete nem lixeira.
-- Falhas na remoção do MinIO ficam registadas em log (`photo delete: storage cleanup failed`) mas não bloqueiam o `delete` na BD, para evitar registos órfãos.
+- Falhas na remoção do ficheiro ficam registadas em log (`photo delete: storage cleanup failed`) mas não bloqueiam o `delete` na BD, para evitar registos órfãos.
 - Para rejeitar fotos em fila de moderação (workflow normal), continua a usar-se `POST /v2/moderation/photos/{photoId}/reject`, que faz soft-reject (mantém o registo com `status = rejected`). Este endpoint aqui é a via administrativa para apagar de vez, usando a mesma `PHOTO_MODERATION_KEY`.

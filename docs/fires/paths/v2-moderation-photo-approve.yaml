@@ -2,8 +2,10 @@ post:
   operationId: v2ApprovePhoto
   summary: Approve a photo pending moderation
   description: |
-    Marks the photo as approved and public-visible. Requires `key` header
-    matching `PHOTO_MODERATION_KEY`.
+    Marks the photo as approved and public-visible: the file moves from
+    `pending/` to `incidents/`, the only path served at
+    `https://cdn.fogos.pt/incident-photos/…`. Requires `key` header matching
+    `PHOTO_MODERATION_KEY`.
 
     If the request body sets `publish: true`, the API also publishes the
     photo to Twitter, Facebook, Telegram and Discord and sends a push
@@ -78,6 +80,8 @@ post:
                     enum: [queued, already]
     401:
       $ref: '../../common/responses/401.yaml'
+    409:
+      description: The pending photo's file is missing (`error = photo_file_missing`); nothing was approved or published.
     503:
       description: Publication requested but the queue is unavailable; nothing was published or claimed. Retry later.
     404:

@@ -10,6 +10,7 @@ use App\Tools\PhotoStorageTool;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Bus;
 
@@ -44,10 +45,26 @@ class PhotoModerationController extends Controller
             abort(404);
         }
 
+        // A pending photo lives outside the public path: move it to its public
+        // key first, so nothing is published (or broadcast) without its file.
+        $key = (string) $photo->storage_key;
+        if (PhotoStorageTool::isPending($key)) {
+            $public = PhotoStorageTool::publicKey($key);
+            if (PhotoStorageTool::exists($key)) {
+                $key = PhotoStorageTool::approve($key);
+            } elseif (PhotoStorageTool::exists($public)) {
+                // Moved by a concurrent approval whose DB update did not land yet.
+                $key = $public;
+            } else {
+                return new JsonResponse(['success' => false, 'error' => 'photo_file_missing'], 409);
+            }
+        }
+
         // Field-level update: saving the whole `moderation` array could wipe a
         // concurrent request's moderation.published_at claim.
         IncidentPhoto::where('_id', $photo->getKey())->update([
             'status' => IncidentPhoto::STATUS_APPROVED,
+            'storage_key' => $key,
             'moderation.reviewed_at' => Carbon::now(),
         ]);
 
@@ -97,6 +114,25 @@ class PhotoModerationController extends Controller
         $photo->delete();
 
         return new JsonResponse(['success' => true]);
+    }
+
+    /**
+     * The photo file, for moderators (pending photos have no public URL).
+     * Reached through PhotoStorageTool::moderationUrl(): the route is signed
+     * and expires, so it works in an <img src> without the moderation key.
+     */
+    public function image(string $photoId): Response
+    {
+        $photo = IncidentPhoto::find($photoId);
+        if ($photo === null || !PhotoStorageTool::exists($photo->storage_key)) {
+            abort(404);
+        }
+
+        return response(PhotoStorageTool::read($photo->storage_key), 200, [
+            'Content-Type' => 'image/jpeg',
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     /**

@@ -95,10 +95,11 @@ class IncidentPhotoController extends Controller
 
         $objectId   = new ObjectId();
         $photoId    = (string) $objectId;
-        $storageKey = "incidents/{$fireId}/{$photoId}.jpg";
+        // Not public until approved (PhotoModerationController::approve moves it).
+        $storageKey = PhotoStorageTool::pendingKey((string) $fireId, $photoId);
 
         try {
-            PhotoStorageTool::store($processed['bytes'], $storageKey, 'image/jpeg');
+            PhotoStorageTool::store($processed['bytes'], $storageKey);
         } catch (\Throwable $e) {
             return new JsonResponse(['success' => false, 'error' => 'storage_failed'], 500);
         }
@@ -213,6 +214,12 @@ class IncidentPhotoController extends Controller
             Log::warning('photo delete: storage cleanup failed: '.$e->getMessage(), [
                 'photo_id' => $photoId,
             ]);
+        }
+
+        // Public photos are cached for a year on cdn.fogos.pt: drop them from
+        // the Cloudflare edge too. Pending ones were never public.
+        if ($photo->status === IncidentPhoto::STATUS_APPROVED && !PhotoStorageTool::isPending($photo->storage_key)) {
+            PhotoStorageTool::purge($photo->storage_key);
         }
 
         $photo->delete();
