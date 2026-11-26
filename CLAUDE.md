@@ -57,7 +57,7 @@ php artisan aemet:daily          # last 10 days of daily summaries
 php artisan aemet:warnings       # CAP warnings snapshot (archive, zones, reconciliation)
 ```
 
-## Deploy (production, docker-compose v1 on the host)
+## Deploy (production: Debian 13, Docker 29, docker compose v2 on the host)
 
 The repo is bind-mounted into every container (`/opt/fogosapi` → `/var/www/html`); `vendor/` lives on the host. The prod image has no composer and php-fpm runs opcache with `validate_timestamps=0`, so **code changes are invisible until php-fpm reloads**.
 
@@ -66,23 +66,23 @@ git pull
 # only when composer.lock changed (prod image has no composer):
 docker run --rm -v "$PWD":/app -w /app composer:2 install --no-dev --no-interaction --prefer-dist \
   --optimize-autoloader --no-scripts --ignore-platform-req='ext-*'
-docker exec -u www-data fogosapi_fogos.api_1 php artisan package:discover   # after composer install
-docker exec -u www-data fogosapi_fogos.api_1 php artisan migrate --force     # when there are migrations
-docker exec fogosapi_fogos.api_1 sh -c 'kill -USR2 1'   # php-fpm reload + opcache reset; sub-second blip vs seconds of 502s on restart
-docker exec -u www-data fogosapi_fogos.api_1 php artisan queue:restart       # workers pick up new code
+docker exec -u www-data fogosapi-fogos.api-1 php artisan package:discover   # after composer install
+docker exec -u www-data fogosapi-fogos.api-1 php artisan migrate --force     # when there are migrations
+docker exec fogosapi-fogos.api-1 sh -c 'kill -USR2 1'   # php-fpm reload + opcache reset; sub-second blip vs seconds of 502s on restart
+docker exec -u www-data fogosapi-fogos.api-1 php artisan queue:restart       # workers pick up new code
 ```
 
-- **Never `docker-compose kill -s USR2 fogos.api`** (the old reload): any `docker kill`, whatever the signal, marks the container as manually stopped (`HasBeenManuallyStopped`), and it does not come back after a reboot or a daemon restart. Send the signal from inside the container (above). The services also use `restart: always` as a second guard.
-- Cache is Redis in production (`CACHE_DRIVER=redis`, connection `cache` = Redis DB 1; the queue is DB 0). Never the `file` store: it never deletes expired entries (per-URL response caches filled the disk). Changing the cache store needs a restart of the workers **and** the scheduler (`docker-compose restart fogos.scheduler fogos.worker …`): `queue:restart` is broadcast through the cache, so workers still on the old store never see it.
-- Docker on the host is pinned at 24.x (`apt-mark hold`): docker-compose v1 cannot recreate containers on Docker 25+ (`KeyError: 'ContainerConfig'`). Upgrade Docker together with the move to compose v2 (container names change to `fogosapi-fogos.api-1`).
+- **Never `docker compose kill -s USR2 fogos.api`** (the old reload): any `docker kill`, whatever the signal, marks the container as manually stopped (`HasBeenManuallyStopped`), and it does not come back after a reboot or a daemon restart. Send the signal from inside the container (above). The services also use `restart: always` as a second guard.
+- Cache is Redis in production (`CACHE_DRIVER=redis`, connection `cache` = Redis DB 1; the queue is DB 0). Never the `file` store: it never deletes expired entries (per-URL response caches filled the disk). Changing the cache store needs a restart of the workers **and** the scheduler (`docker compose restart fogos.scheduler fogos.worker …`): `queue:restart` is broadcast through the cache, so workers still on the old store never see it.
+- Containers are named `fogosapi-fogos.<service>-1` (compose v2; before 2026-11 it was v1 with `fogosapi_fogos.<service>_1`). Docker and the compose plugin come from the Docker apt repository and update with the system.
 - The repo on the host belongs to `tomahock` (`storage/` and `bootstrap/cache` to `www-data`): `git pull` without `sudo`.
 - Run artisan as `-u www-data`: files root creates in `storage/` (e.g. today's log) are not writable by the www-data workers. The API container's entrypoint re-chowns `storage/` on start.
-- `docker-compose exec -T` (v1) can swallow output; prefer `docker exec <container>`.
-- Image changes (`.docker/**`) are built by the *build docker images* workflow; then `docker-compose pull --ignore-pull-failures && docker-compose up -d`. Pin with `FOGOS_IMAGE_TAG=sha-<8 chars>` in `.env` for reproducible deploys/rollbacks.
+- In scripts prefer `docker exec <container>` (or `docker compose exec -T`): `docker compose exec` allocates a TTY by default.
+- Image changes (`.docker/**`) are built by the *build docker images* workflow; then `docker compose pull --ignore-pull-failures && docker compose up -d`. Pin with `FOGOS_IMAGE_TAG=sha-<8 chars>` in `.env` for reproducible deploys/rollbacks.
 - Redis has no published port: the app must use `REDIS_HOST=fogos.redis` and `REDIS_PASSWORD` (compose refuses to start Redis without it).
 - `minio/minio` can no longer be pulled (MinIO stopped publishing images); the host keeps the only copy — never `docker image prune -a`.
-- Memory limits under `deploy:` only apply with `docker-compose --compatibility up -d`.
-- Enabling AEMET (Spain): set `AEMET_API_KEY` in the production `.env`, run the migrations (indexes), reload php-fpm, `queue:restart`, start the AEMET worker (`docker-compose up -d fogos.worker-aemet` — the four jobs run on the `aemet` queue, never on `default`), check `php artisan schedule:list` in the scheduler shows the four AEMET jobs, then run the first import by hand (as `-u www-data`): `aemet:stations`, `aemet:observations`, `aemet:daily`, `aemet:warnings`. No new dependencies.
+- Memory/CPU limits under `deploy:` are applied by compose v2 (workers 1536M, renderer 2 CPU / 2048M; the API has none).
+- Enabling AEMET (Spain): set `AEMET_API_KEY` in the production `.env`, run the migrations (indexes), reload php-fpm, `queue:restart`, start the AEMET worker (`docker compose up -d fogos.worker-aemet` — the four jobs run on the `aemet` queue, never on `default`), check `php artisan schedule:list` in the scheduler shows the four AEMET jobs, then run the first import by hand (as `-u www-data`): `aemet:stations`, `aemet:observations`, `aemet:daily`, `aemet:warnings`. No new dependencies.
 
 
 ### Framework & Infrastructure
