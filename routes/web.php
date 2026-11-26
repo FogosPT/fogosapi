@@ -92,6 +92,12 @@ Route::group(['prefix' => 'v2'], function () {
         Route::post('{photoId}/reject', '\App\Http\Controllers\PhotoModerationController@reject');
     });
 
+    // The photo file for moderators: a short-lived signed URL (from the
+    // moderation listing) instead of the key header, so it works in <img src>.
+    Route::get('moderation/photos/{photoId}/image', '\App\Http\Controllers\PhotoModerationController@image')
+        ->middleware('signed:relative')
+        ->name('moderation.photos.image');
+
     Route::group(['prefix' => 'weather'], function () {
         Route::get('thunders', '\App\Http\Controllers\WeatherController@thunders');
         Route::get('stations', '\App\Http\Controllers\WeatherController@stations');

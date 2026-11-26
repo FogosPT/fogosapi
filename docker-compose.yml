@@ -14,6 +14,8 @@ x-app: &app
   restart: always
   volumes:
     - ./:/var/www/html
+    # Incident photos (plain files, served by the host nginx as cdn.fogos.pt).
+    - ${PHOTOS_HOST_PATH:-/data/photos}:/var/www/photos
   networks:
     - fogos
   logging: *logging

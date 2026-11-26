@@ -11,7 +11,6 @@ use App\Tools\PhotoStorageTool;
 use App\Tools\TelegramTool;
 use App\Tools\TwitterTool;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Posts an approved photo to the social channels and the incident topic.
@@ -50,13 +49,13 @@ class BroadcastApprovedPhoto extends Job
 
         $tmp = null;
         try {
-            $contents = Storage::disk('minio')->get($photo->storage_key);
-            if ($contents !== null) {
+            $contents = PhotoStorageTool::read($photo->storage_key);
+            if ($contents !== '') {
                 $tmp = tempnam(sys_get_temp_dir(), 'fogo_photo_') . '.jpg';
                 file_put_contents($tmp, $contents);
             }
         } catch (\Throwable $e) {
-            DiscordTool::postError('Photo approve: failed to fetch image from MinIO — ' . $e->getMessage());
+            DiscordTool::postError('Photo approve: failed to read the image — ' . $e->getMessage());
             $tmp = null;
         }
 

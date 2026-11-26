@@ -2,7 +2,8 @@ post:
   operationId: v2RejectPhoto
   summary: Reject (delete) a photo pending moderation
   description: |
-    Permanently removes the photo from MinIO and from the database.
+    Permanently removes the photo file (still under `pending/`, never public)
+    and the database document.
     Requires `key` header matching `PHOTO_MODERATION_KEY`.
   tags:
     - Moderation

@@ -2,9 +2,10 @@ post:
   operationId: v2DeletePhoto
   summary: Delete a photo (moderation-key protected)
   description: |
-    Permanently removes a photo. Deletes the underlying object from MinIO
-    (best-effort — DB cleanup proceeds even if storage removal fails) and
-    the `incident_photos` document.
+    Permanently removes a photo. Deletes the file (best-effort — DB cleanup
+    proceeds even if storage removal fails) and the `incident_photos`
+    document. For an approved photo the public URL is also purged from the
+    Cloudflare cache (photos are cached for a year).
 
     Protected by the `key` header (`PHOTO_MODERATION_KEY`).
   tags:

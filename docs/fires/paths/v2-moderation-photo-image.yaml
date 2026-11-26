@@ -1,0 +1,42 @@
+get:
+  operationId: v2ModerationPhotoImage
+  summary: Photo file for moderators (signed URL)
+  description: |
+    Returns the JPEG of a photo, pending or approved. Pending photos have no
+    public URL, so the moderation listing (`url` field of
+    `GET /v2/moderation/photos` and `POST /v2/incidents/{id}/photos/all`)
+    returns this route as a **signed, expiring URL** (`expires` +
+    `signature` query parameters, 120 min by default,
+    `PHOTO_PENDING_URL_TTL_MINUTES`). It works in an `<img src>` without the
+    `key` header. Responses are `Cache-Control: private, no-store`.
+  tags:
+    - Moderation
+  parameters:
+    - name: photoId
+      in: path
+      required: true
+      description: Mongo `_id` of the photo document.
+      schema:
+        type: string
+    - name: expires
+      in: query
+      required: true
+      schema:
+        type: integer
+    - name: signature
+      in: query
+      required: true
+      schema:
+        type: string
+  responses:
+    200:
+      description: The photo.
+      content:
+        image/jpeg:
+          schema:
+            type: string
+            format: binary
+    403:
+      description: Missing, invalid or expired signature.
+    404:
+      $ref: '../../common/responses/404.yaml'
