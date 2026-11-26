@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Rotate container logs (json-file) so a chatty service cannot fill the disk.
 x-logging: &logging
   driver: json-file
@@ -24,7 +22,7 @@ x-app: &app
 x-worker: &worker
   <<: *app
   user: www-data
-  # Only applied with `docker-compose --compatibility up -d` (compose v1).
+  # Applied by docker compose v2.
   deploy:
     resources:
       limits:
@@ -58,9 +56,9 @@ services:
     expose:
       - 9000
     # php-fpm accepting connections. To load new code use
-    # `docker exec fogosapi_fogos.api_1 sh -c 'kill -USR2 1'`: php-fpm reload,
+    # `docker exec fogosapi-fogos.api-1 sh -c 'kill -USR2 1'`: php-fpm reload,
     # resets opcache, no container restart (a restart also re-chowns storage/ and
-    # is slower). Not `docker-compose kill -s USR2`: any `docker kill` marks the
+    # is slower). Not `docker compose kill -s USR2`: any `docker kill` marks the
     # container as manually stopped, so it would not come back after a reboot.
     healthcheck:
       test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 9000) ? 0 : 1);"]
@@ -128,7 +126,7 @@ services:
     expose:
       - 3000
     restart: always
-    # Only applied with `docker-compose --compatibility up -d` (compose v1).
+    # Applied by docker compose v2.
     deploy:
       resources:
         limits:
